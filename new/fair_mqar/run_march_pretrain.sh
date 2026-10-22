@@ -42,6 +42,9 @@ python3 pretrain_branch.py \
   --max-states 64 \
   --protect 8.0 \
   --differentiate-covariance \
+  --split-seed 12345 \
+  --val-per-mille 20 \
+  --test-per-mille 10 \
   --lr 3e-4 \
   --weight-decay 0.1 \
   --eval-every 500 \

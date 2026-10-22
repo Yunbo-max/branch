@@ -1,13 +1,14 @@
 # Branch Memory vs MARCH — fair long-context comparison
 
-> **Status (2026-10-22): legacy pilot, not a valid method comparison.**
-> Two correctness issues reproduced on CPU invalidate the capacity/routing claims below:
-> (1) the chunked Branch fork allocator never allocates a child, so the "64-state" run is
-> a single-active-state replace-only model; (2) the chunked MARCH port uses the same
-> constant anchor key for every anchor, so routing is not content-conditioned. A third
-> issue is that evaluation samples from the training corpus rather than a fixed held-out
-> panel. See [`KNOWN_ISSUES.md`](KNOWN_ISSUES.md) for reproductions and required fixes.
-> Do not use the curves in `results/` as evidence of branch capacity or MARCH fidelity.
+> **Status (2026-10-22): `main` is a legacy pilot; this branch contains correctness fixes.**
+> `main` has three verified problems: the chunked Branch fork allocator never allocates a
+> child (the "64-state" run is replace-only with one active state), the chunked MARCH port
+> uses one constant anchor key for every anchor, and evaluation samples from the training
+> corpus rather than a fixed held-out panel. See [`KNOWN_ISSUES.md`](KNOWN_ISSUES.md).
+>
+> This branch (`fix/correctness`) fixes those items and adds regression tests; see
+> [`FIXES.md`](FIXES.md). The curves in `results/` were produced by the legacy code and are
+> **not** evidence for branch capacity or MARCH fidelity. Re-run before making claims.
 
 One backbone, one corpus, one budget, matched parameters. Only the memory mechanism
 differs. This repository contains the comparison harness, the four memory arms, the

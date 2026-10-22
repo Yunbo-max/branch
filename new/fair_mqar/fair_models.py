@@ -22,7 +22,15 @@ if str(_BRANCH_DIR) not in sys.path:
 from march_mixer import MARCHCache, MARCHMemoryConfig, MARCHMixer  # noqa: E402
 from baseline_mixers import BaselineConfig, DeltaNetMixer, TransformerMixer  # noqa: E402
 
-MIXERS = ("march", "march_chunked", "branch", "branch_cached", "chunked", "delta", "transformer")
+MIXERS = (
+    "march",
+    "march_chunked",
+    "branch",
+    "branch_cached",
+    "chunked",
+    "delta",
+    "transformer",
+)
 
 
 @dataclass
@@ -35,7 +43,7 @@ class FairLMConfig:
     d_key: int = 32
     d_value: int = 32
     ff_mult: int = 2
-    ff_extra: int = 0      # extra FFN hidden units, used to match total parameters
+    ff_extra: int = 0  # extra FFN hidden units, used to match total parameters
     conv_kernel: int = 3
     # MARCH
     anchor_interval: int = 16
@@ -51,8 +59,8 @@ class FairLMConfig:
     protection_decay: float = 0.95
     covariance: str = "full"
     differentiate_covariance: bool = True
-    solver_refresh: int = 1     # branch_cached only
-    chunk_len: int = 64         # chunked only
+    solver_refresh: int = 1  # branch_cached only
+    chunk_len: int = 64  # chunked only
     grad_checkpoint: bool = False
 
     def __post_init__(self) -> None:
@@ -62,65 +70,128 @@ class FairLMConfig:
 
 def build_mixer(cfg: FairLMConfig) -> nn.Module:
     if cfg.mixer == "march":
-        return MARCHMixer(MARCHMemoryConfig(
-            d_model=cfg.d_model, n_heads=cfg.n_heads, d_key=cfg.d_key,
-            d_value=cfg.d_value, d_route=cfg.d_route,
-            anchor_interval=cfg.anchor_interval, max_anchors=cfg.max_anchors,
-            read_topk=cfg.read_topk, conv_kernel=cfg.conv_kernel,
-            tau=cfg.tau, ridge=cfg.ridge,
-        ))
+        return MARCHMixer(
+            MARCHMemoryConfig(
+                d_model=cfg.d_model,
+                n_heads=cfg.n_heads,
+                d_key=cfg.d_key,
+                d_value=cfg.d_value,
+                d_route=cfg.d_route,
+                anchor_interval=cfg.anchor_interval,
+                max_anchors=cfg.max_anchors,
+                read_topk=cfg.read_topk,
+                conv_kernel=cfg.conv_kernel,
+                tau=cfg.tau,
+                ridge=cfg.ridge,
+            )
+        )
     if cfg.mixer == "delta":
-        return DeltaNetMixer(BaselineConfig(
-            d_model=cfg.d_model, n_heads=cfg.n_heads, d_key=cfg.d_key,
-            d_value=cfg.d_value, conv_kernel=cfg.conv_kernel,
-            tau=cfg.tau, ridge=cfg.ridge,
-        ))
+        return DeltaNetMixer(
+            BaselineConfig(
+                d_model=cfg.d_model,
+                n_heads=cfg.n_heads,
+                d_key=cfg.d_key,
+                d_value=cfg.d_value,
+                conv_kernel=cfg.conv_kernel,
+                tau=cfg.tau,
+                ridge=cfg.ridge,
+            )
+        )
     if cfg.mixer == "transformer":
-        return TransformerMixer(BaselineConfig(
-            d_model=cfg.d_model, n_heads=cfg.n_heads, d_key=cfg.d_key,
-            d_value=cfg.d_value, conv_kernel=cfg.conv_kernel,
-        ))
+        return TransformerMixer(
+            BaselineConfig(
+                d_model=cfg.d_model,
+                n_heads=cfg.n_heads,
+                d_key=cfg.d_key,
+                d_value=cfg.d_value,
+                conv_kernel=cfg.conv_kernel,
+            )
+        )
     if cfg.mixer == "march_chunked":
         from chunked_march import ChunkedMARCHConfig, ChunkedMARCHMixer
 
-        return ChunkedMARCHMixer(ChunkedMARCHConfig(
-            d_model=cfg.d_model, n_heads=cfg.n_heads, d_key=cfg.d_key,
-            d_value=cfg.d_value, d_route=cfg.d_route, max_states=cfg.max_states,
-            conv_kernel=cfg.conv_kernel, tau=cfg.tau, ridge=cfg.ridge,
-            read_topk=cfg.read_topk, chunk_len=cfg.chunk_len,
-        ))
+        return ChunkedMARCHMixer(
+            ChunkedMARCHConfig(
+                d_model=cfg.d_model,
+                n_heads=cfg.n_heads,
+                d_key=cfg.d_key,
+                d_value=cfg.d_value,
+                d_route=cfg.d_route,
+                max_states=cfg.max_states,
+                conv_kernel=cfg.conv_kernel,
+                tau=cfg.tau,
+                ridge=cfg.ridge,
+                read_topk=cfg.read_topk,
+                chunk_len=cfg.chunk_len,
+            )
+        )
     if cfg.mixer == "chunked":
         from chunked_branch import ChunkedBranchConfig, ChunkedBranchMixer
 
-        return ChunkedBranchMixer(ChunkedBranchConfig(
-            d_model=cfg.d_model, n_heads=cfg.n_heads, d_key=cfg.d_key,
-            d_value=cfg.d_value, d_route=cfg.d_route, max_states=cfg.max_states,
-            conv_kernel=cfg.conv_kernel, tau=cfg.tau, ridge=cfg.ridge,
-            protect=cfg.protect, protection_decay=cfg.protection_decay,
-            chunk_len=cfg.chunk_len, grad_checkpoint=cfg.grad_checkpoint,
-        ))
+        return ChunkedBranchMixer(
+            ChunkedBranchConfig(
+                d_model=cfg.d_model,
+                n_heads=cfg.n_heads,
+                d_key=cfg.d_key,
+                d_value=cfg.d_value,
+                d_route=cfg.d_route,
+                max_states=cfg.max_states,
+                conv_kernel=cfg.conv_kernel,
+                tau=cfg.tau,
+                ridge=cfg.ridge,
+                protect=cfg.protect,
+                fork_cost=cfg.fork_cost,
+                protection_decay=cfg.protection_decay,
+                covariance=cfg.covariance,
+                differentiate_covariance=cfg.differentiate_covariance,
+                chunk_len=cfg.chunk_len,
+                grad_checkpoint=cfg.grad_checkpoint,
+            )
+        )
     if cfg.mixer == "branch_cached":
         from branch_cached import CachedBranchMixer, CachedSolverConfig
 
-        return CachedBranchMixer(CachedSolverConfig(
-            d_model=cfg.d_model, n_heads=cfg.n_heads, d_key=cfg.d_key,
-            d_value=cfg.d_value, d_route=cfg.d_route, max_states=cfg.max_states,
-            mode="branch", conv_kernel=cfg.conv_kernel, tau=cfg.tau, ridge=cfg.ridge,
-            protect=cfg.protect, fork_cost=cfg.fork_cost,
-            protection_decay=cfg.protection_decay, covariance="full",
-            differentiate_covariance=cfg.differentiate_covariance,
-            solver_refresh=cfg.solver_refresh,
-        ))
+        return CachedBranchMixer(
+            CachedSolverConfig(
+                d_model=cfg.d_model,
+                n_heads=cfg.n_heads,
+                d_key=cfg.d_key,
+                d_value=cfg.d_value,
+                d_route=cfg.d_route,
+                max_states=cfg.max_states,
+                mode="branch",
+                conv_kernel=cfg.conv_kernel,
+                tau=cfg.tau,
+                ridge=cfg.ridge,
+                protect=cfg.protect,
+                fork_cost=cfg.fork_cost,
+                protection_decay=cfg.protection_decay,
+                covariance="full",
+                differentiate_covariance=cfg.differentiate_covariance,
+                solver_refresh=cfg.solver_refresh,
+            )
+        )
     from branch_memory.mixer import BranchMemoryMixer, MemoryConfig
 
-    return BranchMemoryMixer(MemoryConfig(
-        d_model=cfg.d_model, n_heads=cfg.n_heads, d_key=cfg.d_key,
-        d_value=cfg.d_value, d_route=cfg.d_route, max_states=cfg.max_states,
-        mode="branch", conv_kernel=cfg.conv_kernel, tau=cfg.tau, ridge=cfg.ridge,
-        protect=cfg.protect, fork_cost=cfg.fork_cost,
-        protection_decay=cfg.protection_decay, covariance=cfg.covariance,
-        differentiate_covariance=cfg.differentiate_covariance,
-    ))
+    return BranchMemoryMixer(
+        MemoryConfig(
+            d_model=cfg.d_model,
+            n_heads=cfg.n_heads,
+            d_key=cfg.d_key,
+            d_value=cfg.d_value,
+            d_route=cfg.d_route,
+            max_states=cfg.max_states,
+            mode="branch",
+            conv_kernel=cfg.conv_kernel,
+            tau=cfg.tau,
+            ridge=cfg.ridge,
+            protect=cfg.protect,
+            fork_cost=cfg.fork_cost,
+            protection_decay=cfg.protection_decay,
+            covariance=cfg.covariance,
+            differentiate_covariance=cfg.differentiate_covariance,
+        )
+    )
 
 
 class FairBlock(nn.Module):

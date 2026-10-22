@@ -41,7 +41,12 @@ python3 pretrain_branch.py \
   --vocab-size 32000 \
   --max-states 64 \
   --protect 8.0 \
+  --covariance full \
+  --fork-cost 0.02 \
   --differentiate-covariance \
+  --split-seed 12345 \
+  --val-per-mille 20 \
+  --test-per-mille 10 \
   --lr 3e-4 \
   --weight-decay 0.1 \
   --eval-every 500 \
