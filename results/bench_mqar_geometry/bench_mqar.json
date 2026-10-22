@@ -1,0 +1,277 @@
+{
+  "train_config": {
+    "seq_len": 256,
+    "num_pairs": 8,
+    "gap": 32,
+    "n_keys": 48,
+    "n_values": 48,
+    "filler_token": 0,
+    "seed": 17
+  },
+  "args": {
+    "output": "/inspire/hdd/global_user/zhangjiaquan-253108540222/research/DiffRwkv/results/bench_mqar_geometry",
+    "steps": "1500",
+    "batch_size": "32",
+    "eval_n": "256",
+    "eval_batch_size": "32",
+    "seq_len": "256",
+    "train_pairs": "8",
+    "train_gap": "32",
+    "d_model": "64",
+    "layers": "2",
+    "heads": "2",
+    "d_key": "32",
+    "d_value": "32",
+    "d_route": "16",
+    "chunk_len": "32",
+    "lr": "0.001",
+    "seed": "17",
+    "device": "cuda",
+    "eval_pairs": "[2, 4, 8, 16]",
+    "eval_gaps": "[0, 32, 64, 128]"
+  },
+  "arms": {
+    "isotropic": {
+      "protect": 0.0,
+      "train_loss_first": 4.674229621887207,
+      "train_loss_last": 0.4220152795314789,
+      "seconds_per_step": 0.13615007413331962,
+      "peak_allocated_gb": 0.374585856,
+      "grid": [
+        {
+          "num_pairs": 2,
+          "gap": 0,
+          "loss": 0.40062784031033516,
+          "accuracy": 0.953125,
+          "chance": 0.020833333333333332
+        },
+        {
+          "num_pairs": 2,
+          "gap": 32,
+          "loss": 0.045394422486424446,
+          "accuracy": 0.9921875,
+          "chance": 0.020833333333333332
+        },
+        {
+          "num_pairs": 2,
+          "gap": 64,
+          "loss": 0.052474120631814,
+          "accuracy": 0.9921875,
+          "chance": 0.020833333333333332
+        },
+        {
+          "num_pairs": 2,
+          "gap": 128,
+          "loss": 0.03010781528428197,
+          "accuracy": 1.0,
+          "chance": 0.020833333333333332
+        },
+        {
+          "num_pairs": 4,
+          "gap": 0,
+          "loss": 0.5585435889661312,
+          "accuracy": 0.91015625,
+          "chance": 0.020833333333333332
+        },
+        {
+          "num_pairs": 4,
+          "gap": 32,
+          "loss": 0.08640991896390915,
+          "accuracy": 0.9921875,
+          "chance": 0.020833333333333332
+        },
+        {
+          "num_pairs": 4,
+          "gap": 64,
+          "loss": 0.087635004427284,
+          "accuracy": 0.98828125,
+          "chance": 0.020833333333333332
+        },
+        {
+          "num_pairs": 4,
+          "gap": 128,
+          "loss": 0.10235096886754036,
+          "accuracy": 0.984375,
+          "chance": 0.020833333333333332
+        },
+        {
+          "num_pairs": 8,
+          "gap": 0,
+          "loss": 0.961083821952343,
+          "accuracy": 0.765625,
+          "chance": 0.020833333333333332
+        },
+        {
+          "num_pairs": 8,
+          "gap": 32,
+          "loss": 0.25013644620776176,
+          "accuracy": 0.9375,
+          "chance": 0.020833333333333332
+        },
+        {
+          "num_pairs": 8,
+          "gap": 64,
+          "loss": 0.2685529235750437,
+          "accuracy": 0.95703125,
+          "chance": 0.020833333333333332
+        },
+        {
+          "num_pairs": 8,
+          "gap": 128,
+          "loss": 0.3090682905167341,
+          "accuracy": 0.9453125,
+          "chance": 0.020833333333333332
+        },
+        {
+          "num_pairs": 16,
+          "gap": 0,
+          "loss": 1.5460606962442398,
+          "accuracy": 0.5859375,
+          "chance": 0.020833333333333332
+        },
+        {
+          "num_pairs": 16,
+          "gap": 32,
+          "loss": 1.1273450031876564,
+          "accuracy": 0.734375,
+          "chance": 0.020833333333333332
+        },
+        {
+          "num_pairs": 16,
+          "gap": 64,
+          "loss": 1.0751865953207016,
+          "accuracy": 0.71484375,
+          "chance": 0.020833333333333332
+        },
+        {
+          "num_pairs": 16,
+          "gap": 128,
+          "loss": 1.0018403753638268,
+          "accuracy": 0.72265625,
+          "chance": 0.020833333333333332
+        }
+      ]
+    },
+    "full": {
+      "protect": 8.0,
+      "train_loss_first": 4.666006088256836,
+      "train_loss_last": 0.3562150800228119,
+      "seconds_per_step": 0.13647238039665777,
+      "peak_allocated_gb": 0.374585856,
+      "grid": [
+        {
+          "num_pairs": 2,
+          "gap": 0,
+          "loss": 0.30156014673411846,
+          "accuracy": 0.94921875,
+          "chance": 0.020833333333333332
+        },
+        {
+          "num_pairs": 2,
+          "gap": 32,
+          "loss": 0.031270170817151666,
+          "accuracy": 0.99609375,
+          "chance": 0.020833333333333332
+        },
+        {
+          "num_pairs": 2,
+          "gap": 64,
+          "loss": 0.026311018504202366,
+          "accuracy": 1.0,
+          "chance": 0.020833333333333332
+        },
+        {
+          "num_pairs": 2,
+          "gap": 128,
+          "loss": 0.022256156662479043,
+          "accuracy": 1.0,
+          "chance": 0.020833333333333332
+        },
+        {
+          "num_pairs": 4,
+          "gap": 0,
+          "loss": 0.44576068222522736,
+          "accuracy": 0.93359375,
+          "chance": 0.020833333333333332
+        },
+        {
+          "num_pairs": 4,
+          "gap": 32,
+          "loss": 0.07604661956429482,
+          "accuracy": 0.9921875,
+          "chance": 0.020833333333333332
+        },
+        {
+          "num_pairs": 4,
+          "gap": 64,
+          "loss": 0.07720704050734639,
+          "accuracy": 0.9921875,
+          "chance": 0.020833333333333332
+        },
+        {
+          "num_pairs": 4,
+          "gap": 128,
+          "loss": 0.0886509707197547,
+          "accuracy": 0.9921875,
+          "chance": 0.020833333333333332
+        },
+        {
+          "num_pairs": 8,
+          "gap": 0,
+          "loss": 0.8285628482699394,
+          "accuracy": 0.7734375,
+          "chance": 0.020833333333333332
+        },
+        {
+          "num_pairs": 8,
+          "gap": 32,
+          "loss": 0.21964831836521626,
+          "accuracy": 0.9609375,
+          "chance": 0.020833333333333332
+        },
+        {
+          "num_pairs": 8,
+          "gap": 64,
+          "loss": 0.2321424689143896,
+          "accuracy": 0.95703125,
+          "chance": 0.020833333333333332
+        },
+        {
+          "num_pairs": 8,
+          "gap": 128,
+          "loss": 0.24572204053401947,
+          "accuracy": 0.94921875,
+          "chance": 0.020833333333333332
+        },
+        {
+          "num_pairs": 16,
+          "gap": 0,
+          "loss": 1.5562549084424973,
+          "accuracy": 0.578125,
+          "chance": 0.020833333333333332
+        },
+        {
+          "num_pairs": 16,
+          "gap": 32,
+          "loss": 0.9015626907348633,
+          "accuracy": 0.76171875,
+          "chance": 0.020833333333333332
+        },
+        {
+          "num_pairs": 16,
+          "gap": 64,
+          "loss": 0.9277243763208389,
+          "accuracy": 0.75390625,
+          "chance": 0.020833333333333332
+        },
+        {
+          "num_pairs": 16,
+          "gap": 128,
+          "loss": 0.814037561416626,
+          "accuracy": 0.77734375,
+          "chance": 0.020833333333333332
+        }
+      ]
+    }
+  }
+}
