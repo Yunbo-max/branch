@@ -78,6 +78,57 @@ preservation, batch/head isolation, full-pool fallback, telemetry, content-condi
 anchor keys, config wiring, diagonal geometry, covariance gradients, the isotropic routing
 identity, split disjointness and fixed-panel determinism.
 
+## Resume support
+
+File: `new/fair_mqar/pretrain_branch.py`
+
+- `--resume checkpoint_<step>.pt` restores the model, optimizer, step, elapsed time,
+  torch/numpy/python RNG states, the `torch.Generator` used by the data sampler, and the
+  split/panel hashes.
+- `--steps` is the **total** step target; the loop continues from `start_step + 1`.
+- The metrics log is truncated to the checkpoint step before appending, so a restart does
+  not duplicate or retain future rows.
+- `report.json` records `resume.start_step`, `data_stream_continuous`,
+  `optimizer_restored` and `rng_restored`.
+- Numbered checkpoints and the final `checkpoint.pt` both contain the optimizer and all
+  RNG states. Previously the final checkpoint omitted the optimizer and no RNG state was
+  saved, so a restart silently re-initialized the run.
+- `tests/test_resume_and_geometry.py::test_resume_matches_uninterrupted_run` runs 4 steps
+  uninterrupted vs 2 + resume-to-4 and asserts identical losses and weights.
+
+## Single-state geometry ablation
+
+Files: `bench_single_vs_addable.py` (state-count comparison) and
+`bench_mqar_geometry.py` (geometry-only diagnostic).
+
+The geometry comparison keeps `max_states=1`, the backbone, chunk length, read path, data
+order and budget fixed, and changes only:
+
+```
+isotropic: H = lambda I          (protect = 0)
+full:      H = lambda I + mu C   (protect > 0)
+```
+
+`tests/test_resume_and_geometry.py` checks that `protect=0` gives exactly
+`chol(ridge I)` regardless of `C`, that `protect>0` changes the factor, and that both arms
+have identical parameter names/shapes. Do not add fork/read/routing/state-count changes to
+this ablation.
+
+## MQAR diagnostic
+
+Files: `mqar.py`, `bench_mqar_geometry.py`, `tests/test_mqar.py`.
+
+Fixed-length synthetic multi-query associative recall:
+
+```
+[filler]*prefix  k1 v1 ... kn vn  [filler]*gap  q  v_q
+```
+
+The supervised token is the final `v_q`. The benchmark trains the isotropic and full
+single-state arms on the same batches, then evaluates a grid over `num_pairs` (association
+count) and `gap` (retention interval). This separates write-geometry effects from average
+language-model loss.
+
 ## Still open
 
 - Performance: the chunked writer still expands all `M` slots and builds an `L x L`

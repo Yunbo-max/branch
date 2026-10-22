@@ -17,6 +17,7 @@ from __future__ import annotations
 import argparse
 import json
 import platform
+import random
 import time
 from dataclasses import asdict
 from pathlib import Path
@@ -155,6 +156,16 @@ def main() -> int:
         help="let gradients flow through the protection matrix (default: on)",
     )
     p.add_argument("--output", type=Path, required=True)
+    p.add_argument(
+        "--resume",
+        type=Path,
+        default=None,
+        help=(
+            "resume from checkpoint_<step>.pt or checkpoint.pt: restores model, "
+            "optimizer, step, RNG states and the data generator state; --steps is "
+            "the total number of steps to reach"
+        ),
+    )
     a = p.parse_args()
 
     if a.device == "cuda" and not torch.cuda.is_available():
@@ -278,6 +289,28 @@ def main() -> int:
         flush=True,
     )
 
+    def save_checkpoint(path: Path, step: int, elapsed: float) -> None:
+        payload = {
+            "config": asdict(cfg),
+            "model": model.state_dict(),
+            "optimizer": optimizer.state_dict(),
+            "step": step,
+            "elapsed_seconds": elapsed,
+            "gen_state": gen.get_state(),
+            "torch_rng_state": torch.get_rng_state(),
+            "numpy_rng_state": np.random.get_state(),
+            "python_rng_state": random.getstate(),
+            "split": {
+                "seed": split.seed,
+                "val_per_mille": split.val_per_mille,
+                "test_per_mille": split.test_per_mille,
+            },
+            "panel_sha256": panel.tokens_sha256,
+        }
+        if device.type == "cuda":
+            payload["cuda_rng_state"] = torch.cuda.get_rng_state_all()
+        torch.save(payload, path)
+
     def evaluate() -> float:
         model.eval()
         total = 0.0
@@ -298,13 +331,59 @@ def main() -> int:
         model.train()
         return total / max(n_batches, 1)
 
-    start = time.perf_counter()
+    start_step = 0
+    prior_elapsed = 0.0
     history = []
-    with (a.output / "metrics.jsonl").open("w", encoding="utf-8") as log:
-        for step in range(1, a.steps + 1):
+    resume_info = None
+    if a.resume is not None:
+        ckpt = torch.load(a.resume, map_location="cpu", weights_only=False)
+        model.load_state_dict(ckpt["model"])
+        if "optimizer" in ckpt:
+            optimizer.load_state_dict(ckpt["optimizer"])
+        start_step = int(ckpt.get("step", 0))
+        prior_elapsed = float(ckpt.get("elapsed_seconds", 0.0))
+        if "gen_state" in ckpt:
+            gen.set_state(ckpt["gen_state"])
+        if "torch_rng_state" in ckpt:
+            torch.set_rng_state(ckpt["torch_rng_state"])
+        if "numpy_rng_state" in ckpt:
+            np.random.set_state(ckpt["numpy_rng_state"])
+        if "python_rng_state" in ckpt:
+            random.setstate(ckpt["python_rng_state"])
+        if device.type == "cuda" and "cuda_rng_state" in ckpt:
+            torch.cuda.set_rng_state_all(ckpt["cuda_rng_state"])
+        metrics_path = a.output / "metrics.jsonl"
+        if metrics_path.exists():
+            old = [
+                json.loads(line)
+                for line in metrics_path.read_text().splitlines()
+                if line.strip()
+            ]
+            history = [r for r in old if int(r.get("step", 0)) <= start_step]
+            metrics_path.write_text("".join(json.dumps(r) + "\n" for r in history))
+        resume_info = {
+            "from": str(a.resume),
+            "start_step": start_step,
+            "data_stream_continuous": "gen_state" in ckpt,
+            "optimizer_restored": "optimizer" in ckpt,
+            "rng_restored": all(
+                key in ckpt
+                for key in (
+                    "torch_rng_state",
+                    "numpy_rng_state",
+                    "python_rng_state",
+                )
+            ),
+        }
+        print("[resume] " + json.dumps(resume_info), flush=True)
+
+    start = time.perf_counter()
+    mode = "a" if a.resume is not None else "w"
+    with (a.output / "metrics.jsonl").open(mode, encoding="utf-8") as log:
+        for step in range(start_step + 1, a.steps + 1):
             if (
                 a.time_budget_seconds
-                and time.perf_counter() - start > a.time_budget_seconds
+                and prior_elapsed + time.perf_counter() - start > a.time_budget_seconds
             ):
                 print("time budget reached", flush=True)
                 break
@@ -328,7 +407,7 @@ def main() -> int:
                 "step": step,
                 "train_loss": float(loss.detach()),
                 "grad_norm": float(gn),
-                "elapsed_seconds": time.perf_counter() - start,
+                "elapsed_seconds": prior_elapsed + time.perf_counter() - start,
             }
             if step == 1 or step % a.eval_every == 0 or step == a.steps:
                 rec["eval_loss"] = evaluate()
@@ -336,20 +415,17 @@ def main() -> int:
             log.write(json.dumps(rec) + "\n")
             log.flush()
             if a.checkpoint_every and step % a.checkpoint_every == 0:
-                torch.save(
-                    {
-                        "config": asdict(cfg),
-                        "model": model.state_dict(),
-                        "optimizer": optimizer.state_dict(),
-                        "step": step,
-                    },
+                save_checkpoint(
                     a.output / f"checkpoint_{step}.pt",
+                    step,
+                    rec["elapsed_seconds"],
                 )
                 print(f"[ckpt] wrote checkpoint_{step}.pt", flush=True)
             if step == 1 or step % a.log_every == 0 or step == a.steps:
                 print(json.dumps(rec), flush=True)
 
     wall = time.perf_counter() - start
+    total_wall = prior_elapsed + wall
     report = {
         "scope": "pretraining pilot on the packed Long-Data-Collections corpus",
         "mixer": a.mixer,
@@ -362,12 +438,14 @@ def main() -> int:
             "tokens_available": len(corpus) * a.seq_len,
         },
         "split": split_manifest(split, corpus, panel, a.seq_len),
+        "resume": resume_info,
         "training": {
             "steps": len(history),
             "batch_size": a.batch_size,
             "tokens_per_step": a.batch_size * a.seq_len,
-            "wall_seconds": wall,
-            "seconds_per_step": wall / max(len(history), 1),
+            "segment_wall_seconds": wall,
+            "total_wall_seconds": total_wall,
+            "seconds_per_step": total_wall / max(len(history), 1),
         },
         "final": history[-1] if history else None,
         "environment": {
@@ -378,9 +456,10 @@ def main() -> int:
         },
     }
     (a.output / "report.json").write_text(json.dumps(report, indent=2, default=str))
-    torch.save(
-        {"config": asdict(cfg), "model": model.state_dict(), "step": len(history)},
+    save_checkpoint(
         a.output / "checkpoint.pt",
+        len(history),
+        history[-1]["elapsed_seconds"] if history else total_wall,
     )
     print(
         json.dumps(
