@@ -70,6 +70,14 @@ This is the regime that average language-model loss does not expose.
   pretrained checkpoints.
 - Single-seed MQAR; repeat with 3 seeds and ~5k steps before treating +2..5 pt as final.
 
+## Pending: 10k-step LM geometry run
+
+Job `job-a0a38179-7f8d-4e6f-8671-d3aef4d9ac21` runs the same single-state geometry pair
+(`protect=0` vs `protect=8`, M=1) for 10,000 steps each on the packed 16K corpus. Runner:
+`new/fair_mqar/run_geometry_lm.sh`; outputs: `results/bench_geometry_lm/{isotropic,full}`.
+This is the run that will answer whether full covariance improves LM loss at matched
+tokens, not just MQAR accuracy.
+
 ## Raw outputs
 
 - `results/bench_single_vs_addable/bench.json`
