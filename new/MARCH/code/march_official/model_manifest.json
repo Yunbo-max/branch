@@ -1,0 +1,13 @@
+{
+  "format": "merged_model",
+  "model_name": "Safin-1 (35B-A3B)",
+  "backbone_hf_id": null,
+  "standalone_model": true,
+  "adapter_required": false,
+  "architecture": "Safin1MoeForConditionalGeneration",
+  "transformers": "5.5.4",
+  "trust_remote_code": true,
+  "attention_implementation": "eager",
+  "source_adapter_sha256": "940ac7800d4e7c17d876221383e5712afcc89f18f67190ca02ba7ce9d9088af8",
+  "validation": "Existing historical merged model; standalone load and generation verified before packaging."
+}

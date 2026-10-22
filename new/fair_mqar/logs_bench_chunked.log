@@ -1,0 +1,12 @@
+{"chunk_len": 1, "seconds": 24.010493403766304, "seconds_per_token": 0.02344774746461553, "extrapolated_16k_seconds": 384.16789446026087, "iterations_per_layer": 1024}
+{"chunk_len": 32, "seconds": 2.1754438267089427, "seconds_per_token": 0.002124456862020452, "extrapolated_16k_seconds": 34.80710122734308, "iterations_per_layer": 32}
+{"chunk_len": 128, "seconds": 0.2614952400326729, "seconds_per_token": 0.0002553664453444071, "extrapolated_16k_seconds": 4.183923840522766, "iterations_per_layer": 8}
+
+==================================================================================
+  chunk      s/run   speedup  iters/layer   extrap 16K
+----------------------------------------------------------------------------------
+      1     24.010     1.00x        1,024       6.4 min
+     32      2.175    11.04x           32       0.6 min
+    128      0.261    91.82x            8       0.1 min
+==================================================================================
+wrote /tmp/bench_chunked.json
