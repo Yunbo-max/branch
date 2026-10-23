@@ -85,26 +85,54 @@ Reading:
   non-eigenvector / anisotropic part of the geometry.
 * At gap 0 there is no full benefit, matching the earlier single-seed MQAR result.
 
-Consequence for SG-Delta: the fast Rayleigh approximation is not a quality-preserving
-substitute for full geometry, so the conditional solver's "easy" branch would lose the
-very quality that motivates full geometry. The group-level compute saving is also dead at
-L=256 (above). The project should not pursue the Rayleigh/conditional path as specified.
+### 5,000-step confirmation (3 seeds)
 
-At the time of writing, the 10k LM full-vs-isotropic run had reached step 5,700: full is
-ahead by 0.026/0.033/0.047/0.045 eval at 4k/4.5k/5k/5.5k (it was behind at 2.5k). The
-10k endpoint is still required before any LM claim.
+Job: `job-55c36550-048f-4ca7-9227-e7e857586e30`
+Raw: `results/sg_delta/mqar_5k/mqar_modes.json`
+
+| cell | isotropic | Rayleigh | full | full - iso |
+|---|---:|---:|---:|---:|
+| 16/32 | **94.79** | 95.08 | 94.53 | -0.26 |
+| 16/64 | **95.51** | 95.15 | 94.73 | -0.78 |
+| 16/128 | 94.34 | 95.21 | **95.35** | +1.01 |
+| 24/32 | 82.52 | 85.32 | **85.55** | +3.03 |
+| 24/64 | 82.52 | 84.11 | **84.93** | +2.41 |
+| 24/128 | 82.13 | 83.56 | **83.79** | +1.66 |
+| 16/0 | 79.46 | **80.70** | 77.41 | -2.05 |
+| 24/0 | **64.29** | 61.23 | 59.24 | -5.05 |
+
+The 1.5k advantage shrinks by 5k: full is only +1.0..+3.0 on high-load cells, slightly
+worse at 16/32 and 16/64, and clearly worse at gap 0. Rayleigh now ties full on the
+high-load cells (24/32: 85.32 vs 85.55; 24/128: 83.56 vs 83.79). The earlier "Rayleigh is
+uniformly worse" conclusion is therefore transient and must not be stated as final.
+
+### Honest isotropic vs full LM efficiency (2k steps)
+
+Job: `job-48f3a9f4-8125-4e5e-99f4-c24bff942ff7`
+Raw: `results/sg_delta/lm_efficiency_2k/bench.json`
+
+`single_geo` isotropic really skips the covariance and Cholesky factor.
+
+| | s/step | peak allocated | eval loss | token accuracy |
+|---|---:|---:|---:|---:|
+| optimized isotropic | **1.123** | 36.95 GB | **4.4585** | **24.21%** |
+| full | 1.554 | 36.99 GB | 4.4932 | 23.78% |
+
+At 2k full is 38% slower, same memory, slightly worse quality. The quality gain appears
+later: at 10k the full-vs-isotropic LM run reached **3.5133 vs 3.6040** (-0.091 NLL), and
+the legacy full-geometry single-state checkpoint reached 3.4914 at 10k and 3.0945 at 30k.
+So full geometry is a real but compute-expensive quality option, not a free win.
 
 ## Decision
 
 - **NO-GO** for the group-level certified solver at the target `chunk_len=256`.
-- **NO-GO for Rayleigh as a fast substitute**: it is worse than isotropic in every MQAR
-  cell, while full geometry is +4.5..+7.1 points on high-load/long-gap cells.
-- Do not run G4 for the SG-Delta conditional claim. The existing full-vs-isotropic LM run
-  continues as a separate full-geometry measurement.
-- The defensible follow-up is to **keep full geometry and optimize its compute**
-  (active-only / blocked Cholesky, better kernels), not to gate it with this certificate.
-  A per-token packed selective solve remains a speculative systems project; it would need
-  a fused certificate kernel and an end-to-end win at L=32/64 first.
+- **Do not treat Rayleigh as a free quality-preserving substitute**: it is worse at 1.5k,
+  ties full at 5k, and the MQAR full-geometry advantage itself fades by 5k.
+- Full geometry is the best measured single-state LM option at 10k (~0.09 NLL better than
+  optimized isotropic, ~0.07-0.09 better than MARCH) but costs ~38% more step time.
+- The defensible follow-up is to decide whether that NLL gain is worth the compute, and if
+  so **optimize full geometry** (active-only / blocked Cholesky), not to gate it with this
+  certificate. A per-token packed selective solve remains speculative.
 
 ## Files
 
