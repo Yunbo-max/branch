@@ -70,6 +70,27 @@ This is the regime that average language-model loss does not expose.
   pretrained checkpoints.
 - Single-seed MQAR; repeat with 3 seeds and ~5k steps before treating +2..5 pt as final.
 
+## 3. MARCH vs Branch at 10k, same fixed panel
+
+Files: `results/eval_10k_same_panel/eval.json`
+Job: `job-51569ea3-79de-49b1-b1b7-4bc525187625`
+
+All four checkpoints are step 10,000 and were scored on exactly the same 262,128-token
+panel (sha256 prefix `9c3736a6c36a`). MARCH is evaluated through the archived
+`chunked_march.py` that produced it (constant anchor keys), not through the fixed port.
+
+| model | loss | token accuracy |
+|---|---:|---:|
+| MARCH (64 anchors) | **3.5852** | 34.10% |
+| Branch single-state isotropic (M=1, protect=0) | 3.6040 | **34.54%** |
+| Branch fixed fork (M=64, protect=8) | 4.1169 | 26.16% |
+| Branch legacy replace-only (M=64) | 4.4829 | 24.27% |
+
+MARCH and our best single-state model are effectively tied on loss (MARCH 0.019 lower,
+0.5%); our model is 0.44 pt higher on token accuracy. The fork/64-state versions are far
+worse at this point. This is a single seed and a single 10k checkpoint; it does not
+establish a long-horizon win for either side.
+
 ## Pending: 10k-step LM geometry run
 
 Job `job-a0a38179-7f8d-4e6f-8671-d3aef4d9ac21` runs the same single-state geometry pair
