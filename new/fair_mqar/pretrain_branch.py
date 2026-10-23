@@ -119,6 +119,15 @@ def main() -> int:
         help="write checkpoint_<step>.pt every N steps (0 disables)",
     )
     p.add_argument(
+        "--keep-checkpoints",
+        choices=["last", "all"],
+        default="last",
+        help=(
+            "keep only the newest numbered checkpoint (default), or keep every "
+            "checkpoint; at the end only checkpoint.pt remains in 'last' mode"
+        ),
+    )
+    p.add_argument(
         "--auto-chunk",
         type=int,
         nargs="+",
@@ -415,12 +424,13 @@ def main() -> int:
             log.write(json.dumps(rec) + "\n")
             log.flush()
             if a.checkpoint_every and step % a.checkpoint_every == 0:
-                save_checkpoint(
-                    a.output / f"checkpoint_{step}.pt",
-                    step,
-                    rec["elapsed_seconds"],
-                )
-                print(f"[ckpt] wrote checkpoint_{step}.pt", flush=True)
+                current = a.output / f"checkpoint_{step}.pt"
+                save_checkpoint(current, step, rec["elapsed_seconds"])
+                if a.keep_checkpoints == "last":
+                    for old in a.output.glob("checkpoint_*.pt"):
+                        if old != current:
+                            old.unlink()
+                print(f"[ckpt] wrote {current.name}", flush=True)
             if step == 1 or step % a.log_every == 0 or step == a.steps:
                 print(json.dumps(rec), flush=True)
 
@@ -461,6 +471,9 @@ def main() -> int:
         len(history),
         history[-1]["elapsed_seconds"] if history else total_wall,
     )
+    if a.keep_checkpoints == "last":
+        for old in a.output.glob("checkpoint_*.pt"):
+            old.unlink()
     print(
         json.dumps(
             {

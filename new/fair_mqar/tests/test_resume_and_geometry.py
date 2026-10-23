@@ -90,7 +90,7 @@ def test_resume_matches_uninterrupted_run(tmp_path: Path):
     out_b = tmp_path / "split"
     _run_pretrain(root, out_a, steps=4)
     _run_pretrain(root, out_b, steps=2)
-    _run_pretrain(root, out_b, steps=4, resume=out_b / "checkpoint_2.pt")
+    _run_pretrain(root, out_b, steps=4, resume=out_b / "checkpoint.pt")
 
     a = [json.loads(x) for x in (out_a / "metrics.jsonl").read_text().splitlines()]
     b = [json.loads(x) for x in (out_b / "metrics.jsonl").read_text().splitlines()]
@@ -113,6 +113,11 @@ def test_resume_matches_uninterrupted_run(tmp_path: Path):
         "python_rng_state",
     ):
         assert key in ckpt_b
+
+    assert (out_a / "checkpoint.pt").exists()
+    assert not list(out_a.glob("checkpoint_*.pt"))
+    assert (out_b / "checkpoint.pt").exists()
+    assert not list(out_b.glob("checkpoint_*.pt"))
 
     report = json.loads((out_b / "report.json").read_text())
     assert report["resume"]["start_step"] == 2

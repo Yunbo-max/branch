@@ -93,6 +93,9 @@ File: `new/fair_mqar/pretrain_branch.py`
 - Numbered checkpoints and the final `checkpoint.pt` both contain the optimizer and all
   RNG states. Previously the final checkpoint omitted the optimizer and no RNG state was
   saved, so a restart silently re-initialized the run.
+- `--keep-checkpoints last` (default) deletes older numbered checkpoints after each save;
+  when the run finishes only `checkpoint.pt` remains. Use `--keep-checkpoints all` when a
+  checkpoint history is explicitly needed. This is the disk-space default from now on.
 - `tests/test_resume_and_geometry.py::test_resume_matches_uninterrupted_run` runs 4 steps
   uninterrupted vs 2 + resume-to-4 and asserts identical losses and weights.
 
