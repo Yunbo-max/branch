@@ -1,0 +1,687 @@
+{
+  "device": "NVIDIA H100 80GB HBM3",
+  "torch": "2.8.0a0+5228986c39.nv25.06",
+  "config": {
+    "lam": 1.0,
+    "mu": 8.0,
+    "tau": 1.0,
+    "gamma": 0.95,
+    "dtype": "float32",
+    "reps": 100,
+    "groups": 256
+  },
+  "points": [
+    {
+      "d": 32,
+      "L": 32,
+      "ms_per_group": {
+        "cholesky": 0.058444161415100095,
+        "solve": 0.04849535942077637,
+        "Ck": 0.016328959465026854,
+        "rayleigh": 0.42791648864746096,
+        "full": 0.17441024780273437,
+        "easy": 0.4259686279296875
+      },
+      "speedup_ceiling_easy_vs_full": 0.40944388005851784,
+      "cholesky_share_of_full": 0.3350959140956155,
+      "u_quantiles": {
+        "p25": 0.08125518262386322,
+        "p50": 0.09198613464832306,
+        "p75": 0.10373163223266602,
+        "p90": 0.11603022366762161,
+        "p99": 0.13712839782238007,
+        "p100": 0.16233257949352264
+      },
+      "group_easy": {
+        "p25": {
+          "threshold": 0.08125518262386322,
+          "group_easy_fraction": 0.0,
+          "token_exact_fraction": 0.75
+        },
+        "p50": {
+          "threshold": 0.09198613464832306,
+          "group_easy_fraction": 0.0,
+          "token_exact_fraction": 0.5
+        },
+        "p75": {
+          "threshold": 0.10373163223266602,
+          "group_easy_fraction": 0.0,
+          "token_exact_fraction": 0.25
+        },
+        "p90": {
+          "threshold": 0.11603022366762161,
+          "group_easy_fraction": 0.03125,
+          "token_exact_fraction": 0.10009765625
+        },
+        "p99": {
+          "threshold": 0.13712839782238007,
+          "group_easy_fraction": 0.72265625,
+          "token_exact_fraction": 0.010009765625
+        },
+        "p100": {
+          "threshold": 0.16233257949352264,
+          "group_easy_fraction": 1.0,
+          "token_exact_fraction": 0.0
+        }
+      },
+      "groups": 256,
+      "note": "times are per (batch,head,chunk) for one group on this device"
+    },
+    {
+      "d": 32,
+      "L": 64,
+      "ms_per_group": {
+        "cholesky": 0.05105504035949707,
+        "solve": 0.036040639877319335,
+        "Ck": 0.01402783989906311,
+        "rayleigh": 0.40389022827148435,
+        "full": 0.1320627212524414,
+        "easy": 0.39464927673339845
+      },
+      "speedup_ceiling_easy_vs_full": 0.33463312626733915,
+      "cholesky_share_of_full": 0.3865969130069946,
+      "u_quantiles": {
+        "p25": 0.08441285789012909,
+        "p50": 0.0952390730381012,
+        "p75": 0.10608777403831482,
+        "p90": 0.11585696786642075,
+        "p99": 0.1314162164926529,
+        "p100": 0.1479809433221817
+      },
+      "group_easy": {
+        "p25": {
+          "threshold": 0.08441285789012909,
+          "group_easy_fraction": 0.0,
+          "token_exact_fraction": 0.75
+        },
+        "p50": {
+          "threshold": 0.0952390730381012,
+          "group_easy_fraction": 0.0,
+          "token_exact_fraction": 0.5
+        },
+        "p75": {
+          "threshold": 0.10608777403831482,
+          "group_easy_fraction": 0.0,
+          "token_exact_fraction": 0.25
+        },
+        "p90": {
+          "threshold": 0.11585696786642075,
+          "group_easy_fraction": 0.0,
+          "token_exact_fraction": 0.10003662109375
+        },
+        "p99": {
+          "threshold": 0.1314162164926529,
+          "group_easy_fraction": 0.5234375,
+          "token_exact_fraction": 0.010009765625
+        },
+        "p100": {
+          "threshold": 0.1479809433221817,
+          "group_easy_fraction": 1.0,
+          "token_exact_fraction": 0.0
+        }
+      },
+      "groups": 256,
+      "note": "times are per (batch,head,chunk) for one group on this device"
+    },
+    {
+      "d": 32,
+      "L": 128,
+      "ms_per_group": {
+        "cholesky": 0.05055871963500977,
+        "solve": 0.0362281608581543,
+        "Ck": 0.014231679439544677,
+        "rayleigh": 0.4179177474975586,
+        "full": 0.12979519844055176,
+        "easy": 0.3963052749633789
+      },
+      "speedup_ceiling_easy_vs_full": 0.32751317391005114,
+      "cholesky_share_of_full": 0.3895268872998138,
+      "u_quantiles": {
+        "p25": 0.08083845674991608,
+        "p50": 0.0906853973865509,
+        "p75": 0.10209152847528458,
+        "p90": 0.113428995013237,
+        "p99": 0.13167773187160492,
+        "p100": 0.15163592994213104
+      },
+      "group_easy": {
+        "p25": {
+          "threshold": 0.08083845674991608,
+          "group_easy_fraction": 0.0,
+          "token_exact_fraction": 0.75
+        },
+        "p50": {
+          "threshold": 0.0906853973865509,
+          "group_easy_fraction": 0.0,
+          "token_exact_fraction": 0.5
+        },
+        "p75": {
+          "threshold": 0.10209152847528458,
+          "group_easy_fraction": 0.0,
+          "token_exact_fraction": 0.25
+        },
+        "p90": {
+          "threshold": 0.113428995013237,
+          "group_easy_fraction": 0.0,
+          "token_exact_fraction": 0.100006103515625
+        },
+        "p99": {
+          "threshold": 0.13167773187160492,
+          "group_easy_fraction": 0.26953125,
+          "token_exact_fraction": 0.010009765625
+        },
+        "p100": {
+          "threshold": 0.15163592994213104,
+          "group_easy_fraction": 1.0,
+          "token_exact_fraction": 0.0
+        }
+      },
+      "groups": 256,
+      "note": "times are per (batch,head,chunk) for one group on this device"
+    },
+    {
+      "d": 32,
+      "L": 256,
+      "ms_per_group": {
+        "cholesky": 0.05086304187774658,
+        "solve": 0.036180479526519774,
+        "Ck": 0.013968000411987305,
+        "rayleigh": 0.3995539093017578,
+        "full": 0.15626943588256836,
+        "easy": 0.4091263961791992
+      },
+      "speedup_ceiling_easy_vs_full": 0.38195882089729954,
+      "cholesky_share_of_full": 0.3254829813039613,
+      "u_quantiles": {
+        "p25": 0.08114597946405411,
+        "p50": 0.09129711985588074,
+        "p75": 0.10161323100328445,
+        "p90": 0.11059753596782684,
+        "p99": 0.12442436814308167,
+        "p100": 0.14091497659683228
+      },
+      "group_easy": {
+        "p25": {
+          "threshold": 0.08114597946405411,
+          "group_easy_fraction": 0.0,
+          "token_exact_fraction": 0.75
+        },
+        "p50": {
+          "threshold": 0.09129711985588074,
+          "group_easy_fraction": 0.0,
+          "token_exact_fraction": 0.5
+        },
+        "p75": {
+          "threshold": 0.10161323100328445,
+          "group_easy_fraction": 0.0,
+          "token_exact_fraction": 0.25
+        },
+        "p90": {
+          "threshold": 0.11059753596782684,
+          "group_easy_fraction": 0.0,
+          "token_exact_fraction": 0.100006103515625
+        },
+        "p99": {
+          "threshold": 0.12442436814308167,
+          "group_easy_fraction": 0.06640625,
+          "token_exact_fraction": 0.0099945068359375
+        },
+        "p100": {
+          "threshold": 0.14091497659683228,
+          "group_easy_fraction": 1.0,
+          "token_exact_fraction": 0.0
+        }
+      },
+      "groups": 256,
+      "note": "times are per (batch,head,chunk) for one group on this device"
+    },
+    {
+      "d": 64,
+      "L": 32,
+      "ms_per_group": {
+        "cholesky": 0.05532576084136963,
+        "solve": 0.035992319583892825,
+        "Ck": 0.014090559482574462,
+        "rayleigh": 0.40813217163085935,
+        "full": 0.12553183555603029,
+        "easy": 0.41323295593261716
+      },
+      "speedup_ceiling_easy_vs_full": 0.30377982625495104,
+      "cholesky_share_of_full": 0.44073091575782264,
+      "u_quantiles": {
+        "p25": 0.0633191466331482,
+        "p50": 0.07096879929304123,
+        "p75": 0.07948165386915207,
+        "p90": 0.08782881498336792,
+        "p99": 0.1026834025979042,
+        "p100": 0.12322499603033066
+      },
+      "group_easy": {
+        "p25": {
+          "threshold": 0.0633191466331482,
+          "group_easy_fraction": 0.0,
+          "token_exact_fraction": 0.75
+        },
+        "p50": {
+          "threshold": 0.07096879929304123,
+          "group_easy_fraction": 0.0,
+          "token_exact_fraction": 0.5
+        },
+        "p75": {
+          "threshold": 0.07948165386915207,
+          "group_easy_fraction": 0.0,
+          "token_exact_fraction": 0.25
+        },
+        "p90": {
+          "threshold": 0.08782881498336792,
+          "group_easy_fraction": 0.03515625,
+          "token_exact_fraction": 0.10009765625
+        },
+        "p99": {
+          "threshold": 0.1026834025979042,
+          "group_easy_fraction": 0.73828125,
+          "token_exact_fraction": 0.010009765625
+        },
+        "p100": {
+          "threshold": 0.12322499603033066,
+          "group_easy_fraction": 1.0,
+          "token_exact_fraction": 0.0
+        }
+      },
+      "groups": 256,
+      "note": "times are per (batch,head,chunk) for one group on this device"
+    },
+    {
+      "d": 64,
+      "L": 64,
+      "ms_per_group": {
+        "cholesky": 0.05096320152282715,
+        "solve": 0.035972800254821774,
+        "Ck": 0.014055039882659912,
+        "rayleigh": 0.4015932846069336,
+        "full": 0.13460736274719237,
+        "easy": 0.40404640197753905
+      },
+      "speedup_ceiling_easy_vs_full": 0.33314827724830276,
+      "cholesky_share_of_full": 0.37860634427956014,
+      "u_quantiles": {
+        "p25": 0.06444162130355835,
+        "p50": 0.07132381200790405,
+        "p75": 0.07880032062530518,
+        "p90": 0.08540951460599899,
+        "p99": 0.09615820646286011,
+        "p100": 0.1088818609714508
+      },
+      "group_easy": {
+        "p25": {
+          "threshold": 0.06444162130355835,
+          "group_easy_fraction": 0.0,
+          "token_exact_fraction": 0.75
+        },
+        "p50": {
+          "threshold": 0.07132381200790405,
+          "group_easy_fraction": 0.0,
+          "token_exact_fraction": 0.5
+        },
+        "p75": {
+          "threshold": 0.07880032062530518,
+          "group_easy_fraction": 0.0,
+          "token_exact_fraction": 0.25
+        },
+        "p90": {
+          "threshold": 0.08540951460599899,
+          "group_easy_fraction": 0.0,
+          "token_exact_fraction": 0.10003662109375
+        },
+        "p99": {
+          "threshold": 0.09615820646286011,
+          "group_easy_fraction": 0.5078125,
+          "token_exact_fraction": 0.010009765625
+        },
+        "p100": {
+          "threshold": 0.1088818609714508,
+          "group_easy_fraction": 1.0,
+          "token_exact_fraction": 0.0
+        }
+      },
+      "groups": 256,
+      "note": "times are per (batch,head,chunk) for one group on this device"
+    },
+    {
+      "d": 64,
+      "L": 128,
+      "ms_per_group": {
+        "cholesky": 0.05501984119415283,
+        "solve": 0.037720639705657956,
+        "Ck": 0.014539519548416138,
+        "rayleigh": 0.41875007629394534,
+        "full": 0.16033056259155273,
+        "easy": 0.42125247955322265
+      },
+      "speedup_ceiling_easy_vs_full": 0.38060443646907,
+      "cholesky_share_of_full": 0.34316502296768986,
+      "u_quantiles": {
+        "p25": 0.0637647733092308,
+        "p50": 0.07209856808185577,
+        "p75": 0.08143965899944305,
+        "p90": 0.09030310809612274,
+        "p99": 0.10584026575088501,
+        "p100": 0.12586437165737152
+      },
+      "group_easy": {
+        "p25": {
+          "threshold": 0.0637647733092308,
+          "group_easy_fraction": 0.0,
+          "token_exact_fraction": 0.75
+        },
+        "p50": {
+          "threshold": 0.07209856808185577,
+          "group_easy_fraction": 0.0,
+          "token_exact_fraction": 0.5
+        },
+        "p75": {
+          "threshold": 0.08143965899944305,
+          "group_easy_fraction": 0.0,
+          "token_exact_fraction": 0.25
+        },
+        "p90": {
+          "threshold": 0.09030310809612274,
+          "group_easy_fraction": 0.0,
+          "token_exact_fraction": 0.100006103515625
+        },
+        "p99": {
+          "threshold": 0.10584026575088501,
+          "group_easy_fraction": 0.28515625,
+          "token_exact_fraction": 0.010009765625
+        },
+        "p100": {
+          "threshold": 0.12586437165737152,
+          "group_easy_fraction": 1.0,
+          "token_exact_fraction": 0.0
+        }
+      },
+      "groups": 256,
+      "note": "times are per (batch,head,chunk) for one group on this device"
+    },
+    {
+      "d": 64,
+      "L": 256,
+      "ms_per_group": {
+        "cholesky": 0.05042175769805908,
+        "solve": 0.036061758995056155,
+        "Ck": 0.014006400108337402,
+        "rayleigh": 0.39232479095458983,
+        "full": 0.1278656005859375,
+        "easy": 0.3935590362548828
+      },
+      "speedup_ceiling_easy_vs_full": 0.32489560347212354,
+      "cholesky_share_of_full": 0.3943340309434593,
+      "u_quantiles": {
+        "p25": 0.0640595480799675,
+        "p50": 0.07208283990621567,
+        "p75": 0.08083707839250565,
+        "p90": 0.08882389962673187,
+        "p99": 0.10240337252616882,
+        "p100": 0.12089508771896362
+      },
+      "group_easy": {
+        "p25": {
+          "threshold": 0.0640595480799675,
+          "group_easy_fraction": 0.0,
+          "token_exact_fraction": 0.75
+        },
+        "p50": {
+          "threshold": 0.07208283990621567,
+          "group_easy_fraction": 0.0,
+          "token_exact_fraction": 0.5
+        },
+        "p75": {
+          "threshold": 0.08083707839250565,
+          "group_easy_fraction": 0.0,
+          "token_exact_fraction": 0.25
+        },
+        "p90": {
+          "threshold": 0.08882389962673187,
+          "group_easy_fraction": 0.0,
+          "token_exact_fraction": 0.100006103515625
+        },
+        "p99": {
+          "threshold": 0.10240337252616882,
+          "group_easy_fraction": 0.0703125,
+          "token_exact_fraction": 0.010009765625
+        },
+        "p100": {
+          "threshold": 0.12089508771896362,
+          "group_easy_fraction": 1.0,
+          "token_exact_fraction": 0.0
+        }
+      },
+      "groups": 256,
+      "note": "times are per (batch,head,chunk) for one group on this device"
+    },
+    {
+      "d": 128,
+      "L": 32,
+      "ms_per_group": {
+        "cholesky": 0.0753545618057251,
+        "solve": 0.04940544128417969,
+        "Ck": 0.014550080299377441,
+        "rayleigh": 0.4041785430908203,
+        "full": 0.14676063537597656,
+        "easy": 0.42945377349853514
+      },
+      "speedup_ceiling_easy_vs_full": 0.3417379108824553,
+      "cholesky_share_of_full": 0.513452136621507,
+      "u_quantiles": {
+        "p25": 0.04642393812537193,
+        "p50": 0.05182391405105591,
+        "p75": 0.057703979313373566,
+        "p90": 0.06301730126142502,
+        "p99": 0.07228998094797134,
+        "p100": 0.0850692018866539
+      },
+      "group_easy": {
+        "p25": {
+          "threshold": 0.04642393812537193,
+          "group_easy_fraction": 0.0,
+          "token_exact_fraction": 0.75
+        },
+        "p50": {
+          "threshold": 0.05182391405105591,
+          "group_easy_fraction": 0.0,
+          "token_exact_fraction": 0.5
+        },
+        "p75": {
+          "threshold": 0.057703979313373566,
+          "group_easy_fraction": 0.0,
+          "token_exact_fraction": 0.25
+        },
+        "p90": {
+          "threshold": 0.06301730126142502,
+          "group_easy_fraction": 0.0390625,
+          "token_exact_fraction": 0.10009765625
+        },
+        "p99": {
+          "threshold": 0.07228998094797134,
+          "group_easy_fraction": 0.7109375,
+          "token_exact_fraction": 0.010009765625
+        },
+        "p100": {
+          "threshold": 0.0850692018866539,
+          "group_easy_fraction": 1.0,
+          "token_exact_fraction": 0.0
+        }
+      },
+      "groups": 256,
+      "note": "times are per (batch,head,chunk) for one group on this device"
+    },
+    {
+      "d": 128,
+      "L": 64,
+      "ms_per_group": {
+        "cholesky": 0.07324192047119141,
+        "solve": 0.049360318183898924,
+        "Ck": 0.014317760467529297,
+        "rayleigh": 0.42688129425048826,
+        "full": 0.14647775650024414,
+        "easy": 0.39494110107421876
+      },
+      "speedup_ceiling_easy_vs_full": 0.37088506641074437,
+      "cholesky_share_of_full": 0.5000207691675652,
+      "u_quantiles": {
+        "p25": 0.04745608568191528,
+        "p50": 0.05325303226709366,
+        "p75": 0.059569984674453735,
+        "p90": 0.06564019620418549,
+        "p99": 0.07683873176574707,
+        "p100": 0.09478376060724258
+      },
+      "group_easy": {
+        "p25": {
+          "threshold": 0.04745608568191528,
+          "group_easy_fraction": 0.0,
+          "token_exact_fraction": 0.75
+        },
+        "p50": {
+          "threshold": 0.05325303226709366,
+          "group_easy_fraction": 0.0,
+          "token_exact_fraction": 0.5
+        },
+        "p75": {
+          "threshold": 0.059569984674453735,
+          "group_easy_fraction": 0.0,
+          "token_exact_fraction": 0.25
+        },
+        "p90": {
+          "threshold": 0.06564019620418549,
+          "group_easy_fraction": 0.0,
+          "token_exact_fraction": 0.10003662109375
+        },
+        "p99": {
+          "threshold": 0.07683873176574707,
+          "group_easy_fraction": 0.5078125,
+          "token_exact_fraction": 0.010009765625
+        },
+        "p100": {
+          "threshold": 0.09478376060724258,
+          "group_easy_fraction": 1.0,
+          "token_exact_fraction": 0.0
+        }
+      },
+      "groups": 256,
+      "note": "times are per (batch,head,chunk) for one group on this device"
+    },
+    {
+      "d": 128,
+      "L": 128,
+      "ms_per_group": {
+        "cholesky": 0.07503712177276611,
+        "solve": 0.049768319129943846,
+        "Ck": 0.011335680484771729,
+        "rayleigh": 0.3917657470703125,
+        "full": 0.14677568435668945,
+        "easy": 0.39801151275634766
+      },
+      "speedup_ceiling_easy_vs_full": 0.36877245921914253,
+      "cholesky_share_of_full": 0.511236735850697,
+      "u_quantiles": {
+        "p25": 0.04751838743686676,
+        "p50": 0.05293913558125496,
+        "p75": 0.058798838406801224,
+        "p90": 0.064356230199337,
+        "p99": 0.07529447972774506,
+        "p100": 0.0917210802435875
+      },
+      "group_easy": {
+        "p25": {
+          "threshold": 0.04751838743686676,
+          "group_easy_fraction": 0.0,
+          "token_exact_fraction": 0.75
+        },
+        "p50": {
+          "threshold": 0.05293913558125496,
+          "group_easy_fraction": 0.0,
+          "token_exact_fraction": 0.5
+        },
+        "p75": {
+          "threshold": 0.058798838406801224,
+          "group_easy_fraction": 0.0,
+          "token_exact_fraction": 0.25
+        },
+        "p90": {
+          "threshold": 0.064356230199337,
+          "group_easy_fraction": 0.0,
+          "token_exact_fraction": 0.100006103515625
+        },
+        "p99": {
+          "threshold": 0.07529447972774506,
+          "group_easy_fraction": 0.296875,
+          "token_exact_fraction": 0.010009765625
+        },
+        "p100": {
+          "threshold": 0.0917210802435875,
+          "group_easy_fraction": 1.0,
+          "token_exact_fraction": 0.0
+        }
+      },
+      "groups": 256,
+      "note": "times are per (batch,head,chunk) for one group on this device"
+    },
+    {
+      "d": 128,
+      "L": 256,
+      "ms_per_group": {
+        "cholesky": 0.07537631988525391,
+        "solve": 0.04990335941314697,
+        "Ck": 0.011222079992294312,
+        "rayleigh": 0.39352542877197266,
+        "full": 0.146046724319458,
+        "easy": 0.39615936279296876
+      },
+      "speedup_ceiling_easy_vs_full": 0.3686565004795341,
+      "cholesky_share_of_full": 0.5161109928106167,
+      "u_quantiles": {
+        "p25": 0.047707609832286835,
+        "p50": 0.05340547859668732,
+        "p75": 0.0594371035695076,
+        "p90": 0.06522251665592194,
+        "p99": 0.07554358243942261,
+        "p100": 0.09823581576347351
+      },
+      "group_easy": {
+        "p25": {
+          "threshold": 0.047707609832286835,
+          "group_easy_fraction": 0.0,
+          "token_exact_fraction": 0.75
+        },
+        "p50": {
+          "threshold": 0.05340547859668732,
+          "group_easy_fraction": 0.0,
+          "token_exact_fraction": 0.5
+        },
+        "p75": {
+          "threshold": 0.0594371035695076,
+          "group_easy_fraction": 0.0,
+          "token_exact_fraction": 0.25
+        },
+        "p90": {
+          "threshold": 0.06522251665592194,
+          "group_easy_fraction": 0.0,
+          "token_exact_fraction": 0.100006103515625
+        },
+        "p99": {
+          "threshold": 0.07554358243942261,
+          "group_easy_fraction": 0.0703125,
+          "token_exact_fraction": 0.010009765625
+        },
+        "p100": {
+          "threshold": 0.09823581576347351,
+          "group_easy_fraction": 1.0,
+          "token_exact_fraction": 0.0
+        }
+      },
+      "groups": 256,
+      "note": "times are per (batch,head,chunk) for one group on this device"
+    }
+  ]
+}
