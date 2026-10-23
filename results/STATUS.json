@@ -1,0 +1,56 @@
+{
+  "snapshot_utc": "2026-10-23T09:48:04Z",
+  "note": "in-progress snapshot; metrics.jsonl files are the source of truth",
+  "runs": {
+    "legacy_replace_m64": {
+      "step": 32514,
+      "elapsed_hours": 35.83,
+      "seconds_per_step": 3.967,
+      "train_loss": 3.3147,
+      "last_eval": {
+        "step": 32500,
+        "loss": 3.2669
+      }
+    },
+    "fix_fork_m64": {
+      "step": 11225,
+      "elapsed_hours": 13.78,
+      "seconds_per_step": 4.419,
+      "train_loss": 4.7522,
+      "last_eval": {
+        "step": 11000,
+        "loss": 4.0989
+      }
+    },
+    "march": {
+      "step": 155094,
+      "elapsed_hours": 43.8,
+      "seconds_per_step": 1.017,
+      "train_loss": 3.5114,
+      "last_eval": {
+        "step": 155000,
+        "loss": 2.9716
+      }
+    },
+    "geometry_isotropic_m1": {
+      "step": 10000,
+      "elapsed_hours": 8.46,
+      "seconds_per_step": 3.045,
+      "train_loss": 4.4384,
+      "last_eval": {
+        "step": 10000,
+        "loss": 3.604
+      }
+    },
+    "geometry_full_m1": {
+      "step": 3539,
+      "elapsed_hours": 2.82,
+      "seconds_per_step": 2.872,
+      "train_loss": 3.9469,
+      "last_eval": {
+        "step": 3500,
+        "loss": 4.1613
+      }
+    }
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "corpus": {
+    "seq_len": 16384,
+    "sequences": 4197404,
+    "shards": 472
+  },
+  "panel": {
+    "indices_sha256": "89bbc91e6c9b337fcb0cc9cfca84cfc369a5463e4b3787f4f6d5ee70ed8bcbd7",
+    "n": 16,
+    "tokens_sha256": "9c3736a6c36af11fed7bc0e9eb1109e8f3aaf649ca6b5c8a0df7899f4791db2a"
+  },
+  "split": {
+    "counts": {
+      "test": 41721,
+      "train": 4071866,
+      "val": 83817
+    },
+    "level": "row",
+    "note": "Packed corpus has no document ids. Rows are disjoint across splits, but sequences from the same source document may overlap.",
+    "seed": 12345,
+    "test_per_mille": 10,
+    "val_per_mille": 20
+  }
+}

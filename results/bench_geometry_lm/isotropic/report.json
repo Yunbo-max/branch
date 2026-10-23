@@ -1,0 +1,84 @@
+{
+  "scope": "pretraining pilot on the packed Long-Data-Collections corpus",
+  "mixer": "chunked",
+  "config": {
+    "mixer": "chunked",
+    "vocab_size": 32000,
+    "d_model": 256,
+    "n_layers": 2,
+    "n_heads": 4,
+    "d_key": 64,
+    "d_value": 64,
+    "ff_mult": 4,
+    "ff_extra": 0,
+    "conv_kernel": 3,
+    "anchor_interval": 512,
+    "max_anchors": 8,
+    "read_topk": 4,
+    "d_route": 32,
+    "max_states": 1,
+    "tau": 1.0,
+    "ridge": 1.0,
+    "protect": 0.0,
+    "fork_cost": 0.0,
+    "protection_decay": 0.95,
+    "covariance": "full",
+    "differentiate_covariance": true,
+    "solver_refresh": 8,
+    "chunk_len": 256,
+    "grad_checkpoint": true
+  },
+  "parameters": 18064904,
+  "corpus": {
+    "shards": 472,
+    "sequences": 4197404,
+    "seq_len": 16384,
+    "tokens_available": 68770267136
+  },
+  "split": {
+    "split": {
+      "level": "row",
+      "seed": 12345,
+      "val_per_mille": 20,
+      "test_per_mille": 10,
+      "counts": {
+        "train": 4071866,
+        "val": 83817,
+        "test": 41721
+      },
+      "note": "Packed corpus has no document ids. Rows are disjoint across splits, but sequences from the same source document may overlap."
+    },
+    "corpus": {
+      "shards": 472,
+      "sequences": 4197404,
+      "seq_len": 16384
+    },
+    "panel": {
+      "n": 16,
+      "indices_sha256": "89bbc91e6c9b337fcb0cc9cfca84cfc369a5463e4b3787f4f6d5ee70ed8bcbd7",
+      "tokens_sha256": "9c3736a6c36af11fed7bc0e9eb1109e8f3aaf649ca6b5c8a0df7899f4791db2a"
+    }
+  },
+  "resume": null,
+  "training": {
+    "steps": 10000,
+    "batch_size": 4,
+    "tokens_per_step": 65536,
+    "segment_wall_seconds": 30454.55446381797,
+    "total_wall_seconds": 30454.55446381797,
+    "seconds_per_step": 3.045455446381797
+  },
+  "final": {
+    "step": 10000,
+    "train_loss": 4.438432216644287,
+    "grad_norm": 1.2043977975845337,
+    "elapsed_seconds": 30451.57110798097,
+    "eval_loss": 3.60404372215271
+  },
+  "environment": {
+    "python": "3.12.3",
+    "torch": "2.8.0a0+5228986c39.nv25.06",
+    "device": "cuda",
+    "threads": 8
+  }
+}

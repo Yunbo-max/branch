@@ -91,6 +91,24 @@ MARCH and our best single-state model are effectively tied on loss (MARCH 0.019 
 worse at this point. This is a single seed and a single 10k checkpoint; it does not
 establish a long-horizon win for either side.
 
+## Current long-run snapshot (2026-10-23T09:48Z)
+
+From `results/STATUS.json`; the `metrics.jsonl` files are the source of truth. Evaluation
+panels differ between the legacy/MARCH runs and the geometry runs, so only same-panel
+numbers are comparable across models.
+
+| run | step | s/step | last train loss | last eval |
+|---|---:|---:|---:|---:|
+| legacy replace-only M=64 | 32,514 | 3.97 | 3.315 | 3.267 (own panel) |
+| fixed fork M=64 | 11,225 | 4.42 | 4.752 | 4.099 (fixed panel) |
+| MARCH 64 anchors | 155,094 | 1.02 | 3.511 | 2.972 (own panel) |
+| geometry isotropic M=1 | 10,000 | 3.05 | 4.438 | 3.604 (fixed panel) |
+| geometry full M=1 | 3,539 | 2.87 | 3.947 | 4.161 (fixed panel) |
+
+The geometry pair at matched steps is still close: at 2,000/2,500/3,000 the isotropic
+eval is lower by 0.035/0.043/0.030, while at 3,500 the full eval is lower by 0.015; the
+500-step train windows still favor isotropic by 0.03-0.04. The 10k endpoint is needed.
+
 ## Pending: 10k-step LM geometry run
 
 Job `job-a0a38179-7f8d-4e6f-8671-d3aef4d9ac21` runs the same single-state geometry pair
