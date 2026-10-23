@@ -1,0 +1,20 @@
+{
+  "workspace_id": "ws-9dcc0e1f-80a4-4af2-bc2f-0e352e7b17e6",
+  "project_id": "project-160ccb20-98ab-4538-a847-01d1f83d5b0f",
+  "logic_compute_group_id": "lcg-71b971a7-5bdd-4798-b5ba-08f1eabde49e",
+  "name": "bench-sg-mqar-g2-1h100",
+  "description": "SG-Delta G2: single-state isotropic vs Rayleigh vs full geometry on MQAR, 3 seeds x 1500 steps, same init/data/panel; grid over association count and gap. 1xH100.",
+  "framework": "pytorch",
+  "command": "mkdir -p /inspire/hdd/global_user/zhangjiaquan-253108540222/research/DiffRwkv/logs/qz && cd /inspire/hdd/global_user/zhangjiaquan-253108540222/research/DiffRwkv/new/fair_mqar_fix && python3 bench_mqar_geometry_modes.py --output /inspire/hdd/global_user/zhangjiaquan-253108540222/research/DiffRwkv/results/sg_delta/mqar_g2 --modes isotropic rayleigh full --seeds 17 23 42 --steps 1500 --batch-size 32 --eval-n 1024 --eval-batch-size 64 --seq-len 256 --train-pairs 8 --train-gap 32 --eval-pairs 2 4 8 16 24 --eval-gaps 0 32 64 128 --d-model 64 --layers 2 --heads 2 --d-key 32 --d-value 32 --d-route 16 --chunk-len 32 --lr 1e-3 --device cuda > /inspire/hdd/global_user/zhangjiaquan-253108540222/research/DiffRwkv/logs/qz/bench-sg-mqar-g2-1h100.log 2>&1",
+  "max_running_time_ms": "7200000",
+  "task_priority": 4,
+  "framework_config": [
+    {
+      "image": "docker.sii.shaipower.online/inspire-studio/relay2:v2",
+      "image_type": "SOURCE_PRIVATE",
+      "instance_count": 1,
+      "spec_id": "79fe954a-be92-4772-ac0b-94ad8a79b7bb",
+      "shm_gi": 100
+    }
+  ]
+}

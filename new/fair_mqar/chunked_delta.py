@@ -88,6 +88,46 @@ def chunked_delta_update(state0: Tensor, key: Tensor, value: Tensor, query: Tens
     return out, final
 
 
+def chunked_delta_from_directions(state0: Tensor, key: Tensor, value: Tensor,
+                                   query: Tensor, directions: Tensor, *,
+                                   write_mask: Tensor | None = None,
+                                   return_states: bool = False):
+    """Exact triangular recurrence with externally supplied write directions.
+
+    ``directions`` is (B,T,H,K) and already includes the per-token geometry choice
+    (isotropic / Rayleigh / full / selected). The state recurrence and the chunk algebra
+    are identical to ``chunked_delta_update``; only the directions are not computed here.
+    """
+    B, T, H, K = key.shape
+    Vd = value.shape[-1]
+    if directions.shape != key.shape:
+        raise ValueError(f"directions must be {tuple(key.shape)}")
+    if state0.shape != (B, H, K, Vd):
+        raise ValueError(f"state0 must be {(B, H, K, Vd)}, got {tuple(state0.shape)}")
+    dtype = key.dtype
+    eye = torch.eye(T, device=key.device, dtype=dtype)
+    a = directions
+    if write_mask is not None:
+        if write_mask.shape != key.shape[:3]:
+            raise ValueError(f"write_mask must be {tuple(key.shape[:3])}")
+        a = a * write_mask.unsqueeze(-1).to(a.dtype)
+
+    s0 = state0.permute(0, 1, 3, 2)
+    ks0 = torch.einsum("bthk,bhvk->bthv", key, s0)
+    rhs = (value - ks0).permute(0, 2, 1, 3)
+    k_a = torch.einsum("bthk,bshk->bhts", key, a)
+    lower = torch.tril(k_a, diagonal=-1)
+    e = torch.linalg.solve_triangular(lower + eye, rhs, upper=False,
+                                      unitriangular=True)
+    q_k_a = torch.tril(torch.einsum("bthk,bshk->bhts", query, a))
+    out = torch.einsum("bthk,bhvk->bthv", query, s0) + \
+        torch.einsum("bhts,bhsv->bthv", q_k_a, e)
+    final = None
+    if return_states:
+        final = state0 + torch.einsum("bthk,bhtv->bhkv", a, e)
+    return out, final
+
+
 def chunked_delta_reference(state0: Tensor, key: Tensor, value: Tensor, query: Tensor,
                             factor: Tensor, tau: float) -> tuple[Tensor, Tensor]:
     """Per-token loop with the same frozen geometry; used only to check the chunk form."""

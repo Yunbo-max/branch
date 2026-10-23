@@ -5,8 +5,8 @@ Base: `fix/correctness` / `4b2039bd`
 Date: 2026-10-23
 
 This is a **negative engineering result** for the group-level conditional solver at the
-target chunk length. No long SG-Delta training was run. The Rayleigh/full quality
-comparison (G2) was not started because G3 already hits the prescribed stop condition.
+target chunk length, but G2 shows that **full geometry has a real MQAR quality benefit**
+that Rayleigh does not reproduce. No long SG-Delta LM training was run.
 
 ## T0 — pure math
 
@@ -56,16 +56,55 @@ U quantiles over 256 independent key groups.
    chunk-length study (quality and throughput), and it is not the 16K/chunk-256 protocol
    in the proposal.
 
+## G2 — isotropic vs Rayleigh vs full on MQAR
+
+Job: `job-16a76c32-5479-4400-a2f8-5e099d089f72`
+Raw: `results/sg_delta/mqar_g2/mqar_modes.json`
+3 seeds (17/23/42), 1,500 steps, batch 32, seq 256, chunk 32, identical init/data per
+seed; eval 1,024 sequences per cell. Values are mean accuracy over seeds (std in
+parentheses; percentage points).
+
+| cell (pairs/gap) | isotropic | Rayleigh | full | full - iso | Rayleigh - iso |
+|---|---:|---:|---:|---:|---:|
+| 8/128 | 93.13 (1.84) | 91.31 (2.43) | **95.08 (1.09)** | +1.95 | -1.82 |
+| 16/32 | 73.76 (6.05) | 71.22 (7.53) | **78.29 (4.88)** | +4.52 | -2.54 |
+| 16/64 | 73.96 (5.50) | 72.69 (6.75) | **78.58 (5.19)** | +4.62 | -1.27 |
+| 16/128 | 72.85 (3.69) | 71.16 (6.93) | **78.84 (4.07)** | +5.99 | -1.69 |
+| 24/32 | 54.13 (4.55) | 52.18 (5.83) | **61.20 (4.87)** | +7.06 | -1.95 |
+| 24/64 | 52.25 (5.25) | 51.33 (7.47) | **59.24 (5.22)** | +7.00 | -0.91 |
+| 24/128 | 52.99 (5.13) | 49.12 (5.49) | **59.38 (4.29)** | +6.38 | -3.87 |
+| 16/0 | 55.92 (6.22) | 52.67 (6.63) | 55.63 (5.61) | -0.29 | -3.26 |
+| 24/0 | 44.66 (4.46) | 41.24 (4.28) | 42.12 (3.62) | -2.54 | -3.42 |
+
+Reading:
+
+* **Full geometry wins the high-load / long-gap cells** by +4.5 to +7.1 points, consistent
+  across seeds (e.g. 16/128 full-iso per seed: +5.76, +6.54, +5.66).
+* **Rayleigh is worse than isotropic in every cell**, including the cells where full wins.
+  The benefit is therefore *not* the scalar curvature `k^T C k`; it requires the
+  non-eigenvector / anisotropic part of the geometry.
+* At gap 0 there is no full benefit, matching the earlier single-seed MQAR result.
+
+Consequence for SG-Delta: the fast Rayleigh approximation is not a quality-preserving
+substitute for full geometry, so the conditional solver's "easy" branch would lose the
+very quality that motivates full geometry. The group-level compute saving is also dead at
+L=256 (above). The project should not pursue the Rayleigh/conditional path as specified.
+
+At the time of writing, the 10k LM full-vs-isotropic run had reached step 5,700: full is
+ahead by 0.026/0.033/0.047/0.045 eval at 4k/4.5k/5k/5.5k (it was behind at 2.5k). The
+10k endpoint is still required before any LM claim.
+
 ## Decision
 
 - **NO-GO** for the group-level certified solver at the target `chunk_len=256`.
-- Do not run G4 (16K LM) or implement the full `single_geo` pipeline for this claim.
-- The rayleigh-vs-full MQAR mechanism (G2) remains scientifically open, but it does not
-  rescue the conditional-compute contribution; it would only test whether the full
-  geometry benefit is mostly scalar curvature.
-- If the direction is revisited, the only defensible next step is a **fused certificate
-  kernel + per-token/sub-chunk selective solve**, benchmarked end-to-end at L=32/64 with a
-  separate quality check. That is a new engineering proposal, not the current one.
+- **NO-GO for Rayleigh as a fast substitute**: it is worse than isotropic in every MQAR
+  cell, while full geometry is +4.5..+7.1 points on high-load/long-gap cells.
+- Do not run G4 for the SG-Delta conditional claim. The existing full-vs-isotropic LM run
+  continues as a separate full-geometry measurement.
+- The defensible follow-up is to **keep full geometry and optimize its compute**
+  (active-only / blocked Cholesky, better kernels), not to gate it with this certificate.
+  A per-token packed selective solve remains a speculative systems project; it would need
+  a fused certificate kernel and an end-to-end win at L=32/64 first.
 
 ## Files
 

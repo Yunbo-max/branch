@@ -28,6 +28,7 @@ MIXERS = (
     "branch",
     "branch_cached",
     "chunked",
+    "single_geo",
     "delta",
     "transformer",
 )
@@ -61,6 +62,8 @@ class FairLMConfig:
     differentiate_covariance: bool = True
     solver_refresh: int = 1  # branch_cached only
     chunk_len: int = 64  # chunked only
+    geometry_mode: str = "full"  # single_geo only
+    geometry_threshold: float = 0.1  # single_geo certified only
     grad_checkpoint: bool = False
 
     def __post_init__(self) -> None:
@@ -148,6 +151,19 @@ def build_mixer(cfg: FairLMConfig) -> nn.Module:
                 grad_checkpoint=cfg.grad_checkpoint,
             )
         )
+    if cfg.mixer == "single_geo":
+        from single_geometry import SingleGeometryConfig, SingleGeometryMixer
+
+        return SingleGeometryMixer(SingleGeometryConfig(
+            d_model=cfg.d_model, n_heads=cfg.n_heads, d_key=cfg.d_key,
+            d_value=cfg.d_value, d_route=cfg.d_route, max_states=1,
+            conv_kernel=cfg.conv_kernel, tau=cfg.tau, ridge=cfg.ridge,
+            protect=cfg.protect, protection_decay=cfg.protection_decay,
+            covariance="full", differentiate_covariance=cfg.differentiate_covariance,
+            chunk_len=cfg.chunk_len, grad_checkpoint=cfg.grad_checkpoint,
+            geometry_mode=cfg.geometry_mode,
+            geometry_threshold=cfg.geometry_threshold,
+        ))
     if cfg.mixer == "branch_cached":
         from branch_cached import CachedBranchMixer, CachedSolverConfig
 
