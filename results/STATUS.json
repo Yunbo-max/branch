@@ -1,56 +1,45 @@
 {
-  "snapshot_utc": "2026-10-23T09:48:04Z",
+  "snapshot_utc": "2026-10-23T15:00:00Z",
   "note": "in-progress snapshot; metrics.jsonl files are the source of truth",
   "runs": {
     "legacy_replace_m64": {
-      "step": 32514,
-      "elapsed_hours": 35.83,
-      "seconds_per_step": 3.967,
-      "train_loss": 3.3147,
-      "last_eval": {
-        "step": 32500,
-        "loss": 3.2669
-      }
+      "step": 37977,
+      "elapsed_hours": 42.14,
+      "seconds_per_step": 3.995,
+      "train_loss": 3.235
     },
     "fix_fork_m64": {
-      "step": 11225,
-      "elapsed_hours": 13.78,
-      "seconds_per_step": 4.419,
-      "train_loss": 4.7522,
-      "last_eval": {
-        "step": 11000,
-        "loss": 4.0989
-      }
+      "step": 16574,
+      "elapsed_hours": 20.09,
+      "seconds_per_step": 4.364,
+      "train_loss": 4.281
     },
     "march": {
-      "step": 155094,
-      "elapsed_hours": 43.8,
-      "seconds_per_step": 1.017,
-      "train_loss": 3.5114,
-      "last_eval": {
-        "step": 155000,
-        "loss": 2.9716
-      }
+      "step": 178294,
+      "elapsed_hours": 50.11,
+      "seconds_per_step": 1.012,
+      "train_loss": 2.922
     },
     "geometry_isotropic_m1": {
       "step": 10000,
       "elapsed_hours": 8.46,
       "seconds_per_step": 3.045,
       "train_loss": 4.4384,
-      "last_eval": {
-        "step": 10000,
-        "loss": 3.604
-      }
+      "last_eval": {"step": 10000, "loss": 3.604}
     },
     "geometry_full_m1": {
-      "step": 3539,
-      "elapsed_hours": 2.82,
-      "seconds_per_step": 2.872,
-      "train_loss": 3.9469,
-      "last_eval": {
-        "step": 3500,
-        "loss": 4.1613
-      }
+      "step": 10000,
+      "elapsed_hours": 7.57,
+      "seconds_per_step": 2.725,
+      "train_loss": 4.4117,
+      "last_eval": {"step": 10000, "loss": 3.5133}
     }
+  },
+  "same_panel_10k": {
+    "march": {"loss": 3.5852, "accuracy": 0.3410},
+    "single_isotropic": {"loss": 3.6040, "accuracy": 0.3454},
+    "fix_fork": {"loss": 4.1169, "accuracy": 0.2616},
+    "legacy_replace_m1": {"loss": 3.4914, "accuracy": 0.3677},
+    "legacy_replace_m1_30k": {"loss": 3.0945, "accuracy": 0.4194}
   }
 }

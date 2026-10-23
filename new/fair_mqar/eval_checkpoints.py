@@ -50,6 +50,12 @@ def parse() -> argparse.Namespace:
     p.add_argument("--val-per-mille", type=int, default=20)
     p.add_argument("--test-per-mille", type=int, default=10)
     p.add_argument("--device", default="cuda", choices=["cpu", "cuda"])
+    p.add_argument(
+        "--force-single-state",
+        nargs="*",
+        default=[],
+        help="checkpoint names to evaluate with max_states=1 (legacy replace-only runs)",
+    )
     return p.parse_args()
 
 
@@ -62,11 +68,15 @@ def load_legacy_march(old_dir: Path):
     return module
 
 
-def build_from_checkpoint(path: Path, old_dir: Path, device) -> tuple[FairLM, dict]:
+def build_from_checkpoint(
+    path: Path, old_dir: Path, device, force_single_state: bool = False
+) -> tuple[FairLM, dict]:
     ckpt = torch.load(path, map_location="cpu", weights_only=False)
     raw = ckpt["config"]
     names = {f.name for f in fields(FairLMConfig)}
     cfg = FairLMConfig(**{k: v for k, v in raw.items() if k in names})
+    if force_single_state:
+        cfg.max_states = 1
     model = FairLM(cfg)
     if any(k.endswith("anchor_embed") for k in ckpt["model"]):
         legacy = load_legacy_march(old_dir)
@@ -136,13 +146,16 @@ def main() -> int:
     for item in a.checkpoint:
         name, _, raw_path = item.partition("=")
         path = Path(raw_path)
-        model, ckpt = build_from_checkpoint(path, a.old_code_dir, device)
+        model, ckpt = build_from_checkpoint(
+            path, a.old_code_dir, device, name in a.force_single_state
+        )
         metrics = evaluate(model, tokens, a.batch_size)
         step = int(ckpt.get("step", -1))
         results["checkpoints"][name] = {
             "path": str(path),
             "step": step,
             "config": {k: str(v) for k, v in asdict(model.config).items()},
+            "forced_single_state": name in a.force_single_state,
             **metrics,
         }
         print(f"[{name}] step={step} {json.dumps(metrics)}", flush=True)
