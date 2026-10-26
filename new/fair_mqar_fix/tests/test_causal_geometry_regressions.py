@@ -197,3 +197,37 @@ def test_future_fork_does_not_change_first_token_output():
     assert (s0["destination"][:, 0] == 2).all()
     assert (s1["destination"][:, 0] == 2).all()
     torch.testing.assert_close(out0[:, 0], out1[:, 0], atol=1e-7, rtol=0)
+
+
+def test_allocator_matches_online_reference_over_random_events():
+    """The parallel first-event assignment must match online FCFS allocation."""
+    torch.manual_seed(13)
+    B, H, M, T = 2, 3, 8, 12
+    for _ in range(100):
+        active = torch.rand(B, H, M) > 0.45
+        active[..., 0] = True
+        parents = torch.empty(B, H, T, dtype=torch.long)
+        for b in range(B):
+            for h in range(H):
+                options = torch.nonzero(active[b, h], as_tuple=True)[0]
+                parents[b, h] = options[torch.randint(len(options), (T,))]
+        forks = torch.rand(B, H, T) < 0.5
+        events = (
+            torch.nn.functional.one_hot(parents, M).bool()
+            & forks.unsqueeze(-1)
+        )
+        first = torch.where(
+            events, torch.arange(T).view(1, 1, T, 1), T
+        ).amin(dim=2)
+        result = ChunkedBranchMixer._allocate_children(
+            active, first < T, first_request=first
+        )
+        for b in range(B):
+            for h in range(H):
+                free = [j for j in range(M) if not active[b, h, j]]
+                online = [-1] * M
+                for t in range(T):
+                    parent = int(parents[b, h, t])
+                    if bool(forks[b, h, t]) and online[parent] < 0 and free:
+                        online[parent] = free.pop(0)
+                assert result[b, h].tolist() == online
