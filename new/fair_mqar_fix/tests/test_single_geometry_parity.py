@@ -5,6 +5,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+import pytest
 import torch
 
 _HERE = Path(__file__).resolve().parents[1]
@@ -45,7 +46,10 @@ def test_full_mode_matches_chunked_m1():
     x = torch.randn(2, 9, BASE["d_model"])
     a, _, _ = ref(x)
     b, _, _ = new(x)
-    assert torch.equal(a, b)
+    # The partial tail (9 = 2*4 + 1) goes through the per-token streaming path in
+    # single_geo, which is numerically equivalent but not bit-identical to the batched
+    # chunked solve; assert_close with a float32 tolerance covers that.
+    assert torch.allclose(a, b, atol=1e-6, rtol=1e-6)
 
     ref.zero_grad(set_to_none=True)
     new.zero_grad(set_to_none=True)
@@ -98,6 +102,29 @@ def test_causality_and_streaming():
         second, _, _ = m(x[:, 8:], cache)
     streamed = torch.cat([first, second], 1)
     assert torch.allclose(full, streamed, atol=2e-5, rtol=2e-5)
+
+
+@pytest.mark.parametrize("geometry_mode", ["full", "rayleigh", "isotropic"])
+def test_per_token_streaming_equals_whole(geometry_mode):
+    """P0: train (one-shot chunk) must equal per-token streaming decode.
+
+    A partial chunk is deferred across calls (frozen geometry + chunk-start read), so
+    feeding one token at a time must reproduce the whole-sequence output. ``certified``
+    is excluded: its ``easy`` decision is a chunk-level max over the certificate, which
+    is not streamable token-by-token.
+    """
+    torch.manual_seed(0)
+    m = make("single_geo", geometry_mode=geometry_mode).eval()
+    x = torch.randn(2, 17, BASE["d_model"])
+    with torch.no_grad():
+        whole, _, _ = m(x)
+        cache = None
+        parts = []
+        for t in range(17):
+            y, cache, _ = m(x[:, t : t + 1], cache)
+            parts.append(y)
+    streamed = torch.cat(parts, 1)
+    assert torch.allclose(whole, streamed, atol=2e-5, rtol=2e-5)
 
 
 def test_geometry_modes_are_finite_and_distinct():

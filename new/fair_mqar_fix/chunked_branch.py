@@ -93,10 +93,13 @@ class ChunkedBranchConfig:
 @dataclass
 class ChunkedCache:
     states: Tensor  # B H M K V
-    protection: Tensor  # B H M K K
+    protection: Tensor  # B H M K K (frozen at chunk start, used for directions)
     active: Tensor  # B H M
     addresses: Tensor  # B H M R
     conv_context: Tensor
+    chunk_start_states: Tensor  # B H M K V (S0 for the chunk-start read)
+    chunk_protection: Tensor  # B H M K K (running C, committed at chunk boundary)
+    chunk_pos: int = 0  # tokens consumed in the current chunk [0, chunk_len)
     step: int = 0
     max_states: int = 0
 
@@ -107,6 +110,9 @@ class ChunkedCache:
             self.active.detach(),
             self.addresses.detach(),
             self.conv_context.detach(),
+            self.chunk_start_states.detach(),
+            self.chunk_protection.detach(),
+            self.chunk_pos,
             self.step,
             self.max_states,
         )
@@ -120,6 +126,8 @@ class ChunkedCache:
                 self.active,
                 self.addresses,
                 self.conv_context,
+                self.chunk_start_states,
+                self.chunk_protection,
             )
         )
 
@@ -170,6 +178,9 @@ class ChunkedBranchMixer(BranchMemoryMixer):
             active,
             z(b, c.n_heads, c.max_states, c.d_route),
             x.new_zeros(b, c.d_model, c.conv_kernel - 1),
+            z(b, c.n_heads, c.max_states, c.d_key, c.d_value),
+            z(b, c.n_heads, c.max_states, c.d_key, c.d_key),
+            0,
             0,
             c.max_states,
         )
@@ -295,7 +306,16 @@ class ChunkedBranchMixer(BranchMemoryMixer):
             torch.cat(outs, 1).reshape(B, T, H * c.d_value).to(local.dtype)
         )
         new_cache = ChunkedCache(
-            states, C, active, addresses, next_context, cache.step + T, c.max_states
+            states,
+            C,
+            active,
+            addresses,
+            next_context,
+            states,
+            C,
+            0,
+            cache.step + T,
+            c.max_states,
         )
         fork, parent, destination, cost, active_count = [
             torch.cat(parts, 1) for parts in zip(*chunk_stats)

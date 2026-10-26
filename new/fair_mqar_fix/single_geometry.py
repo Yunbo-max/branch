@@ -109,6 +109,188 @@ class SingleGeometryMixer(ChunkedBranchMixer):
             "upper": upper,
         }
 
+    def _refresh_addresses(self, states: Tensor) -> Tensor:
+        c = self.config
+        B, M = states.shape[0], states.shape[2]
+        return (
+            self.descriptor(
+                states.permute(0, 2, 1, 4, 3).reshape(
+                    B * M, c.n_heads, c.d_value, c.d_key
+                )
+            )
+            .reshape(B, M, c.n_heads, c.d_route)
+            .permute(0, 2, 1, 3)
+        )
+
+    def _token_step(
+        self, states, S0, C_frozen, C_run, active, kk, vv, qq, rr, loc, addresses
+    ):
+        """One streaming token inside the current chunk: frozen geometry, deferred C commit.
+
+        The write direction uses the chunk-start geometry ``C_frozen`` (identical to the
+        batched ``_chunk_step``), the chunk-start read uses ``S0``, and ``C_run`` is
+        accumulated so the protection matrix is only committed at the chunk boundary.
+        """
+        c = self.config
+        B, L, H = kk.shape[0], kk.shape[1], kk.shape[2]
+        dtype = states.dtype
+        kk = kk.to(dtype)
+        vv = vv.to(dtype)
+        qq = qq.to(dtype)
+        rr = rr.to(dtype)
+        addresses = addresses.to(dtype)
+        C_frozen_used = C_frozen if c.differentiate_covariance else C_frozen.detach()
+
+        a, _ = self._directions(kk, C_frozen_used)
+        S = states[:, :, 0]  # (B,H,K,V)
+        out_m, state_m = chunked_delta_from_directions(
+            S, kk, vv, qq, a, write_mask=None, return_states=True
+        )
+        new_states = state_m.unsqueeze(2)
+
+        need_weights = (c.read_mode == "chunk_start") or (
+            c.geometry_mode != "isotropic"
+        )
+        weights = None
+        if need_weights:
+            logits = torch.einsum("bthr,bhmr->bthm", rr, addresses) * (c.d_route**-0.5)
+            vis = active.view(B, 1, H, 1).expand(B, L, H, 1)
+            logits = logits.masked_fill(~vis, float("-inf"))
+            nl = self.null_route(loc).to(dtype).unsqueeze(-1)
+            weights = F.softmax(torch.cat([logits, nl], -1), -1)[..., :-1]
+
+        if c.read_mode == "chunk_start":
+            hist = torch.einsum("bthm,bhmkv,bthk->bthv", weights, S0, qq)
+            out = out_m + hist
+        else:
+            out = out_m
+
+        if c.geometry_mode != "isotropic":
+            use = weights + torch.ones_like(weights)
+            gamma = c.protection_decay
+            # L=1 token: match the batched EMA exactly (powers == 1 for a single step).
+            w = use[..., 0]  # (B,L,H)
+            qw = qq * w.unsqueeze(-1)  # (B,L,H,K)
+            contrib = torch.einsum("blhk,blhj->bhkj", qw, qq)  # (B,H,K,J)
+            C_run = gamma * C_run + (1 - gamma) * contrib.unsqueeze(2)
+
+        return out, new_states, C_run
+
+    def forward(self, x: Tensor, cache: ChunkedCache | None = None):
+        c = self.config
+        if x.ndim != 3 or x.shape[-1] != c.d_model:
+            raise ValueError("x must be [B,T,d_model]")
+        B, T, _ = x.shape
+        H = c.n_heads
+        if cache is None:
+            cache = self.initial_cache(x)
+        dtype = cache.states.dtype
+
+        conv_input = torch.cat([cache.conv_context, x.transpose(1, 2)], -1)
+        local = x + F.silu(self.conv(conv_input).transpose(1, 2))
+        next_context = (
+            conv_input[..., -(c.conv_kernel - 1) :]
+            if c.conv_kernel > 1
+            else conv_input[..., :0]
+        )
+
+        q = F.normalize(
+            self.q_proj(local).view(B, T, H, c.d_key).to(dtype), dim=-1, eps=1e-6
+        )
+        k = F.normalize(
+            self.k_proj(local).view(B, T, H, c.d_key).to(dtype), dim=-1, eps=1e-6
+        )
+        v = torch.tanh(self.v_proj(local).view(B, T, H, c.d_value).to(dtype))
+        rq = self.route_q(local).view(B, T, H, c.d_route).to(dtype)
+
+        states = cache.states
+        C_frozen = cache.protection
+        C_run = cache.chunk_protection
+        active = cache.active
+        addresses = cache.addresses
+        S0 = cache.chunk_start_states
+        pos = cache.chunk_pos
+
+        outs = []
+        chunk_stats = []
+        t = 0
+        while t < T:
+            room = c.chunk_len - pos
+            take = min(room, T - t)
+            if take == c.chunk_len:
+                kk = k[:, t : t + take]
+                vv = v[:, t : t + take]
+                qq = q[:, t : t + take]
+                rr = rq[:, t : t + take]
+                nl = self.null_route(local[:, t : t + take]).to(dtype).unsqueeze(-1)
+                out, states, newC, active, telemetry = self._chunk_step(
+                    states, C_frozen, active, kk, vv, qq, rr, nl, addresses, t + take
+                )
+                outs.append(out)
+                chunk_stats.append(telemetry)
+                C_frozen = newC
+                C_run = newC
+                S0 = states
+                addresses = self._refresh_addresses(states)
+                pos = 0
+                t += take
+            else:
+                for _ in range(take):
+                    out, states, C_run = self._token_step(
+                        states,
+                        S0,
+                        C_frozen,
+                        C_run,
+                        active,
+                        k[:, t : t + 1],
+                        v[:, t : t + 1],
+                        q[:, t : t + 1],
+                        rq[:, t : t + 1],
+                        local[:, t : t + 1],
+                        addresses,
+                    )
+                    outs.append(out)
+                    zeros_b = torch.zeros(B, 1, H, dtype=torch.bool, device=x.device)
+                    zeros_l = torch.zeros(B, 1, H, dtype=torch.long, device=x.device)
+                    zeros_c = torch.zeros(B, 1, H, dtype=dtype, device=x.device)
+                    act = active.sum(dim=(-1, -2)).view(B, 1).expand(B, 1).float()
+                    chunk_stats.append((zeros_b, zeros_l, zeros_l, zeros_c, act))
+                    t += 1
+                    pos += 1
+                    if pos == c.chunk_len:
+                        C_frozen = C_run
+                        S0 = states
+                        addresses = self._refresh_addresses(states)
+                        pos = 0
+
+        out = self.out_proj(
+            torch.cat(outs, 1).reshape(B, T, H * c.d_value).to(local.dtype)
+        )
+        new_cache = ChunkedCache(
+            states,
+            C_frozen,
+            active,
+            addresses,
+            next_context,
+            S0,
+            C_run,
+            pos,
+            cache.step + T,
+            c.max_states,
+        )
+        fork, parent, destination, cost, active_count = [
+            torch.cat(parts, 1) for parts in zip(*chunk_stats)
+        ]
+        stats = {
+            "active_states": active_count,
+            "fork": fork,
+            "parent": parent,
+            "destination": destination,
+            "historical_candidates": active_count,
+            "write_cost": cost,
+        }
+        return out, new_cache, stats
+
     def _chunk_step(
         self, bank, Cbank, active, kk, vv, qq, rr, nl, addresses, absolute_end
     ):
