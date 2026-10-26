@@ -1,0 +1,20 @@
+{
+  "workspace_id": "ws-9dcc0e1f-80a4-4af2-bc2f-0e352e7b17e6",
+  "project_id": "project-160ccb20-98ab-4538-a847-01d1f83d5b0f",
+  "logic_compute_group_id": "lcg-71b971a7-5bdd-4798-b5ba-08f1eabde49e",
+  "name": "branch-chunked-full-68b-m64-v2-1h100",
+  "description": "M=64 Branch Memory, capacity-matched to MARCH (64 states vs 64 anchors). Fixes the duplicate --grad-checkpoint argparse bug that killed both earlier m64 submissions. Probe measured 40.46 GiB / 4.73 s per step at batch 4 x 16K, chunk 256, grad checkpoint. d_model 256 / 2 layers, ckpt/10k, output results/pretrain_full_m64. 1xH100, 4-day budget.",
+  "framework": "pytorch",
+  "command": "mkdir -p /inspire/hdd/global_user/zhangjiaquan-253108540222/research/DiffRwkv/logs/qz && cd /inspire/hdd/global_user/zhangjiaquan-253108540222/research/DiffRwkv/new/fair_mqar && bash run_pretrain_full.sh > /inspire/hdd/global_user/zhangjiaquan-253108540222/research/DiffRwkv/logs/qz/branch-chunked-full-68b-m64-v2-1h100.log 2>&1",
+  "max_running_time_ms": "432000000",
+  "task_priority": 4,
+  "framework_config": [
+    {
+      "image": "docker.sii.shaipower.online/inspire-studio/relay2:v2",
+      "image_type": "SOURCE_PRIVATE",
+      "instance_count": 1,
+      "spec_id": "79fe954a-be92-4772-ac0b-94ad8a79b7bb",
+      "shm_gi": 100
+    }
+  ]
+}

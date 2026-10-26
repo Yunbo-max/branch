@@ -1,0 +1,150 @@
+{
+  "arm": "branch",
+  "scope": "native MQAR, single arm / single seed; not a paper reproduction",
+  "protocol": {
+    "vocab_size": 8192,
+    "seq_len": 128,
+    "num_kv_pairs": 8,
+    "num_examples": 8192,
+    "seed": 17
+  },
+  "model": {
+    "mixer": "branch",
+    "vocab_size": 8192,
+    "d_model": 256,
+    "n_layers": 2,
+    "n_heads": 4,
+    "d_key": 64,
+    "d_value": 64,
+    "ff_mult": 2,
+    "ff_extra": 0,
+    "conv_kernel": 3,
+    "anchor_interval": 16,
+    "max_anchors": 16,
+    "read_topk": 4,
+    "d_route": 32,
+    "max_states": 8,
+    "tau": 1.0,
+    "ridge": 1.0,
+    "protect": 8.0,
+    "fork_cost": 0.02,
+    "protection_decay": 0.95,
+    "covariance": "full",
+    "differentiate_covariance": true
+  },
+  "parameters": {
+    "mixer": 627208,
+    "backbone_and_head": 4722688,
+    "total": 5349896
+  },
+  "panels": {
+    "train": {
+      "sha256": "1a3ccba9d7a2f5981bc80ad158096906d1109951c3158c3e778727c9f6fdbe88",
+      "examples": 8192,
+      "alignment": {
+        "rows": 8192,
+        "labeled_positions": 65536,
+        "labels_per_row": 8,
+        "context_tokens": 16,
+        "answer_position_rule": "label[t] is the value for the key at inputs[t]"
+      }
+    },
+    "valid": {
+      "sha256": "eb63fe4116df43e201cfd7dc37eaec3995107d14e3f549318aaaef9e4ca91d9c",
+      "examples": 2048,
+      "alignment": {
+        "rows": 2048,
+        "labeled_positions": 16384,
+        "labels_per_row": 8,
+        "context_tokens": 16,
+        "answer_position_rule": "label[t] is the value for the key at inputs[t]"
+      }
+    },
+    "test": {
+      "sha256": "f37349e6f3b3f9756425fec5060d98b59a45c44c3573e9113b48a2909297e1f1",
+      "examples": 2048,
+      "alignment": {
+        "rows": 2048,
+        "labeled_positions": 16384,
+        "labels_per_row": 8,
+        "context_tokens": 16,
+        "answer_position_rule": "label[t] is the value for the key at inputs[t]"
+      }
+    }
+  },
+  "warmup": {
+    "steps": 25,
+    "seconds_per_step": 6.323060608040105
+  },
+  "main": {
+    "planned_steps": 2517,
+    "steps": 2517,
+    "wall_seconds": 4966.016084324998,
+    "seconds_per_step": 1.9255087443178407
+  },
+  "initial": {
+    "valid": {
+      "loss": 9.180028557777405,
+      "accuracy": 0.0001220703125,
+      "labeled_positions": 16384
+    },
+    "test": {
+      "loss": 9.181453883647919,
+      "accuracy": 6.103515625e-05,
+      "labeled_positions": 16384
+    }
+  },
+  "final": {
+    "valid": {
+      "loss": 13.637016713619232,
+      "accuracy": 0.00030517578125,
+      "labeled_positions": 16384
+    },
+    "test": {
+      "loss": 13.646948635578156,
+      "accuracy": 0.00018310546875,
+      "labeled_positions": 16384
+    }
+  },
+  "history_tail": [
+    {
+      "step": 2515,
+      "train_loss": 1.1519100666046143,
+      "train_accuracy": 0.74609375,
+      "grad_norm": 3.0026907920837402,
+      "elapsed_seconds": 4785.617562949003
+    },
+    {
+      "step": 2516,
+      "train_loss": 0.5391975045204163,
+      "train_accuracy": 0.8828125,
+      "grad_norm": 2.1308481693267822,
+      "elapsed_seconds": 4787.374315639005
+    },
+    {
+      "step": 2517,
+      "train_loss": 0.572259783744812,
+      "train_accuracy": 0.875,
+      "grad_norm": 2.265169620513916,
+      "elapsed_seconds": 4789.143404407005,
+      "valid": {
+        "loss": 13.637016713619232,
+        "accuracy": 0.00030517578125,
+        "labeled_positions": 16384
+      },
+      "test": {
+        "loss": 13.646948635578156,
+        "accuracy": 0.00018310546875,
+        "labeled_positions": 16384
+      }
+    }
+  ],
+  "chance_accuracy": 0.000244140625,
+  "beats_chance": false,
+  "environment": {
+    "python": "3.12.3",
+    "torch": "2.8.0a0+5228986c39.nv25.06",
+    "device": "cuda",
+    "threads": 8
+  }
+}

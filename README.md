@@ -8,6 +8,14 @@
 > issue is that evaluation samples from the training corpus rather than a fixed held-out
 > panel. See [`KNOWN_ISSUES.md`](KNOWN_ISSUES.md) for reproductions and required fixes.
 > Do not use the curves in `results/` as evidence of branch capacity or MARCH fidelity.
+>
+> **Update (2026-10-26):** failure-mode analysis of the pretraining jobs is in
+> [`new/fair_mqar_fix/FINDINGS_2026-10-26.md`](new/fair_mqar_fix/FINDINGS_2026-10-26.md).
+> Summary: the runs stopped for three distinct reasons — CUDA OOM (full-covariance
+> × `max_states=64`), disk-write failure at checkpoint save (MARCH @ 290k, m64-v2 @ 70k),
+> and an argparse bug (m64-v1). The P0-B anchor-key fix (content-conditioned
+> `κ = W_k · u_m`) is in `new/fair_mqar_fix/chunked_march.py`. Loss plots: `results/`
+> (`march_loss.png`, `branch_loss.png`, `all_eval_loss.png`).
 
 One backbone, one corpus, one budget, matched parameters. Only the memory mechanism
 differs. This repository contains the comparison harness, the four memory arms, the

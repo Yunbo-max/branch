@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fair-mqar"
+version = "0.1.0"
+description = "Paired MQAR comparison: MARCH (official semantics) vs Branch Memory"
+requires-python = ">=3.10"
+dependencies = ["torch>=2.2"]
+
+[project.optional-dependencies]
+test = ["pytest>=7"]
+
+[tool.pytest.ini_options]
+pythonpath = [".", "../branch_memory"]
+testpaths = ["tests"]
