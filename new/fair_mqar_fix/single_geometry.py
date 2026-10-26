@@ -19,6 +19,7 @@ from dataclasses import dataclass
 import torch
 import torch.nn.functional as F
 from torch import Tensor
+from torch.utils.checkpoint import checkpoint
 
 from chunked_branch import ChunkedBranchConfig, ChunkedBranchMixer, ChunkedCache
 from chunked_delta import _solve_keys, chunked_delta_from_directions
@@ -71,7 +72,9 @@ class SingleGeometryMixer(ChunkedBranchMixer):
         super().__init__(base)
         self.config = config
 
-    def _directions(self, kk: Tensor, Cbank: Tensor) -> tuple[Tensor, dict]:
+    def _directions(
+        self, kk: Tensor, Cbank: Tensor, factor: Tensor | None = None
+    ) -> tuple[Tensor, dict]:
         c = self.config
         B, L, H, _ = kk.shape
         C = Cbank[:, :, 0]  # (B,H,K,K)
@@ -89,9 +92,10 @@ class SingleGeometryMixer(ChunkedBranchMixer):
             )
             return a_ray, {"mode": "rayleigh", "upper": upper}
 
-        eye = torch.eye(c.d_key, device=kk.device, dtype=kk.dtype)
-        H = c.ridge * eye + c.protect * C
-        factor = torch.linalg.cholesky(H)
+        if factor is None:
+            eye = torch.eye(c.d_key, device=kk.device, dtype=kk.dtype)
+            H = c.ridge * eye + c.protect * C
+            factor = torch.linalg.cholesky(H)
         u = _solve_keys(factor, kk)
         a_full = u / (c.tau + (kk * u).sum(-1, keepdim=True))
 
@@ -109,6 +113,16 @@ class SingleGeometryMixer(ChunkedBranchMixer):
             "upper": upper,
         }
 
+    def _make_factor(self, C_frozen: Tensor) -> Tensor:
+        """Frozen Cholesky factor of H = ridge I + protect C at a chunk boundary (full only)."""
+        c = self.config
+        C = C_frozen[:, :, 0]  # (B,H,K,K)
+        if c.geometry_mode != "full":
+            return torch.zeros_like(C)
+        eye = torch.eye(c.d_key, device=C.device, dtype=C.dtype)
+        H = c.ridge * eye + c.protect * C
+        return torch.linalg.cholesky(H)  # (B,H,K,K)
+
     def _refresh_addresses(self, states: Tensor) -> Tensor:
         c = self.config
         B, M = states.shape[0], states.shape[2]
@@ -123,7 +137,19 @@ class SingleGeometryMixer(ChunkedBranchMixer):
         )
 
     def _token_step(
-        self, states, S0, C_frozen, C_run, active, kk, vv, qq, rr, loc, addresses
+        self,
+        states,
+        S0,
+        C_frozen,
+        C_run,
+        active,
+        factor,
+        kk,
+        vv,
+        qq,
+        rr,
+        loc,
+        addresses,
     ):
         """One streaming token inside the current chunk: frozen geometry, deferred C commit.
 
@@ -141,7 +167,7 @@ class SingleGeometryMixer(ChunkedBranchMixer):
         addresses = addresses.to(dtype)
         C_frozen_used = C_frozen if c.differentiate_covariance else C_frozen.detach()
 
-        a, _ = self._directions(kk, C_frozen_used)
+        a, _ = self._directions(kk, C_frozen_used, factor)
         S = states[:, :, 0]  # (B,H,K,V)
         out_m, state_m = chunked_delta_from_directions(
             S, kk, vv, qq, a, write_mask=None, return_states=True
@@ -180,6 +206,12 @@ class SingleGeometryMixer(ChunkedBranchMixer):
         c = self.config
         if x.ndim != 3 or x.shape[-1] != c.d_model:
             raise ValueError("x must be [B,T,d_model]")
+        if c.geometry_mode == "certified":
+            raise ValueError(
+                "geometry_mode='certified' is a chunk-level (non-causal) decision and is "
+                "not supported for autoregressive language modeling. It remains available "
+                "only through _directions() for offline numerical analysis."
+            )
         B, T, _ = x.shape
         H = c.n_heads
         if cache is None:
@@ -209,7 +241,12 @@ class SingleGeometryMixer(ChunkedBranchMixer):
         active = cache.active
         addresses = cache.addresses
         S0 = cache.chunk_start_states
+        factor = cache.chunk_factor
         pos = cache.chunk_pos
+        if pos == 0:
+            # At a chunk boundary (or a fresh cache) the frozen factor must match the
+            # committed protection matrix; initial_cache() only zero-fills chunk_factor.
+            factor = self._make_factor(C_frozen)
 
         outs = []
         chunk_stats = []
@@ -223,15 +260,41 @@ class SingleGeometryMixer(ChunkedBranchMixer):
                 qq = q[:, t : t + take]
                 rr = rq[:, t : t + take]
                 nl = self.null_route(local[:, t : t + take]).to(dtype).unsqueeze(-1)
-                out, states, newC, active, telemetry = self._chunk_step(
-                    states, C_frozen, active, kk, vv, qq, rr, nl, addresses, t + take
-                )
+                if c.grad_checkpoint and self.training:
+                    out, states, newC, active, telemetry = checkpoint(
+                        self._chunk_step,
+                        states,
+                        C_frozen,
+                        active,
+                        kk,
+                        vv,
+                        qq,
+                        rr,
+                        nl,
+                        addresses,
+                        t + take,
+                        use_reentrant=False,
+                    )
+                else:
+                    out, states, newC, active, telemetry = self._chunk_step(
+                        states,
+                        C_frozen,
+                        active,
+                        kk,
+                        vv,
+                        qq,
+                        rr,
+                        nl,
+                        addresses,
+                        t + take,
+                    )
                 outs.append(out)
                 chunk_stats.append(telemetry)
                 C_frozen = newC
                 C_run = newC
                 S0 = states
                 addresses = self._refresh_addresses(states)
+                factor = self._make_factor(C_frozen)
                 pos = 0
                 t += take
             else:
@@ -242,6 +305,7 @@ class SingleGeometryMixer(ChunkedBranchMixer):
                         C_frozen,
                         C_run,
                         active,
+                        factor,
                         k[:, t : t + 1],
                         v[:, t : t + 1],
                         q[:, t : t + 1],
@@ -261,6 +325,7 @@ class SingleGeometryMixer(ChunkedBranchMixer):
                         C_frozen = C_run
                         S0 = states
                         addresses = self._refresh_addresses(states)
+                        factor = self._make_factor(C_frozen)
                         pos = 0
 
         out = self.out_proj(
@@ -274,6 +339,7 @@ class SingleGeometryMixer(ChunkedBranchMixer):
             next_context,
             S0,
             C_run,
+            factor,
             pos,
             cache.step + T,
             c.max_states,

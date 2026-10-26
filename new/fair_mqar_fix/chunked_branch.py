@@ -99,6 +99,7 @@ class ChunkedCache:
     conv_context: Tensor
     chunk_start_states: Tensor  # B H M K V (S0 for the chunk-start read)
     chunk_protection: Tensor  # B H M K K (running C, committed at chunk boundary)
+    chunk_factor: Tensor  # B H K K (frozen Cholesky factor, single_geo full mode)
     chunk_pos: int = 0  # tokens consumed in the current chunk [0, chunk_len)
     step: int = 0
     max_states: int = 0
@@ -112,6 +113,7 @@ class ChunkedCache:
             self.conv_context.detach(),
             self.chunk_start_states.detach(),
             self.chunk_protection.detach(),
+            self.chunk_factor.detach(),
             self.chunk_pos,
             self.step,
             self.max_states,
@@ -128,6 +130,7 @@ class ChunkedCache:
                 self.conv_context,
                 self.chunk_start_states,
                 self.chunk_protection,
+                self.chunk_factor,
             )
         )
 
@@ -180,6 +183,7 @@ class ChunkedBranchMixer(BranchMemoryMixer):
             x.new_zeros(b, c.d_model, c.conv_kernel - 1),
             z(b, c.n_heads, c.max_states, c.d_key, c.d_value),
             z(b, c.n_heads, c.max_states, c.d_key, c.d_key),
+            z(b, c.n_heads, c.d_key, c.d_key),
             0,
             0,
             c.max_states,
@@ -313,6 +317,7 @@ class ChunkedBranchMixer(BranchMemoryMixer):
             next_context,
             states,
             C,
+            torch.zeros(B, H, c.d_key, c.d_key, device=x.device, dtype=dtype),
             0,
             cache.step + T,
             c.max_states,
@@ -332,7 +337,16 @@ class ChunkedBranchMixer(BranchMemoryMixer):
 
     @staticmethod
     def _allocate_children(active: Tensor, any_fork: Tensor) -> Tensor:
-        """Assign one distinct free slot to each forking parent (or -1)."""
+        """Assign one distinct free slot to each forking parent (or -1).
+
+        .. warning::
+            This is a **chunk-level** allocation: ``any_fork`` aggregates fork requests
+            across the whole chunk, so a later token's fork can change an earlier token's
+            slot (and thus its replace-vs-fork action and output). This is non-causal for
+            autoregressive modeling and is tracked as a known issue (P0-A). A causal
+            per-event capacity management scheme is required before multi-state Branch is
+            used for language modeling.
+        """
         B, H, M = active.shape
         long = torch.long
         slots = torch.arange(M, device=active.device, dtype=long).view(1, 1, M)
