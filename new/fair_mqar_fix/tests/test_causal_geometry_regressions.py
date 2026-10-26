@@ -231,3 +231,26 @@ def test_allocator_matches_online_reference_over_random_events():
                     if bool(forks[b, h, t]) and online[parent] < 0 and free:
                         online[parent] = free.pop(0)
                 assert result[b, h].tolist() == online
+
+
+def test_grad_checkpoint_matches_noncheckpoint_gradients():
+    """Activation recomputation must not alter parameter or input gradients."""
+    torch.manual_seed(9)
+    plain = single_model(checkpoint=False).train()
+    wrapped = single_model(checkpoint=True).train()
+    wrapped.load_state_dict(plain.state_dict())
+    original = torch.randn(1, 8, 16)
+    xa = original.clone().requires_grad_(True)
+    xb = original.clone().requires_grad_(True)
+    pa, _, _ = plain(xa)
+    pb, _, _ = wrapped(xb)
+    torch.testing.assert_close(pa, pb, atol=2e-5, rtol=2e-5)
+    pa.square().mean().backward()
+    pb.square().mean().backward()
+    torch.testing.assert_close(xa.grad, xb.grad, atol=2e-5, rtol=2e-5)
+    for (an, ap), (bn, bp) in zip(plain.named_parameters(), wrapped.named_parameters()):
+        assert an == bn
+        if ap.grad is None or bp.grad is None:
+            assert ap.grad is None and bp.grad is None
+        else:
+            torch.testing.assert_close(ap.grad, bp.grad, atol=2e-5, rtol=2e-5)
