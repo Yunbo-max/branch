@@ -243,10 +243,9 @@ class SingleGeometryMixer(ChunkedBranchMixer):
         S0 = cache.chunk_start_states
         factor = cache.chunk_factor
         pos = cache.chunk_pos
-        if pos == 0:
-            # At a chunk boundary (or a fresh cache) the frozen factor must match the
-            # committed protection matrix; initial_cache() only zero-fills chunk_factor.
-            factor = self._make_factor(C_frozen)
+        # chunk_factor is valid only when pos > 0. A complete prefill chunk
+        # factorises inside _chunk_step; eagerly making another factor here
+        # would duplicate Cholesky work for every training chunk.
 
         outs = []
         chunk_stats = []
@@ -294,11 +293,14 @@ class SingleGeometryMixer(ChunkedBranchMixer):
                 C_run = newC
                 S0 = states
                 addresses = self._refresh_addresses(states)
-                factor = self._make_factor(C_frozen)
+                # Defer factorisation until the next streamed token. In particular,
+                # do not factor a chunk that might never be consumed.
                 pos = 0
                 t += take
             else:
                 for _ in range(take):
+                    if pos == 0:
+                        factor = self._make_factor(C_frozen)
                     out, states, C_run = self._token_step(
                         states,
                         S0,
@@ -325,7 +327,7 @@ class SingleGeometryMixer(ChunkedBranchMixer):
                         C_frozen = C_run
                         S0 = states
                         addresses = self._refresh_addresses(states)
-                        factor = self._make_factor(C_frozen)
+                        # New chunk geometry is factored on the first token only.
                         pos = 0
 
         out = self.out_proj(
