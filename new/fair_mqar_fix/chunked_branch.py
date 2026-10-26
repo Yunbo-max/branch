@@ -336,31 +336,51 @@ class ChunkedBranchMixer(BranchMemoryMixer):
         return out, new_cache, stats
 
     @staticmethod
-    def _allocate_children(active: Tensor, any_fork: Tensor) -> Tensor:
-        """Assign one distinct free slot to each forking parent (or -1).
+    def _allocate_children(
+        active: Tensor, any_fork: Tensor, first_request: Tensor | None = None
+    ) -> Tensor:
+        """Assign free slots to forking parents by their *first request time*.
 
-        .. warning::
-            This is a **chunk-level** allocation: ``any_fork`` aggregates fork requests
-            across the whole chunk, so a later token's fork can change an earlier token's
-            slot (and thus its replace-vs-fork action and output). This is non-causal for
-            autoregressive modeling and is tracked as a known issue (P0-A). A causal
-            per-event capacity management scheme is required before multi-state Branch is
-            used for language modeling.
+        An earlier fork must not lose a slot when a later token requests a
+        lower-numbered parent. Ties are broken by parent slot index. The
+        allocation can be computed for a whole chunk because, for each
+        prefix, its allocations are identical to online first-come-first-served
+        processing. Children become readable only at the next chunk boundary.
+
+        first_request=None retains parent-index ordering for direct legacy
+        callers; the actual chunk writer always passes the first-event times.
         """
         B, H, M = active.shape
-        long = torch.long
-        slots = torch.arange(M, device=active.device, dtype=long).view(1, 1, M)
+        if any_fork.shape != active.shape:
+            raise ValueError("any_fork must match active")
+        slots = torch.arange(M, device=active.device, dtype=torch.long).view(1, 1, M)
         free = ~active
         rank_free = torch.where(
             free,
-            torch.cumsum(free.to(long), -1) - 1,
-            torch.full_like(active, -1, dtype=long),
+            torch.cumsum(free.to(torch.long), -1) - 1,
+            torch.full_like(active, -1, dtype=torch.long),
         )
-        rank_fork = torch.where(
-            any_fork,
-            torch.cumsum(any_fork.to(long), -1) - 1,
-            torch.full_like(active, -1, dtype=long),
-        )
+        if first_request is None:
+            rank_fork = torch.where(
+                any_fork,
+                torch.cumsum(any_fork.to(torch.long), -1) - 1,
+                torch.full_like(active, -1, dtype=torch.long),
+            )
+        else:
+            if first_request.shape != active.shape:
+                raise ValueError("first_request must match active")
+            # Deterministic lexicographic rank: (first_token, parent_slot).
+            priority = first_request.to(torch.long) * M + slots
+            order = priority.argsort(dim=-1)
+            rank_by_parent = torch.empty_like(order).scatter_(
+                -1, order, slots.expand(B, H, M)
+            )
+            rank_fork = torch.where(
+                any_fork,
+                rank_by_parent,
+                torch.full_like(active, -1, dtype=torch.long),
+            )
+
         match = (
             (rank_fork.unsqueeze(-1) == rank_free.unsqueeze(-2))
             & any_fork.unsqueeze(-1)
@@ -368,7 +388,7 @@ class ChunkedBranchMixer(BranchMemoryMixer):
         )
         return torch.where(
             match.any(-1),
-            (match.to(long) * slots).sum(-1),
+            (match.to(torch.long) * slots).sum(-1),
             torch.full_like(rank_fork, -1),
         )
 
@@ -407,11 +427,21 @@ class ChunkedBranchMixer(BranchMemoryMixer):
             bank, fb.permute(0, 2, 1, 3, 4), active, kk, vv
         )
         snapshot = bank.clone()
-        fork_count = torch.zeros(B, H, M, dtype=torch.float32, device=kk.device)
-        fork_count.scatter_add_(
-            2, parent.permute(0, 2, 1), is_fork.permute(0, 2, 1).float()
-        )
-        child = self._allocate_children(active, fork_count > 0)  # (B,H,M)
+        # First-come-first-served fork allocation is causal even if the whole
+        # chunk is processed in parallel. A later parent's first request cannot
+        # preempt an earlier request merely because its slot index is smaller.
+        fork_event = (
+            F.one_hot(parent.permute(0, 2, 1), M).bool()
+            & is_fork.permute(0, 2, 1).unsqueeze(-1)
+        )  # (B,H,L,M)
+        first_request = torch.where(
+            fork_event,
+            torch.arange(L, device=kk.device).view(1, 1, L, 1),
+            L,
+        ).amin(dim=2)  # (B,H,M), L means no request
+        child = self._allocate_children(
+            active, first_request < L, first_request=first_request
+        )  # (B,H,M)
         has_child = child >= 0
         child_tok = torch.gather(child, 2, parent.permute(0, 2, 1)).permute(0, 2, 1)
         is_fork = is_fork & (child_tok >= 0)
