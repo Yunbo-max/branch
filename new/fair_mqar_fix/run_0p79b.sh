@@ -103,7 +103,9 @@ case "$ARM" in
     EXTRA=(--mixer march_chunked --anchor-interval "$CHUNK_LEN" --read-topk 4 --max-states 64 --ff-extra 1088)
     ;;
   fork)
-    EXTRA=(--mixer chunked --max-states 64 --ff-extra 1280)
+    echo "ERROR: multi-state Branch M>1 is not verified as causal/streaming-safe on main." >&2
+    echo "Use a separately validated fork branch; do not run this 0.79B arm." >&2
+    exit 3
     ;;
   transformer25)
     EXTRA=(--mixer transformer --layers 25 --ff-extra -192)
