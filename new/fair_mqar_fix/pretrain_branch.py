@@ -141,7 +141,11 @@ def main() -> int:
     p.add_argument("--threads", type=int, default=8)
     p.add_argument("--device", default="cpu", choices=["cpu", "cuda"])
     p.add_argument("--amp", choices=["none", "bf16"], default="none",
-                   help="bf16 autocast for the LM forward/backward")
+                   help="BF16 backbone/autocast; GeoDelta geometry/state stay FP32")
+    p.add_argument("--random-crop", action="store_true",
+                   help="random training crop from each packed row; validation stays fixed")
+    p.add_argument("--fused-adamw", action="store_true",
+                   help="use fused torch.optim.AdamW optimizer on CUDA")
     p.add_argument("--grad-accum", type=int, default=1,
                    help="micro-batches accumulated per optimizer step")
     p.add_argument("--tf32", action=argparse.BooleanOptionalAction, default=True,
@@ -201,6 +205,10 @@ def main() -> int:
     p.add_argument("--read-topk", type=int, default=4)
     p.add_argument("--solver-refresh", type=int, default=8)
     p.add_argument("--protect", type=float, default=8.0)
+    p.add_argument("--protection-decay", type=float, default=0.95,
+                   help="per-token EMA decay for Query covariance; independent of chunk_len")
+    p.add_argument("--delta-tile-len", type=int, default=0,
+                   help="inner Delta solve tile; 0 uses the full geometry chunk")
     p.add_argument("--fork-cost", type=float, default=0.02)
     p.add_argument("--covariance", choices=["full", "diagonal"], default="full")
     p.add_argument(
@@ -226,6 +234,10 @@ def main() -> int:
         raise SystemExit("CUDA requested but unavailable")
     if a.grad_accum < 1:
         raise SystemExit("--grad-accum must be >= 1")
+    if not 0 <= a.protection_decay < 1:
+        raise SystemExit("--protection-decay must be in [0,1)")
+    if a.delta_tile_len < 0 or (a.delta_tile_len and a.delta_tile_len > a.chunk_len):
+        raise SystemExit("--delta-tile-len must be 0 or <= --chunk-len")
 
     world_size = int(os.environ.get("WORLD_SIZE", 1))
     rank = int(os.environ.get("RANK", 0))
@@ -252,7 +264,7 @@ def main() -> int:
         torch.backends.cuda.matmul.allow_tf32 = True
         torch.backends.cudnn.allow_tf32 = True
 
-    corpus = PackedCorpus(a.packed_dir, a.seq_len)
+    corpus = PackedCorpus(a.packed_dir, a.seq_len, random_crop=a.random_crop)
     print(
         f"corpus: {len(corpus):,} sequences x {a.seq_len} tokens "
         f"= {len(corpus) * a.seq_len / 1e9:.2f} B tokens available",
@@ -276,6 +288,8 @@ def main() -> int:
             d_route=a.d_route,
             max_states=a.max_states,
             protect=a.protect,
+            protection_decay=a.protection_decay,
+            delta_tile_len=a.delta_tile_len,
             fork_cost=a.fork_cost,
             covariance=a.covariance,
             differentiate_covariance=a.differentiate_covariance,
@@ -355,7 +369,8 @@ def main() -> int:
         model = DDP(model, device_ids=[local_rank])
     raw_model = model.module if ddp else model
     optimizer = torch.optim.AdamW(
-        model.parameters(), lr=a.lr, weight_decay=a.weight_decay
+        model.parameters(), lr=a.lr, weight_decay=a.weight_decay,
+        fused=(a.fused_adamw and device.type == "cuda"),
     )
 
     if is_main:
@@ -431,7 +446,11 @@ def main() -> int:
                 ids = panel_ids[start : start + a.batch_size]
                 if ids.shape[0] == 0:
                     continue
-                logits, _ = model(ids)
+                with torch.autocast(
+                    device_type=device.type, dtype=torch.bfloat16,
+                    enabled=(a.amp == "bf16" and device.type == "cuda"),
+                ):
+                    logits, _ = model(ids)
                 total += float(
                     F.cross_entropy(
                         logits[:, :-1].reshape(-1, logits.shape[-1]),
@@ -514,6 +533,7 @@ def main() -> int:
         return a.lr * (1.0 - (1.0 - a.min_lr_ratio) * frac)
 
     start = time.perf_counter()
+    last_step = start_step
     mode = "a" if a.resume is not None else "w"
     log_path = (a.output / "metrics.jsonl") if is_main else Path(os.devnull)
     with log_path.open(mode, encoding="utf-8") as log:
@@ -562,6 +582,7 @@ def main() -> int:
                 model.parameters(), a.grad_clip, error_if_nonfinite=True
             )
             optimizer.step()
+            last_step = step
             tokens_seen = (
                 step
                 * a.batch_size
@@ -615,12 +636,18 @@ def main() -> int:
         "split": split_manifest(split, corpus, panel, a.seq_len),
         "resume": resume_info,
         "training": {
-            "steps": len(history),
+            "steps": last_step,
+            "segment_steps": last_step - start_step,
             "batch_size": a.batch_size,
-            "tokens_per_step": a.batch_size * a.seq_len,
+            "grad_accum": a.grad_accum,
+            "world_size": world_size,
+            "random_crop": a.random_crop,
+            "amp": a.amp,
+            "fused_adamw": a.fused_adamw,
+            "tokens_per_step": a.batch_size * a.seq_len * world_size * a.grad_accum,
             "segment_wall_seconds": wall,
             "total_wall_seconds": total_wall,
-            "seconds_per_step": total_wall / max(len(history), 1),
+            "seconds_per_step": wall / max(last_step - start_step, 1),
         },
         "final": history[-1] if history else None,
         "environment": {
@@ -636,7 +663,7 @@ def main() -> int:
         )
     save_checkpoint(
         a.output / "checkpoint.pt",
-        len(history),
+        last_step,
         history[-1]["elapsed_seconds"] if history else total_wall,
     )
     if ddp:
@@ -647,7 +674,7 @@ def main() -> int:
     print(
         json.dumps(
             {
-                "steps": len(history),
+                "steps": last_step,
                 "final": history[-1] if history else None,
                 "seconds_per_step": report["training"]["seconds_per_step"],
             }
