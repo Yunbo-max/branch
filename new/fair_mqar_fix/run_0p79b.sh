@@ -15,6 +15,10 @@ CHUNK_LEN=${CHUNK_LEN:-256}
 DELTA_TILE_LEN=${DELTA_TILE_LEN:-0}
 DRY_RUN=${DRY_RUN:-0}
 PROTECTION_DECAY=${PROTECTION_DECAY:-0.95}
+DIFFERENTIATE_COVARIANCE=${DIFFERENTIATE_COVARIANCE:-1}
+READ_MODE=${READ_MODE:-chunk_start}
+PROTECT=${PROTECT:-8.0}
+SEED=${SEED:-17}
 AMP=${AMP:-bf16}
 CHECKPOINT_EVERY=${CHECKPOINT_EVERY:-500}
 EVAL_EVERY=${EVAL_EVERY:-100}
@@ -65,7 +69,7 @@ COMMON=(
   --d-model 1536 --layers 21 --heads 6 --d-key 256 --d-value 256
   --d-route 64 --ff-mult 4 --vocab-size 32000
   --chunk-len "$CHUNK_LEN" --delta-tile-len "$DELTA_TILE_LEN" --grad-checkpoint
-  --protection-decay "$PROTECTION_DECAY"
+  --protection-decay "$PROTECTION_DECAY" --protect "$PROTECT" --seed "$SEED"
   --lr "$LR" --weight-decay 0.1
   --lr-schedule wsd --warmup-frac 0.01 --decay-frac 0.2 --min-lr-ratio 0.1
   --split-seed 12345 --val-per-mille 20 --test-per-mille 10
@@ -75,18 +79,19 @@ COMMON=(
   --amp "$AMP" --time-budget-seconds "$TIME_BUDGET_SECONDS"
 )
 if [[ "$RANDOM_CROP" == 1 ]]; then COMMON+=(--random-crop); fi
+if [[ "$DIFFERENTIATE_COVARIANCE" == 0 ]]; then COMMON+=(--no-differentiate-covariance); fi
 if [[ "$FUSED_ADAMW" == 1 ]]; then COMMON+=(--fused-adamw); fi
 if [[ -n "$RESUME" ]]; then COMMON+=(--resume "$RESUME"); fi
 
 case "$ARM" in
   single_full)
-    EXTRA=(--mixer single_geo --geometry-mode full --max-states 1 --ff-extra 1280)
+    EXTRA=(--mixer single_geo --geometry-mode full --read-mode "$READ_MODE" --max-states 1 --ff-extra 1280)
     ;;
   isotropic)
-    EXTRA=(--mixer single_geo --geometry-mode isotropic --max-states 1 --ff-extra 1280)
+    EXTRA=(--mixer single_geo --geometry-mode isotropic --read-mode "$READ_MODE" --max-states 1 --ff-extra 1280)
     ;;
   rayleigh)
-    EXTRA=(--mixer single_geo --geometry-mode rayleigh --max-states 1 --ff-extra 1280)
+    EXTRA=(--mixer single_geo --geometry-mode rayleigh --read-mode "$READ_MODE" --max-states 1 --ff-extra 1280)
     ;;
   delta_proxy|delta_chunked)
     # NOT genuine Gated DeltaNet: fixed isotropic Delta recurrence with no anchor read.
@@ -110,7 +115,7 @@ esac
 
 if [[ "$DRY_RUN" != 1 ]]; then mkdir -p "$OUT_ROOT"; fi
 OUT_DIR="$OUT_ROOT/$ARM"
-echo "0.79B TRAIN: arm=$ARM gpus=$GPUS seq_len=$SEQ_LEN global_tokens/step=$GLOBAL_TOKENS grad_accum=$GRAD_ACCUM amp=$AMP chunk=$CHUNK_LEN tile=$DELTA_TILE_LEN gamma=$PROTECTION_DECAY random_crop=$RANDOM_CROP output=$OUT_DIR"
+echo "0.79B TRAIN: arm=$ARM gpus=$GPUS seq_len=$SEQ_LEN global_tokens/step=$GLOBAL_TOKENS grad_accum=$GRAD_ACCUM amp=$AMP chunk=$CHUNK_LEN tile=$DELTA_TILE_LEN gamma=$PROTECTION_DECAY diffC=$DIFFERENTIATE_COVARIANCE read=$READ_MODE seed=$SEED random_crop=$RANDOM_CROP output=$OUT_DIR"
 echo "NOTE: this launcher uses proxy MARCH/Delta rather than official fused GDN/MARCH."
 if [[ "$DRY_RUN" == 1 ]]; then
   printf 'torchrun --standalone --nproc_per_node=%q pretrain_branch.py ' "$GPUS"
