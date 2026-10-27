@@ -31,6 +31,14 @@ The new control is `run_mqar_geometry_isolation.sh`, which compares **the same S
 
 Regression `tests/test_mqar_geometry_activation.py` specifically checks first-chunk parity, gradients, and second-chunk geometry activity. Both new controls are **committed but not yet run on H100/H200**.
 
+## The 8-pair layout also suppresses the intended protection signal
+
+With `num_kv_pairs=8` and `seq_len=128`, the Zoology generator places **all eight KV writes in the first 16 positions**; the current `chunk_len=64` uses `C_0=0` throughout that initial writing phase. Thus Full Query Geometry cannot protect the *initial KV writes against one another*. The later chunks may use a nonzero C when processing queries/filler, but that is a different intervention.
+
+The MQAR placement distribution is weighted toward early query positions (`power_a=.01`). A Monte Carlo simulation of the generator's without-replacement `gap` sampling (10,000 rows, seed=17, 8 gaps from 56 candidate positions) places approximately **76.5% of query labels before token 64**. This is a simulation of the documented sampling law, not a direct statistic computed from the uploaded fixed panels.
+
+To engage C during the original KV writing phase, use `chunk_len=8` for 8 pairs, or interleave new KV writes with prior queries across geometry boundaries. The new `run_mqar_geometry_isolation.sh` supports `SEQ_LEN=128 NUM_KV_PAIRS=8 CHUNKS="64 8"`. Compare Full against Isotropic **within the identical SingleGeometryMixer architecture and seed**, rather than only against the independently initialized DeltaNetMixer.
+
 ## Second issue: the 8-pair failure does not prove an information-theoretic capacity limit
 
 A single state `S in R^{d_k x d_v}` can in principle represent `m<=d_k` independent key-to-value associations exactly. If `K in R^{d_k x m}` has full column rank, the linear constraints `S^T K=V` have a solution `S^T=V(K^TK)^{-1}K^T`. Thus with `d_k=64` and `m=8`, there is no immediate algebraic impossibility. The learned update dynamics, representation of token keys/values, initialization, missing trainable GDN gates, positional selectivity, or optimization could prevent training from discovering that solution.
