@@ -13,6 +13,7 @@ MICRO_BATCH=${MICRO_BATCH:-1}
 GLOBAL_TOKENS=${GLOBAL_TOKENS:-4194304}
 CHUNK_LEN=${CHUNK_LEN:-256}
 DELTA_TILE_LEN=${DELTA_TILE_LEN:-0}
+DRY_RUN=${DRY_RUN:-0}
 PROTECTION_DECAY=${PROTECTION_DECAY:-0.95}
 AMP=${AMP:-bf16}
 CHECKPOINT_EVERY=${CHECKPOINT_EVERY:-500}
@@ -46,7 +47,7 @@ fi
 if (( DELTA_TILE_LEN < 0 || (DELTA_TILE_LEN > 0 && CHUNK_LEN % DELTA_TILE_LEN != 0) )); then
   echo "ERROR: DELTA_TILE_LEN must divide CHUNK_LEN (or be 0)" >&2; exit 2
 fi
-if [[ ! -d "$PACKED_DIR" ]]; then
+if [[ "$DRY_RUN" != 1 && ! -d "$PACKED_DIR" ]]; then
   echo "ERROR: packed dataset does not exist: $PACKED_DIR" >&2; exit 2
 fi
 
@@ -77,28 +78,28 @@ if [[ -n "$RESUME" ]]; then COMMON+=(--resume "$RESUME"); fi
 
 case "$ARM" in
   single_full)
-    EXTRA=(--mixer single_geo --geometry-mode full --max-states 1 --ff-extra 1285)
+    EXTRA=(--mixer single_geo --geometry-mode full --max-states 1 --ff-extra 1280)
     ;;
   isotropic)
-    EXTRA=(--mixer single_geo --geometry-mode isotropic --max-states 1 --ff-extra 1285)
+    EXTRA=(--mixer single_geo --geometry-mode isotropic --max-states 1 --ff-extra 1280)
     ;;
   rayleigh)
-    EXTRA=(--mixer single_geo --geometry-mode rayleigh --max-states 1 --ff-extra 1285)
+    EXTRA=(--mixer single_geo --geometry-mode rayleigh --max-states 1 --ff-extra 1280)
     ;;
   delta_proxy|delta_chunked)
     # NOT genuine Gated DeltaNet: fixed isotropic Delta recurrence with no anchor read.
-    EXTRA=(--mixer single_geo --geometry-mode isotropic --read-mode current_only --max-states 1 --ff-extra 1285)
+    EXTRA=(--mixer single_geo --geometry-mode isotropic --read-mode current_only --max-states 1 --ff-extra 1280)
     ;;
   march_proxy|march)
     # Proxy uses one anchor per CHUNK_LEN, independent of --anchor-interval.
     # Do not call this an official GDN-based MARCH reproduction.
-    EXTRA=(--mixer march_chunked --anchor-interval "$CHUNK_LEN" --read-topk 4 --max-states 64 --ff-extra 1090)
+    EXTRA=(--mixer march_chunked --anchor-interval "$CHUNK_LEN" --read-topk 4 --max-states 64 --ff-extra 1088)
     ;;
   fork)
-    EXTRA=(--mixer chunked --max-states 64 --ff-extra 1285)
+    EXTRA=(--mixer chunked --max-states 64 --ff-extra 1280)
     ;;
   transformer25)
-    EXTRA=(--mixer transformer --layers 25 --ff-extra -177)
+    EXTRA=(--mixer transformer --layers 25 --ff-extra -192)
     ;;
   *)
     echo "ERROR: unknown arm $ARM" >&2; exit 2
@@ -108,7 +109,13 @@ esac
 mkdir -p "$OUT_ROOT"
 OUT_DIR="$OUT_ROOT/$ARM"
 echo "0.79B TRAIN: arm=$ARM gpus=$GPUS seq_len=$SEQ_LEN global_tokens/step=$GLOBAL_TOKENS grad_accum=$GRAD_ACCUM amp=$AMP chunk=$CHUNK_LEN tile=$DELTA_TILE_LEN gamma=$PROTECTION_DECAY random_crop=$RANDOM_CROP output=$OUT_DIR"
-echo "NOTE: this launcher uses a proxy MARCH and proxy Delta, not native fused GDN/MARCH baselines."
+echo "NOTE: this launcher uses proxy MARCH/Delta rather than official fused GDN/MARCH."
+if [[ "$DRY_RUN" == 1 ]]; then
+  printf 'torchrun --standalone --nproc_per_node=%q pretrain_branch.py ' "$GPUS"
+  printf '%q ' "${COMMON[@]}" "${EXTRA[@]}" --output "$OUT_DIR"
+  echo
+  exit 0
+fi
 torchrun --standalone --nproc_per_node="$GPUS" pretrain_branch.py \
   "${COMMON[@]}" "${EXTRA[@]}" \
   --output "$OUT_DIR"
