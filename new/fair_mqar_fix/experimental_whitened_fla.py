@@ -19,6 +19,7 @@ from whitened_delta_reference import geo_reference
 def geo_via_fla_delta(
     state: Tensor, k: Tensor, v: Tensor, q: Tensor, H: Tensor, *,
     tau: float = 1.0, chunk_size: int = 64,
+    log_gate: Tensor | None = None,
 ) -> tuple[Tensor, Tensor]:
     if not k.is_cuda:
         raise RuntimeError("FLA fused Delta kernel requires a CUDA GPU")
@@ -26,6 +27,7 @@ def geo_via_fla_delta(
         raise ValueError("FLA chunk_size must be 16, 32, or 64")
     try:
         from fla.ops.delta_rule import chunk_delta_rule
+        from fla.ops.gated_delta_rule import chunk_gated_delta_rule
     except ImportError as exc:
         raise ImportError("Install fla and matching Triton for GPU testing") from exc
 
@@ -45,7 +47,7 @@ def geo_via_fla_delta(
 
     # FLA kernel needs BF16 q/k/v, but keeps recurrent state FP32 where
     # supported. Do not enable implicit K normalization or 1/sqrt(d) scaling.
-    out, W_final = chunk_delta_rule(
+    common = dict(
         q=z_q.to(torch.bfloat16),
         k=z_k.to(torch.bfloat16),
         v=v.to(torch.bfloat16),
@@ -56,6 +58,14 @@ def geo_via_fla_delta(
         use_qk_l2norm_in_kernel=False,
         chunk_size=chunk_size,
     )
+    if log_gate is None:
+        out, W_final = chunk_delta_rule(**common)
+    else:
+        if log_gate.shape != k.shape[:3]:
+            raise ValueError("log_gate must be [batch, tokens, heads]")
+        out, W_final = chunk_gated_delta_rule(
+            g=log_gate.to(torch.bfloat16), **common
+        )
     if W_final is None:
         raise RuntimeError("FLA did not return a final recurrent state")
     with torch.autocast(device_type="cuda", enabled=False):
