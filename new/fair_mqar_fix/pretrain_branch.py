@@ -15,6 +15,7 @@ Branch Memory, ``branch_cached``/``branch`` for the per-token variants).
 from __future__ import annotations
 
 import argparse
+from contextlib import nullcontext
 from datetime import timedelta
 import json
 import os
@@ -46,7 +47,7 @@ from data_split import (  # noqa: E402
 class PackedCorpus:
     """Random access over memmapped shards; no shard is fully loaded into RAM."""
 
-    def __init__(self, root: Path, seq_len: int) -> None:
+    def __init__(self, root: Path, seq_len: int, *, random_crop: bool = False) -> None:
         self.files = sorted(root.glob("*.npy"))
         if not self.files:
             raise SystemExit(f"no .npy shards under {root}")
@@ -57,29 +58,53 @@ class PackedCorpus:
                 f"seq_len {seq_len} exceeds packed length {self.packed_len}"
             )
         self.seq_len = seq_len
+        self.random_crop = random_crop
         self.lengths = np.array([m.shape[0] for m in self.maps], dtype=np.int64)
         self.cum = np.cumsum(self.lengths)
 
     def __len__(self) -> int:
         return int(self.cum[-1])
 
-    def gather(self, idx: np.ndarray) -> np.ndarray:
+    def gather(self, idx: np.ndarray, *, offsets: np.ndarray | None = None) -> np.ndarray:
+        """Read packed sub-sequences; validation uses a deterministic prefix."""
         idx = np.asarray(idx, dtype=np.int64)
         shard = np.searchsorted(self.cum, idx, side="right")
         within = idx - np.where(shard > 0, self.cum[shard - 1], 0)
+        if offsets is None:
+            offsets = np.zeros(len(idx), dtype=np.int64)
+        else:
+            offsets = np.asarray(offsets, dtype=np.int64)
+            if offsets.shape != idx.shape or np.any(offsets < 0) or np.any(
+                offsets + self.seq_len > self.packed_len
+            ):
+                raise ValueError("invalid packed-row crop offsets")
         rows = np.stack(
-            [self.maps[s][w][: self.seq_len] for s, w in zip(shard, within)]
+            [self.maps[sh][row][off:off + self.seq_len]
+             for sh, row, off in zip(shard, within, offsets)]
         )
         return rows.astype(np.int64)
 
+    def _offsets(self, n: int, gen: torch.Generator) -> np.ndarray | None:
+        if not self.random_crop or self.seq_len == self.packed_len:
+            return None
+        return torch.randint(
+            0, self.packed_len - self.seq_len + 1, (n,), generator=gen
+        ).numpy()
+
     def sample(self, n: int, gen: torch.Generator) -> np.ndarray:
         idx = torch.randint(len(self), (n,), generator=gen).numpy()
-        return self.gather(idx)
+        return self.gather(idx, offsets=self._offsets(n, gen))
 
     def sample_split(self, n: int, gen: torch.Generator, split: RowSplit) -> np.ndarray:
         idx = split.train_indices(n, gen, len(self))
-        return self.gather(idx)
+        return self.gather(idx, offsets=self._offsets(n, gen))
 
+
+def grad_sync_context(model, *, ddp: bool, micro_idx: int, grad_accum: int):
+    """Reduce gradients only in the last microbatch; wrap forward AND backward."""
+    if ddp and micro_idx < grad_accum - 1:
+        return model.no_sync()
+    return nullcontext()
 
 def main() -> int:
     p = argparse.ArgumentParser(
@@ -509,23 +534,26 @@ def main() -> int:
             model.train()
             optimizer.zero_grad(set_to_none=True)
             micro_losses = []
-            for _ in range(a.grad_accum):
+            for micro_idx in range(a.grad_accum):
                 ids = torch.from_numpy(
                     corpus.sample_split(a.batch_size, gen, split)
                 ).to(device)
-                with torch.autocast(
-                    device_type="cuda",
-                    dtype=torch.bfloat16,
-                    enabled=(a.amp == "bf16" and device.type == "cuda"),
+                with grad_sync_context(
+                    model, ddp=ddp, micro_idx=micro_idx, grad_accum=a.grad_accum
                 ):
-                    logits, _ = model(ids)
-                    loss = F.cross_entropy(
-                        logits[:, :-1].reshape(-1, logits.shape[-1]),
-                        ids[:, 1:].reshape(-1),
-                    )
-                if not torch.isfinite(loss):
-                    raise FloatingPointError(f"non-finite loss at step {step}")
-                (loss / a.grad_accum).backward()
+                    with torch.autocast(
+                        device_type=device.type,
+                        dtype=torch.bfloat16,
+                        enabled=(a.amp == "bf16" and device.type == "cuda"),
+                    ):
+                        logits, _ = model(ids)
+                        loss = F.cross_entropy(
+                            logits[:, :-1].reshape(-1, logits.shape[-1]),
+                            ids[:, 1:].reshape(-1),
+                        )
+                    if not torch.isfinite(loss):
+                        raise FloatingPointError(f"non-finite loss at step {step}")
+                    (loss / a.grad_accum).backward()
                 micro_losses.append(float(loss.detach()))
             lr_now = learning_rate_at(step)
             for group in optimizer.param_groups:
