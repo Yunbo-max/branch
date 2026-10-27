@@ -332,7 +332,8 @@ class SingleGeometryMixer(ChunkedBranchMixer):
             else:
                 for _ in range(take):
                     if pos == 0:
-                        factor = self._make_factor(C_frozen)
+                        with torch.autocast(device_type=x.device.type, enabled=False):
+                            factor = self._make_factor(C_frozen)
                     with torch.autocast(device_type=x.device.type, enabled=False):
                         out, states, C_run = self._token_step(
                             states,
