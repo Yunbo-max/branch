@@ -20,16 +20,17 @@ fixed. 1x H100, 2000 steps, MQAR seq 128 / 8 KV pairs / vocab 8192.
   at chance. The full-C protection geometry adds nothing over the plain delta
   rule (marginally worse).
 - Attention learns the algorithm and generalises to ~99%.
-- This is stronger than the fixed-set result: the recurrent arms do not even
-  fit the training stream, so the failure is not overfitting — the single
-  compressed state fundamentally cannot store/retrieve 8 distinct KV
-  associations, with or without the geometry.
+- This is stronger than the fixed-set result: the tested recurrent arms do not
+  learn to retrieve unseen KV combinations under this training protocol. It
+  does **not** prove that a single recurrent state is algebraically unable to
+  represent eight associations: 8 independent keys are representable within
+  a 64-dimensional key state. Missing trainable retention gates, poor
+  optimization, and representation/position learning remain possible causes.
 
 ## Next per plan
 
 Step 3: reduce difficulty to 2 KV pairs to distinguish capacity/interference
 from a broken recurrence/training path; also try differentiating through C
-(`DIFFERENTIATE_COVARIANCE=1`). Step 4 (50B pretrain / fused kernel) is not
-warranted until the memory mechanism shows any sign of learning.
+(`DIFFERENTIATE_COVARIANCE=1`). Step 4 (50B pretrain / fused kernel) is not warranted until the memory mechanism shows learnable retrieval. Also see STEP3_MQAR_DIAG_2026-10-27.md: the 2-pair seq64/full-C comparison had exactly one geometry chunk, so C was inactive and that experiment cannot establish a negative effect of Query protection.
 
 Reproduced by: `bash run_mqar_online.sh 2000` (in `new/fair_mqar_fix/`).
