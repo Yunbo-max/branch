@@ -571,10 +571,16 @@ def main() -> int:
                             logits[:, :-1].reshape(-1, logits.shape[-1]),
                             ids[:, 1:].reshape(-1),
                         )
-                    if not torch.isfinite(loss):
-                        raise FloatingPointError(f"non-finite loss at step {step}")
                     (loss / a.grad_accum).backward()
-                micro_losses.append(float(loss.detach()))
+                # Keep small scalar losses on device; .item()/float() on every
+                # microbatch would force a CUDA synchronization 128x per step at 4K.
+                micro_losses.append(loss.detach())
+            mean_loss = torch.stack(micro_losses).mean()
+            bad_loss = (~torch.isfinite(mean_loss)).to(torch.int32)
+            if ddp:
+                dist.all_reduce(bad_loss, op=dist.ReduceOp.MAX)
+            if bool(bad_loss.item()):
+                raise FloatingPointError(f"non-finite loss at step {step}")
             lr_now = learning_rate_at(step)
             for group in optimizer.param_groups:
                 group["lr"] = lr_now
@@ -592,7 +598,7 @@ def main() -> int:
             )
             rec = {
                 "step": step,
-                "train_loss": float(sum(micro_losses) / len(micro_losses)),
+                "train_loss": float(mean_loss),
                 "grad_norm": float(gn),
                 "lr": lr_now,
                 "tokens_seen": tokens_seen,
