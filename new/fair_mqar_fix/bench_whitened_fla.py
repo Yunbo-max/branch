@@ -43,6 +43,7 @@ def main():
     if not torch.cuda.is_available():
         raise SystemExit("requires CUDA GPU with installed FLA")
     import fla.ops.delta_rule  # noqa: F401
+    from fla.ops.gated_delta_rule import chunk_gated_delta_rule
 
     torch.manual_seed(37)
     d, dv, T, h = a.d_key, a.d_value, a.chunk, a.heads
@@ -58,8 +59,22 @@ def main():
     def fla_run():
         return geo_via_fla_delta(S, K, V, Q, H, chunk_size=64)
 
+    def native_gdn_run():
+        # A speed control, NOT an equivalent mathematical model.
+        # Scalar log-decay g<0 and the same q/k/v/state/head layout.
+        return chunk_gated_delta_rule(
+            q=Q.to(torch.bfloat16), k=K.to(torch.bfloat16),
+            v=V.to(torch.bfloat16),
+            g=torch.full((1, T, h), -0.01, device="cuda", dtype=torch.bfloat16),
+            beta=torch.full((1, T, h), 0.5, device="cuda", dtype=torch.bfloat16),
+            scale=1.0, initial_state=S,
+            output_final_state=True, chunk_size=64,
+            use_qk_l2norm_in_kernel=False,
+        )
+
     methods = [("original_pytorch", lambda: original_torch(S, K, V, Q, H)),
-               ("whitened_fla", fla_run)]
+               ("whitened_fla", fla_run),
+               ("native_fla_gdn", native_gdn_run)]
     records = []
     for name, fn in methods:
         for _ in range(a.warmup):
@@ -97,7 +112,7 @@ def main():
             "backward": a.include_backward,
         },
         "records": records, "errors": accuracy,
-        "note": "isolated frozen-C block, not full 0.79B LM, BF16 FLA vs FP32 PyTorch",
+        "note": "isolated frozen-C block; native FLA GDN is runtime control, not an equivalent objective or full 0.79B LM",
     }
     a.output.parent.mkdir(parents=True, exist_ok=True)
     a.output.write_text(json.dumps(result, indent=2))
