@@ -36,6 +36,7 @@ def default_config(a) -> FairLMConfig:
         fork_cost=a.fork_cost, protection_decay=a.protection_decay,
         covariance=a.covariance, differentiate_covariance=a.differentiate_covariance,
         solver_refresh=a.solver_refresh, chunk_len=a.chunk_len,
+        geometry_mode=a.geometry_mode, read_mode=a.read_mode,
     )
 
 
@@ -69,7 +70,11 @@ def add_common_args(p: argparse.ArgumentParser) -> None:
     p.add_argument("--protection-decay", type=float, default=0.95)
     p.add_argument("--covariance", choices=["full", "diagonal"], default="full")
     p.add_argument("--chunk-len", type=int, default=64,
-                   help="chunked arm: tokens per Python iteration")
+                   help="geometry update interval / chunked recurrence length")
+    p.add_argument("--geometry-mode", choices=["full", "isotropic", "rayleigh"],
+                   default="full", help="single_geo write geometry: matched architecture")
+    p.add_argument("--read-mode", choices=["chunk_start", "current_only"],
+                   default="chunk_start", help="single_geo historical-read ablation")
     p.add_argument("--solver-refresh", type=int, default=1,
                    help="branch_cached only: reuse the SPD factorization for N tokens")
     p.add_argument("--differentiate-covariance", action="store_true")
@@ -199,6 +204,8 @@ def run(a) -> dict:
         "final": final,
         "training": {
             "steps": a.steps, "batch_size": a.batch_size, "lr": a.lr,
+            "geometry_mode": a.geometry_mode if a.mixer == "single_geo" else None,
+            "read_mode": a.read_mode if a.mixer == "single_geo" else None,
             "online_train": a.online_train,
             "online_seed_offset": a.online_seed_offset if a.online_train else None,
             "online_examples_generated": a.steps * a.batch_size
