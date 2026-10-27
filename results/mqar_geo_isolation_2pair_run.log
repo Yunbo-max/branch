@@ -1,0 +1,63 @@
+Running 5 items in this shard
+.....                                                                    [100%]
+=============================== warnings summary ===============================
+tests/test_mqar_geometry_activation.py::test_nonzero_C_affects_only_later_chunks
+  /inspire/hdd/global_user/zhangjiaquan-253108540222/research/DiffRwkv-geodelta-exp/new/fair_mqar_fix/tests/test_mqar_geometry_activation.py:68: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+  Consider using tensor.detach() first. (Triggered internally at /opt/pytorch/pytorch/aten/src/ATen/native/Scalar.cpp:22.)
+    assert (y_i[:, 16:] - y_f[:, 16:]).abs().max().item() > 1e-8
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+5 passed, 1 warning in 3.92s
+=== geometry=isotropic chunk=64 steps=1000 ===
+{"step": 1, "train_loss": 9.066985130310059, "train_accuracy": 0.0, "grad_norm": 2.257258176803589, "valid": {"loss": 9.181378602981567, "accuracy": 0.0, "labeled_positions": 1024}, "test": {"loss": 9.152862429618835, "accuracy": 0.0, "labeled_positions": 1024}}
+{"step": 250, "train_loss": 8.708126068115234, "train_accuracy": 0.0, "grad_norm": 2.087573289871216, "valid": {"loss": 8.711527109146118, "accuracy": 0.0, "labeled_positions": 1024}, "test": {"loss": 8.62863576412201, "accuracy": 0.0, "labeled_positions": 1024}}
+{"step": 500, "train_loss": 8.505998611450195, "train_accuracy": 0.0, "grad_norm": 1.8888777494430542, "valid": {"loss": 8.57946515083313, "accuracy": 0.0, "labeled_positions": 1024}, "test": {"loss": 8.535486340522766, "accuracy": 0.0009765625, "labeled_positions": 1024}}
+{"step": 750, "train_loss": 8.505642890930176, "train_accuracy": 0.0, "grad_norm": 1.452059268951416, "valid": {"loss": 8.450504660606384, "accuracy": 0.0, "labeled_positions": 1024}, "test": {"loss": 8.447959303855896, "accuracy": 0.0, "labeled_positions": 1024}}
+{"step": 1000, "train_loss": 8.327600479125977, "train_accuracy": 0.0, "grad_norm": 0.6726660132408142, "valid": {"loss": 8.376063585281372, "accuracy": 0.0009765625, "labeled_positions": 1024}, "test": {"loss": 8.35325562953949, "accuracy": 0.0009765625, "labeled_positions": 1024}}
+{"mixer": "single_geo", "parameters": {"mixer": 627208, "backbone_and_head": 4722688, "total": 5349896}, "final": {"valid": {"loss": 8.376063585281372, "accuracy": 0.0009765625, "labeled_positions": 1024}, "test": {"loss": 8.35325562953949, "accuracy": 0.0009765625, "labeled_positions": 1024}}, "wall_seconds": 18.038605326000834}
+=== geometry=full chunk=64 steps=1000 ===
+{"step": 1, "train_loss": 9.066985130310059, "train_accuracy": 0.0, "grad_norm": 2.257258176803589, "valid": {"loss": 9.18138301372528, "accuracy": 0.0, "labeled_positions": 1024}, "test": {"loss": 9.152857899665833, "accuracy": 0.0, "labeled_positions": 1024}}
+{"step": 250, "train_loss": 8.70819091796875, "train_accuracy": 0.0, "grad_norm": 2.0875587463378906, "valid": {"loss": 8.711411237716675, "accuracy": 0.0, "labeled_positions": 1024}, "test": {"loss": 8.628539800643921, "accuracy": 0.0, "labeled_positions": 1024}}
+{"step": 500, "train_loss": 8.50622272491455, "train_accuracy": 0.0, "grad_norm": 1.888893961906433, "valid": {"loss": 8.579496502876282, "accuracy": 0.0, "labeled_positions": 1024}, "test": {"loss": 8.535475969314575, "accuracy": 0.0009765625, "labeled_positions": 1024}}
+{"step": 750, "train_loss": 8.505325317382812, "train_accuracy": 0.0, "grad_norm": 1.4518345594406128, "valid": {"loss": 8.450485706329346, "accuracy": 0.0, "labeled_positions": 1024}, "test": {"loss": 8.447851300239563, "accuracy": 0.0, "labeled_positions": 1024}}
+{"step": 1000, "train_loss": 8.327729225158691, "train_accuracy": 0.0, "grad_norm": 0.6726343631744385, "valid": {"loss": 8.376057147979736, "accuracy": 0.0009765625, "labeled_positions": 1024}, "test": {"loss": 8.353257894515991, "accuracy": 0.0009765625, "labeled_positions": 1024}}
+{"mixer": "single_geo", "parameters": {"mixer": 627208, "backbone_and_head": 4722688, "total": 5349896}, "final": {"valid": {"loss": 8.376057147979736, "accuracy": 0.0009765625, "labeled_positions": 1024}, "test": {"loss": 8.353257894515991, "accuracy": 0.0009765625, "labeled_positions": 1024}}, "wall_seconds": 23.024371781997615}
+=== geometry=isotropic chunk=16 steps=1000 ===
+{"step": 1, "train_loss": 9.066993713378906, "train_accuracy": 0.0, "grad_norm": 2.2572662830352783, "valid": {"loss": 9.18138301372528, "accuracy": 0.0, "labeled_positions": 1024}, "test": {"loss": 9.152856707572937, "accuracy": 0.0, "labeled_positions": 1024}}
+{"step": 250, "train_loss": 8.708169937133789, "train_accuracy": 0.0, "grad_norm": 2.0875117778778076, "valid": {"loss": 8.711373925209045, "accuracy": 0.0, "labeled_positions": 1024}, "test": {"loss": 8.628552556037903, "accuracy": 0.0, "labeled_positions": 1024}}
+{"step": 500, "train_loss": 8.506108283996582, "train_accuracy": 0.0, "grad_norm": 1.8888803720474243, "valid": {"loss": 8.579460740089417, "accuracy": 0.0, "labeled_positions": 1024}, "test": {"loss": 8.535435795783997, "accuracy": 0.0009765625, "labeled_positions": 1024}}
+{"step": 750, "train_loss": 8.505281448364258, "train_accuracy": 0.0, "grad_norm": 1.4515125751495361, "valid": {"loss": 8.450493216514587, "accuracy": 0.0, "labeled_positions": 1024}, "test": {"loss": 8.447812676429749, "accuracy": 0.0, "labeled_positions": 1024}}
+{"step": 1000, "train_loss": 8.327733993530273, "train_accuracy": 0.0, "grad_norm": 0.672728955745697, "valid": {"loss": 8.376091599464417, "accuracy": 0.0009765625, "labeled_positions": 1024}, "test": {"loss": 8.353271484375, "accuracy": 0.0009765625, "labeled_positions": 1024}}
+{"mixer": "single_geo", "parameters": {"mixer": 627208, "backbone_and_head": 4722688, "total": 5349896}, "final": {"valid": {"loss": 8.376091599464417, "accuracy": 0.0009765625, "labeled_positions": 1024}, "test": {"loss": 8.353271484375, "accuracy": 0.0009765625, "labeled_positions": 1024}}, "wall_seconds": 31.46812385800149}
+=== geometry=full chunk=16 steps=1000 ===
+{"step": 1, "train_loss": 9.067972183227539, "train_accuracy": 0.0, "grad_norm": 2.25437068939209, "valid": {"loss": 9.181172847747803, "accuracy": 0.0, "labeled_positions": 1024}, "test": {"loss": 9.152705073356628, "accuracy": 0.0, "labeled_positions": 1024}}
+{"step": 250, "train_loss": 8.73227310180664, "train_accuracy": 0.0, "grad_norm": 2.08145809173584, "valid": {"loss": 8.701228857040405, "accuracy": 0.0, "labeled_positions": 1024}, "test": {"loss": 8.622575998306274, "accuracy": 0.0009765625, "labeled_positions": 1024}}
+{"step": 500, "train_loss": 8.501016616821289, "train_accuracy": 0.0, "grad_norm": 1.8792999982833862, "valid": {"loss": 8.580918908119202, "accuracy": 0.0, "labeled_positions": 1024}, "test": {"loss": 8.534004211425781, "accuracy": 0.0009765625, "labeled_positions": 1024}}
+{"step": 750, "train_loss": 8.520126342773438, "train_accuracy": 0.0, "grad_norm": 1.5970662832260132, "valid": {"loss": 8.463906168937683, "accuracy": 0.0, "labeled_positions": 1024}, "test": {"loss": 8.456197619438171, "accuracy": 0.0, "labeled_positions": 1024}}
+{"step": 1000, "train_loss": 8.28458023071289, "train_accuracy": 0.0, "grad_norm": 0.8872098326683044, "valid": {"loss": 8.34897267818451, "accuracy": 0.0, "labeled_positions": 1024}, "test": {"loss": 8.332297325134277, "accuracy": 0.0, "labeled_positions": 1024}}
+{"mixer": "single_geo", "parameters": {"mixer": 627208, "backbone_and_head": 4722688, "total": 5349896}, "final": {"valid": {"loss": 8.34897267818451, "accuracy": 0.0, "labeled_positions": 1024}, "test": {"loss": 8.332297325134277, "accuracy": 0.0, "labeled_positions": 1024}}, "wall_seconds": 48.88885356800165}
+=== geometry=isotropic chunk=2 steps=1000 ===
+{"step": 1, "train_loss": 9.067001342773438, "train_accuracy": 0.0, "grad_norm": 2.257261276245117, "valid": {"loss": 9.181388139724731, "accuracy": 0.0, "labeled_positions": 1024}, "test": {"loss": 9.152867794036865, "accuracy": 0.0, "labeled_positions": 1024}}
+{"step": 250, "train_loss": 8.708028793334961, "train_accuracy": 0.0, "grad_norm": 2.0875704288482666, "valid": {"loss": 8.7114577293396, "accuracy": 0.0, "labeled_positions": 1024}, "test": {"loss": 8.628566861152649, "accuracy": 0.0, "labeled_positions": 1024}}
+{"step": 500, "train_loss": 8.506292343139648, "train_accuracy": 0.0, "grad_norm": 1.8888181447982788, "valid": {"loss": 8.57955002784729, "accuracy": 0.0, "labeled_positions": 1024}, "test": {"loss": 8.53549039363861, "accuracy": 0.0009765625, "labeled_positions": 1024}}
+{"step": 750, "train_loss": 8.505365371704102, "train_accuracy": 0.0, "grad_norm": 1.4518331289291382, "valid": {"loss": 8.450536012649536, "accuracy": 0.0, "labeled_positions": 1024}, "test": {"loss": 8.44795846939087, "accuracy": 0.0, "labeled_positions": 1024}}
+{"step": 1000, "train_loss": 8.327747344970703, "train_accuracy": 0.0, "grad_norm": 0.6728959083557129, "valid": {"loss": 8.37608253955841, "accuracy": 0.0009765625, "labeled_positions": 1024}, "test": {"loss": 8.353262305259705, "accuracy": 0.0009765625, "labeled_positions": 1024}}
+{"mixer": "single_geo", "parameters": {"mixer": 627208, "backbone_and_head": 4722688, "total": 5349896}, "final": {"valid": {"loss": 8.37608253955841, "accuracy": 0.0009765625, "labeled_positions": 1024}, "test": {"loss": 8.353262305259705, "accuracy": 0.0009765625, "labeled_positions": 1024}}, "wall_seconds": 156.42126167300012}
+=== geometry=full chunk=2 steps=1000 ===
+{"step": 1, "train_loss": 9.069185256958008, "train_accuracy": 0.0, "grad_norm": 2.249554395675659, "valid": {"loss": 9.180873394012451, "accuracy": 0.0, "labeled_positions": 1024}, "test": {"loss": 9.152008056640625, "accuracy": 0.0, "labeled_positions": 1024}}
+{"step": 250, "train_loss": 8.736245155334473, "train_accuracy": 0.0, "grad_norm": 2.073434591293335, "valid": {"loss": 8.700068473815918, "accuracy": 0.0, "labeled_positions": 1024}, "test": {"loss": 8.619812607765198, "accuracy": 0.0009765625, "labeled_positions": 1024}}
+{"step": 500, "train_loss": 8.485940933227539, "train_accuracy": 0.0, "grad_norm": 1.8965965509414673, "valid": {"loss": 8.564430594444275, "accuracy": 0.0, "labeled_positions": 1024}, "test": {"loss": 8.51632809638977, "accuracy": 0.0009765625, "labeled_positions": 1024}}
+{"step": 750, "train_loss": 8.446816444396973, "train_accuracy": 0.0, "grad_norm": 1.6815435886383057, "valid": {"loss": 8.40101420879364, "accuracy": 0.0, "labeled_positions": 1024}, "test": {"loss": 8.390276432037354, "accuracy": 0.001953125, "labeled_positions": 1024}}
+{"step": 1000, "train_loss": 7.962268829345703, "train_accuracy": 0.03125, "grad_norm": 1.6745738983154297, "valid": {"loss": 8.064308881759644, "accuracy": 0.009765625, "labeled_positions": 1024}, "test": {"loss": 8.042807698249817, "accuracy": 0.0107421875, "labeled_positions": 1024}}
+{"mixer": "single_geo", "parameters": {"mixer": 627208, "backbone_and_head": 4722688, "total": 5349896}, "final": {"valid": {"loss": 8.064308881759644, "accuracy": 0.009765625, "labeled_positions": 1024}, "test": {"loss": 8.042807698249817, "accuracy": 0.0107421875, "labeled_positions": 1024}}, "wall_seconds": 296.62293784099893}
+chunk_16_full          valid acc=0.00000  CE=8.34897
+chunk_16_isotropic     valid acc=0.00098  CE=8.37609
+chunk_2_full           valid acc=0.00977  CE=8.06431
+chunk_2_isotropic      valid acc=0.00098  CE=8.37608
+chunk_64_full          valid acc=0.00098  CE=8.37606
+chunk_64_isotropic     valid acc=0.00098  CE=8.37606
+within-model Full minus Iso:
+chunk 2: Δvalid_acc=+0.00879, ΔCE=-0.31177
+chunk 16: Δvalid_acc=-0.00098, ΔCE=-0.02712
+chunk 64: Δvalid_acc=+0.00000, ΔCE=-0.00001
+Results: ../../results/mqar_geo_isolation_2pair
