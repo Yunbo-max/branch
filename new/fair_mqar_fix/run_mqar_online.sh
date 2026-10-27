@@ -5,6 +5,10 @@
 set -euo pipefail
 
 STEPS=${1:-2000}
+SEQ_LEN=${SEQ_LEN:-128}
+NUM_KV_PAIRS=${NUM_KV_PAIRS:-8}
+VOCAB_SIZE=${VOCAB_SIZE:-8192}
+DIFFERENTIATE_COVARIANCE=${DIFFERENTIATE_COVARIANCE:-0}
 ARMS=(${ARMS:-delta single_geo transformer})
 DEVICE=${DEVICE:-cuda}
 EVAL_EXAMPLES=${EVAL_EXAMPLES:-512}
@@ -19,19 +23,23 @@ if [[ -z "$OUTPUT_DIR" ]]; then
   OUTPUT_DIR="$HERE/../../results/mqar_online_$(date -u +%Y%m%dT%H%M%SZ)"
 fi
 mkdir -p "$OUTPUT_DIR"
-echo "online MQAR: steps=$STEPS seed=$SEED eval_examples=$EVAL_EXAMPLES batch=$BATCH_SIZE output=$OUTPUT_DIR"
+echo "online MQAR: steps=$STEPS seed=$SEED seq=$SEQ_LEN pairs=$NUM_KV_PAIRS vocab=$VOCAB_SIZE eval_examples=$EVAL_EXAMPLES batch=$BATCH_SIZE diffC=$DIFFERENTIATE_COVARIANCE output=$OUTPUT_DIR"
+EXTRA=()
+if [[ "$DIFFERENTIATE_COVARIANCE" == 1 ]]; then
+  EXTRA+=(--differentiate-covariance)
+fi
 for ARM in "${ARMS[@]}"; do
   echo "===== $ARM ====="
   python3 train_fair.py \
     --online-train --online-seed-offset 3000001 \
     --mixer "$ARM" --device "$DEVICE" \
-    --vocab-size 8192 --seq-len 128 --num-kv-pairs 8 \
+    --vocab-size "$VOCAB_SIZE" --seq-len "$SEQ_LEN" --num-kv-pairs "$NUM_KV_PAIRS" \
     --num-examples 8192 --seed "$SEED" \
     --d-model 256 --layers 2 --heads 4 --d-key 64 --d-value 64 \
     --steps "$STEPS" --batch-size "$BATCH_SIZE" --lr "$LEARNING_RATE" \
     --weight-decay 0.01 --eval-every "$EVAL_EVERY" \
     --eval-examples "$EVAL_EXAMPLES" --log-every "$EVAL_EVERY" \
-    --threads 8 --output "$OUTPUT_DIR/$ARM" \
+    --threads 8 "${EXTRA[@]}" --output "$OUTPUT_DIR/$ARM" \
     2>&1 | tee "$OUTPUT_DIR/$ARM.log"
 done
 
