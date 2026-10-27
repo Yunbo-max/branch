@@ -61,3 +61,49 @@ def whitened_delta_reference(
         L.transpose(-1, -2), W, upper=True
     )
     return torch.stack(outputs, 1), final_state
+
+
+def gated_geo_reference(
+    state: Tensor, k: Tensor, v: Tensor, q: Tensor, H: Tensor,
+    gate: Tensor, tau: float = 1.,
+) -> tuple[Tensor, Tensor]:
+    """GeoDelta with scalar retention gate alpha_t in [0,1] on old state."""
+    L = torch.linalg.cholesky(H)
+    u = torch.cholesky_solve(k.permute(0, 2, 3, 1), L).permute(0, 3, 1, 2)
+    a = u / (tau + (k * u).sum(-1, keepdim=True))
+    S = state
+    outputs = []
+    for i in range(k.shape[1]):
+        S = gate[:, i].unsqueeze(-1).unsqueeze(-1) * S
+        e = v[:, i] - torch.einsum("bhkv,bhk->bhv", S, k[:, i])
+        S = S + torch.einsum("bhk,bhv->bhkv", a[:, i], e)
+        outputs.append(torch.einsum("bhkv,bhk->bhv", S, q[:, i]))
+    return torch.stack(outputs, 1), S
+
+
+def whitened_gated_geo_reference(
+    state: Tensor, k: Tensor, v: Tensor, q: Tensor, H: Tensor,
+    gate: Tensor, tau: float = 1.,
+) -> tuple[Tensor, Tensor]:
+    """Gated GeoDelta is exactly GDN over whitened keys/queries/state."""
+    L = torch.linalg.cholesky(H)
+    z_k = torch.linalg.solve_triangular(
+        L, k.permute(0, 2, 3, 1), upper=False
+    ).permute(0, 3, 1, 2)
+    z_q = torch.linalg.solve_triangular(
+        L, q.permute(0, 2, 3, 1), upper=False
+    ).permute(0, 3, 1, 2)
+    W = L.transpose(-1, -2) @ state
+    beta = 1. / (tau + z_k.square().sum(-1))
+    outputs = []
+    for i in range(k.shape[1]):
+        W = gate[:, i].unsqueeze(-1).unsqueeze(-1) * W
+        e = v[:, i] - torch.einsum("bhkv,bhk->bhv", W, z_k[:, i])
+        W = W + torch.einsum(
+            "bhk,bhv->bhkv", beta[:, i].unsqueeze(-1) * z_k[:, i], e
+        )
+        outputs.append(torch.einsum("bhkv,bhk->bhv", W, z_q[:, i]))
+    final_state = torch.linalg.solve_triangular(
+        L.transpose(-1, -2), W, upper=True
+    )
+    return torch.stack(outputs, 1), final_state
