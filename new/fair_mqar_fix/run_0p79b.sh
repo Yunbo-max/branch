@@ -1,61 +1,141 @@
 #!/usr/bin/env bash
-# 0.79B-scale arm runner (21 layers, hidden 1536, 6 heads, seq 16K, 8xH200).
-# Usage: bash run_0p79b.sh <arm> [steps]
+# 0.79B GeoDelta training protocol: 4K first, 16K continuation/controlled comparison.
+# H200 default: 8 GPUs. Works for other counts by overriding GPUS/GLOBAL_TOKENS.
+# Usage: bash run_0p79b.sh <single_full|isotropic|rayleigh|delta_proxy|march_proxy|fork|transformer25> [total_steps]
+# Dry setup check: GPUS=8 SEQ_LEN=4096 GLOBAL_TOKENS=32768 bash run_0p79b.sh single_full 3
 set -euo pipefail
 
-ARM=${1:?arm: march | single_full | fork | isotropic | rayleigh | delta_chunked | transformer25}
+ARM=${1:?usage: $0 <single_full|isotropic|rayleigh|delta_proxy|march_proxy|fork|transformer25> [total_steps]}
 STEPS=${2:-11921}
-REPO=/inspire/hdd/global_user/zhangjiaquan-253108540222/research/DiffRwkv
-cd "$REPO/new/fair_mqar_fix"
+GPUS=${GPUS:-8}
+SEQ_LEN=${SEQ_LEN:-4096}
+MICRO_BATCH=${MICRO_BATCH:-1}
+GLOBAL_TOKENS=${GLOBAL_TOKENS:-4194304}
+CHUNK_LEN=${CHUNK_LEN:-256}
+DELTA_TILE_LEN=${DELTA_TILE_LEN:-0}
+DRY_RUN=${DRY_RUN:-0}
+PROTECTION_DECAY=${PROTECTION_DECAY:-0.95}
+DIFFERENTIATE_COVARIANCE=${DIFFERENTIATE_COVARIANCE:-1}
+READ_MODE=${READ_MODE:-chunk_start}
+PROTECT=${PROTECT:-8.0}
+SEED=${SEED:-17}
+AMP=${AMP:-bf16}
+CHECKPOINT_EVERY=${CHECKPOINT_EVERY:-500}
+EVAL_EVERY=${EVAL_EVERY:-100}
+TIME_BUDGET_SECONDS=${TIME_BUDGET_SECONDS:-345600}
+RANDOM_CROP=${RANDOM_CROP:-1}
+FUSED_ADAMW=${FUSED_ADAMW:-1}
+LR=${LR:-4e-4}
+REPO=${REPO:-/inspire/hdd/global_user/zhangjiaquan-253108540222/research/DiffRwkv}
+PACKED_DIR=${PACKED_DIR:-$REPO/new/MARCH/data/packed_16k}
+RUN_TAG=${RUN_TAG:-4k_fullC}
+OUT_ROOT=${OUT_ROOT:-$REPO/results/scale_0p79b/$RUN_TAG}
+RESUME=${RESUME:-}
 
-export OMP_NUM_THREADS=8
-export MKL_NUM_THREADS=8
-export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+case "$SEQ_LEN" in 4096|16384) ;; *) echo "ERROR: only tested plan lengths 4096/16384" >&2; exit 2 ;; esac
+case "$AMP" in bf16|none) ;; *) echo "ERROR: AMP must be bf16 or none" >&2; exit 2 ;; esac
+case "$GPUS" in ''|*[!0-9]*) echo "ERROR: GPUS must be integer" >&2; exit 2 ;; esac
+if (( GPUS < 1 || MICRO_BATCH < 1 || GLOBAL_TOKENS < 1 )); then
+  echo "ERROR: invalid GPU/batch/token configuration" >&2; exit 2
+fi
+PER_MICRO=$((GPUS * MICRO_BATCH * SEQ_LEN))
+if (( GLOBAL_TOKENS % PER_MICRO != 0 )); then
+  echo "ERROR: GLOBAL_TOKENS must be divisible by GPUS*MICRO_BATCH*SEQ_LEN=$PER_MICRO" >&2
+  exit 2
+fi
+GRAD_ACCUM=$((GLOBAL_TOKENS / PER_MICRO))
+if (( GRAD_ACCUM < 1 )); then echo "ERROR: grad accumulation below one" >&2; exit 2; fi
+if (( CHUNK_LEN < 1 || SEQ_LEN % CHUNK_LEN != 0 )); then
+  echo "ERROR: CHUNK_LEN must divide SEQ_LEN" >&2; exit 2
+fi
+if (( DELTA_TILE_LEN < 0 || (DELTA_TILE_LEN > 0 && CHUNK_LEN % DELTA_TILE_LEN != 0) )); then
+  echo "ERROR: DELTA_TILE_LEN must divide CHUNK_LEN (or be 0)" >&2; exit 2
+fi
+if [[ "$DRY_RUN" != 1 && ! -d "$PACKED_DIR" ]]; then
+  echo "ERROR: packed dataset does not exist: $PACKED_DIR" >&2; exit 2
+fi
+
+if [[ "$DRY_RUN" != 1 ]]; then
+  cd "$REPO/new/fair_mqar_fix"
+fi
+export OMP_NUM_THREADS=${OMP_NUM_THREADS:-8}
+export MKL_NUM_THREADS=${MKL_NUM_THREADS:-8}
+export PYTORCH_CUDA_ALLOC_CONF=${PYTORCH_CUDA_ALLOC_CONF:-expandable_segments:True}
 export HF_HUB_OFFLINE=1
-unset CUDA_VISIBLE_DEVICES
 
 COMMON=(
-  --packed-dir "$REPO/new/MARCH/data/packed_16k"
-  --seq-len 16384 --batch-size 1 --grad-accum 32 --steps "$STEPS"
+  --packed-dir "$PACKED_DIR"
+  --seq-len "$SEQ_LEN" --batch-size "$MICRO_BATCH" --grad-accum "$GRAD_ACCUM" --steps "$STEPS"
   --d-model 1536 --layers 21 --heads 6 --d-key 256 --d-value 256
   --d-route 64 --ff-mult 4 --vocab-size 32000
-  --chunk-len 256 --grad-checkpoint
-  --lr 4e-4 --weight-decay 0.1
+  --chunk-len "$CHUNK_LEN" --delta-tile-len "$DELTA_TILE_LEN" --grad-checkpoint
+  --protection-decay "$PROTECTION_DECAY" --protect "$PROTECT" --seed "$SEED"
+  --lr "$LR" --weight-decay 0.1
   --lr-schedule wsd --warmup-frac 0.01 --decay-frac 0.2 --min-lr-ratio 0.1
   --split-seed 12345 --val-per-mille 20 --test-per-mille 10
-  --eval-every 500 --eval-batches 4 --checkpoint-every 500
-  --keep-checkpoints last --log-every 10 --threads 8 --device cuda
-  --amp none --time-budget-seconds 345600
+  --eval-every "$EVAL_EVERY" --eval-batches 4
+  --checkpoint-every "$CHECKPOINT_EVERY" --keep-checkpoints last
+  --log-every 10 --threads 8 --device cuda
+  --amp "$AMP" --time-budget-seconds "$TIME_BUDGET_SECONDS"
 )
+if [[ "$RANDOM_CROP" == 1 ]]; then COMMON+=(--random-crop); fi
+if [[ "$DIFFERENTIATE_COVARIANCE" == 0 ]]; then COMMON+=(--no-differentiate-covariance); fi
+if [[ "$FUSED_ADAMW" == 1 ]]; then COMMON+=(--fused-adamw); fi
+if [[ -n "$RESUME" ]]; then COMMON+=(--resume "$RESUME"); fi
 
 case "$ARM" in
-  march)
-    EXTRA=(--mixer march_chunked --anchor-interval 512 --read-topk 4 --max-states 64 --ff-extra 1090)
-    ;;
   single_full)
-    EXTRA=(--mixer single_geo --geometry-mode full --max-states 1 --ff-extra 1285)
-    ;;
-  fork)
-    EXTRA=(--mixer chunked --max-states 64 --ff-extra 1285)
+    EXTRA=(--mixer single_geo --geometry-mode full --read-mode "$READ_MODE" --max-states 1 --ff-extra 1280)
     ;;
   isotropic)
-    EXTRA=(--mixer single_geo --geometry-mode isotropic --max-states 1 --ff-extra 1285)
+    EXTRA=(--mixer single_geo --geometry-mode isotropic --read-mode "$READ_MODE" --max-states 1 --ff-extra 1280)
     ;;
   rayleigh)
-    EXTRA=(--mixer single_geo --geometry-mode rayleigh --max-states 1 --ff-extra 1285)
+    EXTRA=(--mixer single_geo --geometry-mode rayleigh --read-mode "$READ_MODE" --max-states 1 --ff-extra 1280)
     ;;
-  delta_chunked)
-    EXTRA=(--mixer single_geo --geometry-mode isotropic --read-mode current_only --max-states 1 --ff-extra 1285)
+  delta_proxy|delta_chunked)
+    # NOT genuine Gated DeltaNet: fixed isotropic Delta recurrence with no anchor read.
+    EXTRA=(--mixer single_geo --geometry-mode isotropic --read-mode current_only --max-states 1 --ff-extra 1280)
+    ;;
+  march_proxy|march)
+    # Proxy uses one anchor per CHUNK_LEN, independent of --anchor-interval.
+    # Do not call this an official GDN-based MARCH reproduction.
+    EXTRA=(--mixer march_chunked --anchor-interval "$CHUNK_LEN" --read-topk 4 --max-states 64 --ff-extra 1088)
+    ;;
+  fork)
+    echo "ERROR: multi-state Branch M>1 is not verified as causal/streaming-safe on main." >&2
+    echo "Use a separately validated fork branch; do not run this 0.79B arm." >&2
+    exit 3
     ;;
   transformer25)
-    EXTRA=(--mixer transformer --layers 25 --ff-extra -177)
+    EXTRA=(--mixer transformer --layers 25 --ff-extra -192)
     ;;
   *)
-    echo "unknown arm: $ARM" >&2
-    exit 2
+    echo "ERROR: unknown arm $ARM" >&2; exit 2
     ;;
 esac
 
-torchrun --standalone --nproc_per_node=8 pretrain_branch.py \
+if [[ "$DRY_RUN" != 1 ]]; then mkdir -p "$OUT_ROOT"; fi
+OUT_DIR="$OUT_ROOT/$ARM"
+echo "0.79B TRAIN: arm=$ARM gpus=$GPUS seq_len=$SEQ_LEN global_tokens/step=$GLOBAL_TOKENS grad_accum=$GRAD_ACCUM amp=$AMP chunk=$CHUNK_LEN tile=$DELTA_TILE_LEN gamma=$PROTECTION_DECAY diffC=$DIFFERENTIATE_COVARIANCE read=$READ_MODE seed=$SEED random_crop=$RANDOM_CROP output=$OUT_DIR"
+echo "NOTE: this launcher uses proxy MARCH/Delta rather than official fused GDN/MARCH."
+if [[ "$DRY_RUN" == 1 ]]; then
+  printf 'torchrun --standalone --nproc_per_node=%q pretrain_branch.py ' "$GPUS"
+  printf '%q ' "${COMMON[@]}" "${EXTRA[@]}" --output "$OUT_DIR"
+  echo
+  exit 0
+fi
+python3 - "$GPUS" <<'PY'
+import sys
+import torch
+required = int(sys.argv[1])
+visible = torch.cuda.device_count()
+if visible < required:
+    raise SystemExit(f"Requested {required} GPUs but only {visible} CUDA devices are visible")
+print(f"[preflight] torch={torch.__version__}; CUDA GPUs={visible}; "
+      f"GPU0={torch.cuda.get_device_name(0)}", flush=True)
+PY
+git rev-parse HEAD > "$OUT_ROOT/git_commit.txt"
+torchrun --standalone --nproc_per_node="$GPUS" pretrain_branch.py \
   "${COMMON[@]}" "${EXTRA[@]}" \
-  --output "$REPO/results/scale_0p79b/$ARM"
+  --output "$OUT_DIR"

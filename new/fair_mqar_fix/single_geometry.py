@@ -31,6 +31,7 @@ class SingleGeometryConfig(ChunkedBranchConfig):
     geometry_mode: str = "full"
     geometry_threshold: float = 0.1
     read_mode: str = "chunk_start"
+    delta_tile_len: int = 0  # inner solve tile; 0 keeps old full-chunk solve
 
     def __post_init__(self) -> None:
         super().__post_init__()
@@ -42,6 +43,10 @@ class SingleGeometryConfig(ChunkedBranchConfig):
             raise ValueError("read_mode must be 'chunk_start' or 'current_only'")
         if self.max_states != 1:
             raise ValueError("single_geometry requires max_states=1")
+        if self.delta_tile_len < 0 or (
+            self.delta_tile_len and self.delta_tile_len > self.chunk_len
+        ):
+            raise ValueError("delta_tile_len must be 0 or <= chunk_len")
 
 
 class SingleGeometryMixer(ChunkedBranchMixer):
@@ -123,6 +128,32 @@ class SingleGeometryMixer(ChunkedBranchMixer):
         H = c.ridge * eye + c.protect * C
         return torch.linalg.cholesky(H)  # (B,H,K,K)
 
+    def _delta_update(self, state, kk, vv, qq, directions):
+        """Exact ordered recurrence with optional smaller triangular solve tiles.
+
+        The geometry and the chunk-start historical read are NOT refreshed
+        between tiles; only the main recurrent state is propagated.
+        """
+        tile = self.config.delta_tile_len
+        if tile == 0 or tile >= kk.shape[1]:
+            return chunked_delta_from_directions(
+                state, kk, vv, qq, directions, write_mask=None, return_states=True
+            )
+        parts = []
+        for offset in range(0, kk.shape[1], tile):
+            stop = min(offset + tile, kk.shape[1])
+            part, state = chunked_delta_from_directions(
+                state,
+                kk[:, offset:stop],
+                vv[:, offset:stop],
+                qq[:, offset:stop],
+                directions[:, offset:stop],
+                write_mask=None,
+                return_states=True,
+            )
+            parts.append(part)
+        return torch.cat(parts, dim=1), state
+
     def _refresh_addresses(self, states: Tensor) -> Tensor:
         c = self.config
         B, M = states.shape[0], states.shape[2]
@@ -169,9 +200,7 @@ class SingleGeometryMixer(ChunkedBranchMixer):
 
         a, _ = self._directions(kk, C_frozen_used, factor)
         S = states[:, :, 0]  # (B,H,K,V)
-        out_m, state_m = chunked_delta_from_directions(
-            S, kk, vv, qq, a, write_mask=None, return_states=True
-        )
+        out_m, state_m = self._delta_update(S, kk, vv, qq, a)
         new_states = state_m.unsqueeze(2)
 
         need_weights = (c.read_mode == "chunk_start") or (
@@ -243,10 +272,9 @@ class SingleGeometryMixer(ChunkedBranchMixer):
         S0 = cache.chunk_start_states
         factor = cache.chunk_factor
         pos = cache.chunk_pos
-        if pos == 0:
-            # At a chunk boundary (or a fresh cache) the frozen factor must match the
-            # committed protection matrix; initial_cache() only zero-fills chunk_factor.
-            factor = self._make_factor(C_frozen)
+        # chunk_factor is valid only when pos > 0. A complete prefill chunk
+        # factorises inside _chunk_step; eagerly making another factor here
+        # would duplicate Cholesky work for every training chunk.
 
         outs = []
         chunk_stats = []
@@ -260,59 +288,67 @@ class SingleGeometryMixer(ChunkedBranchMixer):
                 qq = q[:, t : t + take]
                 rr = rq[:, t : t + take]
                 nl = self.null_route(local[:, t : t + take]).to(dtype).unsqueeze(-1)
-                if c.grad_checkpoint and self.training:
-                    out, states, newC, active, telemetry = checkpoint(
-                        self._chunk_step,
-                        states,
-                        C_frozen,
-                        active,
-                        kk,
-                        vv,
-                        qq,
-                        rr,
-                        nl,
-                        addresses,
-                        t + take,
-                        use_reentrant=False,
-                    )
-                else:
-                    out, states, newC, active, telemetry = self._chunk_step(
-                        states,
-                        C_frozen,
-                        active,
-                        kk,
-                        vv,
-                        qq,
-                        rr,
-                        nl,
-                        addresses,
-                        t + take,
-                    )
+                # Keep C, H, Cholesky, and the recurrent Delta solve FP32
+                # under a BF16 autocast of the surrounding language model.
+                with torch.autocast(device_type=x.device.type, enabled=False):
+                    if c.grad_checkpoint and self.training:
+                        out, states, newC, active, telemetry = checkpoint(
+                            self._chunk_step,
+                            states,
+                            C_frozen,
+                            active,
+                            kk,
+                            vv,
+                            qq,
+                            rr,
+                            nl,
+                            addresses,
+                            t + take,
+                            use_reentrant=False,
+                        )
+                    else:
+                        out, states, newC, active, telemetry = self._chunk_step(
+                            states,
+                            C_frozen,
+                            active,
+                            kk,
+                            vv,
+                            qq,
+                            rr,
+                            nl,
+                            addresses,
+                            t + take,
+                        )
                 outs.append(out)
                 chunk_stats.append(telemetry)
                 C_frozen = newC
                 C_run = newC
                 S0 = states
                 addresses = self._refresh_addresses(states)
-                factor = self._make_factor(C_frozen)
+                # Defer factorisation until the next streamed token. In particular,
+                # do not factor a chunk that might never be consumed.
                 pos = 0
                 t += take
             else:
                 for _ in range(take):
-                    out, states, C_run = self._token_step(
-                        states,
-                        S0,
-                        C_frozen,
-                        C_run,
-                        active,
-                        factor,
-                        k[:, t : t + 1],
-                        v[:, t : t + 1],
-                        q[:, t : t + 1],
-                        rq[:, t : t + 1],
-                        local[:, t : t + 1],
-                        addresses,
-                    )
+                    if pos == 0:
+                        with torch.autocast(device_type=x.device.type, enabled=False):
+                            factor = self._make_factor(C_frozen)
+                    with torch.autocast(device_type=x.device.type, enabled=False):
+                        out, states, C_run = self._token_step(
+                            states,
+                            S0,
+                            C_frozen,
+                            C_run,
+                            active,
+                            factor,
+                            k[:, t : t + 1],
+                            v[:, t : t + 1],
+                            q[:, t : t + 1],
+                            rq[:, t : t + 1],
+                            local[:, t : t + 1],
+                            addresses,
+                        )
                     outs.append(out)
                     zeros_b = torch.zeros(B, 1, H, dtype=torch.bool, device=x.device)
                     zeros_l = torch.zeros(B, 1, H, dtype=torch.long, device=x.device)
@@ -325,7 +361,7 @@ class SingleGeometryMixer(ChunkedBranchMixer):
                         C_frozen = C_run
                         S0 = states
                         addresses = self._refresh_addresses(states)
-                        factor = self._make_factor(C_frozen)
+                        # New chunk geometry is factored on the first token only.
                         pos = 0
 
         out = self.out_proj(
@@ -376,9 +412,7 @@ class SingleGeometryMixer(ChunkedBranchMixer):
         Cbank_used = Cbank if c.differentiate_covariance else Cbank.detach()
         a, telemetry = self._directions(kk, Cbank_used)
         S0 = bank[:, :, 0]
-        out_m, state_m = chunked_delta_from_directions(
-            S0, kk, vv, qq, a, write_mask=None, return_states=True
-        )
+        out_m, state_m = self._delta_update(S0, kk, vv, qq, a)
         new_bank = state_m.unsqueeze(2)
 
         need_weights = (c.read_mode == "chunk_start") or (

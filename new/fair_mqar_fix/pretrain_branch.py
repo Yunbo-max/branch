@@ -15,6 +15,7 @@ Branch Memory, ``branch_cached``/``branch`` for the per-token variants).
 from __future__ import annotations
 
 import argparse
+from contextlib import nullcontext
 from datetime import timedelta
 import json
 import os
@@ -46,7 +47,7 @@ from data_split import (  # noqa: E402
 class PackedCorpus:
     """Random access over memmapped shards; no shard is fully loaded into RAM."""
 
-    def __init__(self, root: Path, seq_len: int) -> None:
+    def __init__(self, root: Path, seq_len: int, *, random_crop: bool = False) -> None:
         self.files = sorted(root.glob("*.npy"))
         if not self.files:
             raise SystemExit(f"no .npy shards under {root}")
@@ -57,29 +58,53 @@ class PackedCorpus:
                 f"seq_len {seq_len} exceeds packed length {self.packed_len}"
             )
         self.seq_len = seq_len
+        self.random_crop = random_crop
         self.lengths = np.array([m.shape[0] for m in self.maps], dtype=np.int64)
         self.cum = np.cumsum(self.lengths)
 
     def __len__(self) -> int:
         return int(self.cum[-1])
 
-    def gather(self, idx: np.ndarray) -> np.ndarray:
+    def gather(self, idx: np.ndarray, *, offsets: np.ndarray | None = None) -> np.ndarray:
+        """Read packed sub-sequences; validation uses a deterministic prefix."""
         idx = np.asarray(idx, dtype=np.int64)
         shard = np.searchsorted(self.cum, idx, side="right")
         within = idx - np.where(shard > 0, self.cum[shard - 1], 0)
+        if offsets is None:
+            offsets = np.zeros(len(idx), dtype=np.int64)
+        else:
+            offsets = np.asarray(offsets, dtype=np.int64)
+            if offsets.shape != idx.shape or np.any(offsets < 0) or np.any(
+                offsets + self.seq_len > self.packed_len
+            ):
+                raise ValueError("invalid packed-row crop offsets")
         rows = np.stack(
-            [self.maps[s][w][: self.seq_len] for s, w in zip(shard, within)]
+            [self.maps[sh][row][off:off + self.seq_len]
+             for sh, row, off in zip(shard, within, offsets)]
         )
         return rows.astype(np.int64)
 
+    def _offsets(self, n: int, gen: torch.Generator) -> np.ndarray | None:
+        if not self.random_crop or self.seq_len == self.packed_len:
+            return None
+        return torch.randint(
+            0, self.packed_len - self.seq_len + 1, (n,), generator=gen
+        ).numpy()
+
     def sample(self, n: int, gen: torch.Generator) -> np.ndarray:
         idx = torch.randint(len(self), (n,), generator=gen).numpy()
-        return self.gather(idx)
+        return self.gather(idx, offsets=self._offsets(n, gen))
 
     def sample_split(self, n: int, gen: torch.Generator, split: RowSplit) -> np.ndarray:
         idx = split.train_indices(n, gen, len(self))
-        return self.gather(idx)
+        return self.gather(idx, offsets=self._offsets(n, gen))
 
+
+def grad_sync_context(model, *, ddp: bool, micro_idx: int, grad_accum: int):
+    """Reduce gradients only in the last microbatch; wrap forward AND backward."""
+    if ddp and micro_idx < grad_accum - 1:
+        return model.no_sync()
+    return nullcontext()
 
 def main() -> int:
     p = argparse.ArgumentParser(
@@ -116,7 +141,11 @@ def main() -> int:
     p.add_argument("--threads", type=int, default=8)
     p.add_argument("--device", default="cpu", choices=["cpu", "cuda"])
     p.add_argument("--amp", choices=["none", "bf16"], default="none",
-                   help="bf16 autocast for the LM forward/backward")
+                   help="BF16 backbone/autocast; GeoDelta geometry/state stay FP32")
+    p.add_argument("--random-crop", action="store_true",
+                   help="random training crop from each packed row; validation stays fixed")
+    p.add_argument("--fused-adamw", action="store_true",
+                   help="use fused torch.optim.AdamW optimizer on CUDA")
     p.add_argument("--grad-accum", type=int, default=1,
                    help="micro-batches accumulated per optimizer step")
     p.add_argument("--tf32", action=argparse.BooleanOptionalAction, default=True,
@@ -176,6 +205,10 @@ def main() -> int:
     p.add_argument("--read-topk", type=int, default=4)
     p.add_argument("--solver-refresh", type=int, default=8)
     p.add_argument("--protect", type=float, default=8.0)
+    p.add_argument("--protection-decay", type=float, default=0.95,
+                   help="per-token EMA decay for Query covariance; independent of chunk_len")
+    p.add_argument("--delta-tile-len", type=int, default=0,
+                   help="inner Delta solve tile; 0 uses the full geometry chunk")
     p.add_argument("--fork-cost", type=float, default=0.02)
     p.add_argument("--covariance", choices=["full", "diagonal"], default="full")
     p.add_argument(
@@ -201,6 +234,10 @@ def main() -> int:
         raise SystemExit("CUDA requested but unavailable")
     if a.grad_accum < 1:
         raise SystemExit("--grad-accum must be >= 1")
+    if not 0 <= a.protection_decay < 1:
+        raise SystemExit("--protection-decay must be in [0,1)")
+    if a.delta_tile_len < 0 or (a.delta_tile_len and a.delta_tile_len > a.chunk_len):
+        raise SystemExit("--delta-tile-len must be 0 or <= --chunk-len")
 
     world_size = int(os.environ.get("WORLD_SIZE", 1))
     rank = int(os.environ.get("RANK", 0))
@@ -227,7 +264,7 @@ def main() -> int:
         torch.backends.cuda.matmul.allow_tf32 = True
         torch.backends.cudnn.allow_tf32 = True
 
-    corpus = PackedCorpus(a.packed_dir, a.seq_len)
+    corpus = PackedCorpus(a.packed_dir, a.seq_len, random_crop=a.random_crop)
     print(
         f"corpus: {len(corpus):,} sequences x {a.seq_len} tokens "
         f"= {len(corpus) * a.seq_len / 1e9:.2f} B tokens available",
@@ -251,6 +288,8 @@ def main() -> int:
             d_route=a.d_route,
             max_states=a.max_states,
             protect=a.protect,
+            protection_decay=a.protection_decay,
+            delta_tile_len=a.delta_tile_len,
             fork_cost=a.fork_cost,
             covariance=a.covariance,
             differentiate_covariance=a.differentiate_covariance,
@@ -330,7 +369,8 @@ def main() -> int:
         model = DDP(model, device_ids=[local_rank])
     raw_model = model.module if ddp else model
     optimizer = torch.optim.AdamW(
-        model.parameters(), lr=a.lr, weight_decay=a.weight_decay
+        model.parameters(), lr=a.lr, weight_decay=a.weight_decay,
+        fused=(a.fused_adamw and device.type == "cuda"),
     )
 
     if is_main:
@@ -406,7 +446,11 @@ def main() -> int:
                 ids = panel_ids[start : start + a.batch_size]
                 if ids.shape[0] == 0:
                     continue
-                logits, _ = model(ids)
+                with torch.autocast(
+                    device_type=device.type, dtype=torch.bfloat16,
+                    enabled=(a.amp == "bf16" and device.type == "cuda"),
+                ):
+                    logits, _ = model(ids)
                 total += float(
                     F.cross_entropy(
                         logits[:, :-1].reshape(-1, logits.shape[-1]),
@@ -489,6 +533,7 @@ def main() -> int:
         return a.lr * (1.0 - (1.0 - a.min_lr_ratio) * frac)
 
     start = time.perf_counter()
+    last_step = start_step
     mode = "a" if a.resume is not None else "w"
     log_path = (a.output / "metrics.jsonl") if is_main else Path(os.devnull)
     with log_path.open(mode, encoding="utf-8") as log:
@@ -509,24 +554,33 @@ def main() -> int:
             model.train()
             optimizer.zero_grad(set_to_none=True)
             micro_losses = []
-            for _ in range(a.grad_accum):
+            for micro_idx in range(a.grad_accum):
                 ids = torch.from_numpy(
                     corpus.sample_split(a.batch_size, gen, split)
                 ).to(device)
-                with torch.autocast(
-                    device_type="cuda",
-                    dtype=torch.bfloat16,
-                    enabled=(a.amp == "bf16" and device.type == "cuda"),
+                with grad_sync_context(
+                    model, ddp=ddp, micro_idx=micro_idx, grad_accum=a.grad_accum
                 ):
-                    logits, _ = model(ids)
-                    loss = F.cross_entropy(
-                        logits[:, :-1].reshape(-1, logits.shape[-1]),
-                        ids[:, 1:].reshape(-1),
-                    )
-                if not torch.isfinite(loss):
-                    raise FloatingPointError(f"non-finite loss at step {step}")
-                (loss / a.grad_accum).backward()
-                micro_losses.append(float(loss.detach()))
+                    with torch.autocast(
+                        device_type=device.type,
+                        dtype=torch.bfloat16,
+                        enabled=(a.amp == "bf16" and device.type == "cuda"),
+                    ):
+                        logits, _ = model(ids)
+                        loss = F.cross_entropy(
+                            logits[:, :-1].reshape(-1, logits.shape[-1]),
+                            ids[:, 1:].reshape(-1),
+                        )
+                    (loss / a.grad_accum).backward()
+                # Keep small scalar losses on device; .item()/float() on every
+                # microbatch would force a CUDA synchronization 128x per step at 4K.
+                micro_losses.append(loss.detach())
+            mean_loss = torch.stack(micro_losses).mean()
+            bad_loss = (~torch.isfinite(mean_loss)).to(torch.int32)
+            if ddp:
+                dist.all_reduce(bad_loss, op=dist.ReduceOp.MAX)
+            if bool(bad_loss.item()):
+                raise FloatingPointError(f"non-finite loss at step {step}")
             lr_now = learning_rate_at(step)
             for group in optimizer.param_groups:
                 group["lr"] = lr_now
@@ -534,6 +588,7 @@ def main() -> int:
                 model.parameters(), a.grad_clip, error_if_nonfinite=True
             )
             optimizer.step()
+            last_step = step
             tokens_seen = (
                 step
                 * a.batch_size
@@ -543,7 +598,7 @@ def main() -> int:
             )
             rec = {
                 "step": step,
-                "train_loss": float(sum(micro_losses) / len(micro_losses)),
+                "train_loss": float(mean_loss),
                 "grad_norm": float(gn),
                 "lr": lr_now,
                 "tokens_seen": tokens_seen,
@@ -582,17 +637,25 @@ def main() -> int:
             "shards": len(corpus.files),
             "sequences": len(corpus),
             "seq_len": a.seq_len,
-            "tokens_available": len(corpus) * a.seq_len,
+            "packed_row_len": corpus.packed_len,
+            "random_crop": a.random_crop,
+            "tokens_available": len(corpus) * corpus.packed_len,
         },
         "split": split_manifest(split, corpus, panel, a.seq_len),
         "resume": resume_info,
         "training": {
-            "steps": len(history),
+            "steps": last_step,
+            "segment_steps": last_step - start_step,
             "batch_size": a.batch_size,
-            "tokens_per_step": a.batch_size * a.seq_len,
+            "grad_accum": a.grad_accum,
+            "world_size": world_size,
+            "random_crop": a.random_crop,
+            "amp": a.amp,
+            "fused_adamw": a.fused_adamw,
+            "tokens_per_step": a.batch_size * a.seq_len * world_size * a.grad_accum,
             "segment_wall_seconds": wall,
             "total_wall_seconds": total_wall,
-            "seconds_per_step": total_wall / max(len(history), 1),
+            "seconds_per_step": wall / max(last_step - start_step, 1),
         },
         "final": history[-1] if history else None,
         "environment": {
@@ -608,7 +671,7 @@ def main() -> int:
         )
     save_checkpoint(
         a.output / "checkpoint.pt",
-        len(history),
+        last_step,
         history[-1]["elapsed_seconds"] if history else total_wall,
     )
     if ddp:
@@ -619,7 +682,7 @@ def main() -> int:
     print(
         json.dumps(
             {
-                "steps": len(history),
+                "steps": last_step,
                 "final": history[-1] if history else None,
                 "seconds_per_step": report["training"]["seconds_per_step"],
             }
