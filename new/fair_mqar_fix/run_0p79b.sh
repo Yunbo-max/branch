@@ -51,7 +51,9 @@ if [[ "$DRY_RUN" != 1 && ! -d "$PACKED_DIR" ]]; then
   echo "ERROR: packed dataset does not exist: $PACKED_DIR" >&2; exit 2
 fi
 
-cd "$REPO/new/fair_mqar_fix"
+if [[ "$DRY_RUN" != 1 ]]; then
+  cd "$REPO/new/fair_mqar_fix"
+fi
 export OMP_NUM_THREADS=${OMP_NUM_THREADS:-8}
 export MKL_NUM_THREADS=${MKL_NUM_THREADS:-8}
 export PYTORCH_CUDA_ALLOC_CONF=${PYTORCH_CUDA_ALLOC_CONF:-expandable_segments:True}
@@ -106,7 +108,7 @@ case "$ARM" in
     ;;
 esac
 
-mkdir -p "$OUT_ROOT"
+if [[ "$DRY_RUN" != 1 ]]; then mkdir -p "$OUT_ROOT"; fi
 OUT_DIR="$OUT_ROOT/$ARM"
 echo "0.79B TRAIN: arm=$ARM gpus=$GPUS seq_len=$SEQ_LEN global_tokens/step=$GLOBAL_TOKENS grad_accum=$GRAD_ACCUM amp=$AMP chunk=$CHUNK_LEN tile=$DELTA_TILE_LEN gamma=$PROTECTION_DECAY random_crop=$RANDOM_CROP output=$OUT_DIR"
 echo "NOTE: this launcher uses proxy MARCH/Delta rather than official fused GDN/MARCH."
