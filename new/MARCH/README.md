@@ -1,0 +1,126 @@
+# MARCH — reproduction workspace
+
+Paper: **MARCH: Scaling Recurrent Memory with Content-Routed State Anchors**
+Ming Zhang, Kaisen Yang, Shu Yu, Ermo Hua, Ning Ding, Xia Hu, Bowen Zhou, Chaochao Lu, Youbang Sun
+Shanghai AI Laboratory / Tsinghua / Fudan — arXiv:2608.12435v1 (2026-08-12)
+
+Paper copy: `paper/paper.pdf`, extracted text: `paper/paper.txt`.
+
+> **Status: code, configs, data and preprocessing are prepared. No training has been run
+> (no GPU yet).** The paper releases **no code and no checkpoints** — verified: no GitHub or
+> HuggingFace link in the PDF, no code comment on the arXiv page, and GitHub search for
+> "content-routed state anchors" returns zero repositories.
+
+## What is in this directory
+
+```
+MARCH/
+├── paper/              paper.pdf + paper.txt (extracted text)
+├── code/
+│   ├── log-linear-attention/   reference protocol (Guo et al. 2026)
+│   │   ├── flame/              training framework (+ torchtitan, lm-evaluation-harness, FLA)
+│   │   ├── hattention/         H-GDN / Log-Linear baseline
+│   │   └── configs/flame/      the exact mid-size configs from the paper
+│   ├── flash-linear-attention/ FLA kernels (Gated DeltaNet)
+│   ├── RULER/                  NIAH data generation
+│   ├── LongBench/              LongBench harness
+│   └── march/                  MARCH reference implementation + HF/FLAME wrapper
+├── configs/            model matrix (5 configs)
+├── data/               pretraining + evaluation fetch scripts; data/eval populated (20/20)
+├── eval/               protocols + commonsense runner
+├── preprocess/         full training commands
+└── logs/
+```
+
+## Model matrix — one shared backbone (fairness contract)
+
+All five models use **one identical backbone**; only the sequence mixer differs. The full
+contract is in `configs/common.md`.
+
+| Model | Config | Mixer | Params |
+|---|---|---|---:|
+| Transformer | `transformer.json` | full attention, 16 heads | ~693M |
+| Gated DeltaNet | `gated_deltanet.json` | GDN, 6 value heads × 192 | ~644M |
+| GDN + Log-Linear | `h_gated_deltanet.json` | H-GDN | ~same + log-linear overhead |
+| **MARCH** | `march.json` | GDN + state anchors, `d_r=64`, `C=512` | 685.1M (built) |
+| Transformer 24L (optional) | `paper/transformer_mid.json` | parameter-matched check | ~778M |
+
+Shared backbone: hidden 1536, 21 layers, FFN 4096, 16K context, vocab 32000, untied
+embeddings, same data/token budget/optimiser/seed. `configs/paper/` keeps the original
+protocol configs for paper-reproduction runs only.
+
+Parameter counts are **not** equal even with a fixed backbone — the mixers cost different
+amounts (attention `4·h²` vs GDN's `3·h·(6·192) + 192·6·h`, plus MARCH's `d_r` routing
+projections). That is the price of holding width/depth/data/optimiser fixed; report the
+counts next to the results. If parameter parity is required, the optional 24-layer
+Transformer (~778M) is the paper's own answer.
+
+> Note on the paper's "GDN 793M": the shipped protocol config builds ~644M under FLA's
+> dimension conventions. The 793M figure is reproduced only by a different FFN/embedding
+> convention. We use the shared backbone above and state actual counts rather than tuning one
+> model to the paper's number — that would break fairness.
+
+## MARCH in one paragraph
+
+Keep the Gated DeltaNet recurrence unchanged. Every `C=512` text tokens insert one shared
+learned **anchor token** `ξ`. At each boundary `b_m` snapshot the *cumulative* state
+`A^(m,ℓ) = S^(ℓ)_{b_m}` (the recurrence is **not** reset). The anchor token reads only its own
+checkpoint `o^(ℓ)_m = A^(m,ℓ) q^(ℓ)_m` and emits a routing key `κ^(ℓ)_m = W_k^(ℓ) u^(ℓ)_m ∈ R^{d_r}`.
+Every text token routes with `ρ_t = W_R x_t`, scores visible anchors `a_{t,m} = ρ_tᵀκ_m`, adds a
+learned **null** option, softmaxes, then
+
+```
+o_t = S_t q_t  +  Σ_j π_{t,j} A^(j) q_t
+```
+
+The historical term is a residual branch; routing and keys train end-to-end with the LM loss.
+`top_k > 0` selects the sparse Top-K variant.
+
+## Verification (works on CPU)
+
+```bash
+cd new/MARCH
+python code/march/run_tests.py        # 6/6 CPU smoke tests, incl. causality
+python code/march/check_models.py     # builds MARCH on the meta device; reports baselines
+```
+
+`run_tests.py` is used instead of pytest because the DiffRwkv repo root contains an
+`__init__.py`, which makes pytest import the unrelated top-level `models` package.
+
+Result on this CPU-only node: **6/6 tests pass**, MARCH builds at **685.1M**. The four
+FLA/H-GDN baselines cannot even be imported here — Triton initialises a GPU driver at import
+time (`0 active drivers`). That is expected; verify them on the GPU node.
+
+## Data
+
+| item | status |
+|---|---|
+| Long-Data-Collections (50B pretraining tokens) | **gated** — 401 without `HF_TOKEN`; script ready |
+| 8 commonsense datasets | downloaded → `data/eval/` |
+| 12 LongBench tasks | downloaded → `data/eval/longbench/` |
+| RULER NIAH (6 tasks × 4K/8K/16K) | synthetic; generated by `code/RULER` |
+| In-context retrieval (SQuAD/TriviaQA/NQ) | script ready (`--groups retrieval`); SWDE/FDA need external sources |
+
+`data/fetch_eval.py` wrote a `manifest.json`; 20/20 requested datasets succeeded.
+
+## Honest gaps before this reproduces anything
+
+1. **Pretraining data is gated.** Accept the terms on HF, export `HF_TOKEN`, then
+   `python data/prepare_pretrain.py --out <dir>`. Do not mirror 50B tokens locally.
+2. **No released checkpoints.** All five models must be trained from scratch.
+3. **The fused producer–reader Triton kernel is not reproduced.** `code/march/` is an eager
+   reference implementation of the equations (correct, slow). The paper's throughput claims
+   (Figure 4) need that kernel.
+4. **LongBench / RULER adapters are not written.** `MARCHForCausalLM` is HF-compatible now,
+   but LongBench's `pred.py` and RULER's eval scripts still need a generation adapter.
+5. **Tokenizer unnamed in the paper.** Vocab 32000 is specified; pick one, record it, use it
+   for all five models.
+6. **GDN parameter-count discrepancy** (above).
+
+## Next steps (when GPUs are available)
+
+1. `export HF_TOKEN`; run `data/prepare_pretrain.py`.
+2. `python code/march/check_models.py` on the GPU node → confirm all five build.
+3. Smoke-train Transformer 693M and GDN 793M on a small token budget.
+4. Train MARCH via the FLAME command in `preprocess/train_commands.md`.
+5. Wire LongBench/RULER adapters and rerun Tables 1–2.

@@ -1,0 +1,15 @@
+{
+    "model_type": "march",
+    "hidden_size": 1536,
+    "initializer_range": 0.006,
+    "max_position_embeddings": 16384,
+    "head_dim": 192,
+    "num_heads": 6,
+    "num_hidden_layers": 21,
+    "tie_word_embeddings": false,
+    "use_cache": true,
+    "vocab_size": 32000,
+    "routing_dim": 64,
+    "anchor_interval": 512,
+    "top_k": -1
+}

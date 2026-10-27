@@ -1,0 +1,13 @@
+{
+    "model_type": "h_gated_deltanet",
+    "hidden_size": 1536,
+    "num_hidden_layers": 21,
+    "num_heads": 6,
+    "head_dim": 192,
+    "intermediate_size": 4096,
+    "max_position_embeddings": 16384,
+    "vocab_size": 32000,
+    "tie_word_embeddings": false,
+    "initializer_range": 0.006,
+    "use_cache": true
+}

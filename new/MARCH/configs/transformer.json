@@ -1,0 +1,20 @@
+{
+    "model_type": "transformer",
+    "hidden_size": 1536,
+    "num_hidden_layers": 21,
+    "num_heads": 16,
+    "intermediate_size": 4096,
+    "hidden_act": "swish",
+    "max_position_embeddings": 16384,
+    "rope_theta": 500000,
+    "attention_bias": false,
+    "norm_eps": 1e-06,
+    "fuse_norm": true,
+    "fuse_cross_entropy": true,
+    "vocab_size": 32000,
+    "tie_word_embeddings": false,
+    "initializer_range": 0.006,
+    "use_cache": true,
+    "bos_token_id": 1,
+    "eos_token_id": 2
+}
