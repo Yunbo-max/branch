@@ -125,6 +125,17 @@ if [[ "$DRY_RUN" == 1 ]]; then
   echo
   exit 0
 fi
+python3 - "$GPUS" <<'PY'
+import sys
+import torch
+required = int(sys.argv[1])
+visible = torch.cuda.device_count()
+if visible < required:
+    raise SystemExit(f"Requested {required} GPUs but only {visible} CUDA devices are visible")
+print(f"[preflight] torch={torch.__version__}; CUDA GPUs={visible}; "
+      f"GPU0={torch.cuda.get_device_name(0)}", flush=True)
+PY
+git rev-parse HEAD > "$OUT_ROOT/git_commit.txt"
 torchrun --standalone --nproc_per_node="$GPUS" pretrain_branch.py \
   "${COMMON[@]}" "${EXTRA[@]}" \
   --output "$OUT_DIR"
