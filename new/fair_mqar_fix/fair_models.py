@@ -61,7 +61,8 @@ class FairLMConfig:
     covariance: str = "full"
     differentiate_covariance: bool = True
     solver_refresh: int = 1  # branch_cached only
-    chunk_len: int = 64  # chunked only
+    chunk_len: int = 64  # geometry update interval
+    delta_tile_len: int = 0  # internal recurrence tile; 0 = whole geometry chunk
     geometry_mode: str = "full"  # single_geo only
     geometry_threshold: float = 0.1  # single_geo certified only
     read_mode: str = "chunk_start"  # single_geo only
@@ -161,7 +162,8 @@ def build_mixer(cfg: FairLMConfig) -> nn.Module:
             conv_kernel=cfg.conv_kernel, tau=cfg.tau, ridge=cfg.ridge,
             protect=cfg.protect, protection_decay=cfg.protection_decay,
             covariance="full", differentiate_covariance=cfg.differentiate_covariance,
-            chunk_len=cfg.chunk_len, grad_checkpoint=cfg.grad_checkpoint,
+            chunk_len=cfg.chunk_len, delta_tile_len=cfg.delta_tile_len,
+            grad_checkpoint=cfg.grad_checkpoint,
             geometry_mode=cfg.geometry_mode,
             geometry_threshold=cfg.geometry_threshold,
             read_mode=cfg.read_mode,
