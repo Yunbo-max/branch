@@ -28,6 +28,19 @@ This exact path still pays one d x d Cholesky, two Q/K triangular solves, and st
 
 CPU FP64 proofs: three independent seeds, outputs/final-state/gradients including gradients wrt H agree at tight tolerances. These tests were executed locally against matching reference code and added to tests/.
 
+**GDN extension:** When adding scalar retention `alpha_t`, the same fixed-basis transform gives an exact GDN recurrence:
+    W_t = alpha_t W_(t-1) + beta_t k'_t (v_t - alpha_t W_(t-1)^T k'_t)^T.
+Thus experimental_whitened_fla.py also accepts `log_gate` and can call
+FLA's `chunk_gated_delta_rule` directly. Three more independent FP64
+reference tests checked outputs, final states, and all input/geometry/gate
+gradients. This does NOT claim that the BF16 fused FLA backend has passed
+GPU verification; CUDA-only tests are included but have not run.
+
+The H200 fused-kernel benchmark `bench_whitened_fla.py` now includes a
+same-shape native `chunk_gated_delta_rule` timing control. Its GDN gate
+and learning rule differ from the ungated GeoDelta arm, so that row is
+for wall-time comparison, not model-quality equivalence.
+
 ## Path B: FAST fading-window full-correlation Query sketch via Woodbury
 
 Original C_t = (1-gamma) sum_{s<=t} gamma^{t-s} w_s q_s q_s^T.
@@ -78,7 +91,7 @@ The prototype functions accept only previously observed Queries and weights. To 
 - Empty history and causal history-prefix invariance.
 - Three independent exact-whitening forward/backward seeds.
 
-The above CPU test batch returned 12 passed (9 Woodbury + 3 whitening). The GitHub tests reproduce those checks. The separate FLA tests are GPU-conditional and have NOT run.
+The above CPU test batch returned 15 passed (9 Woodbury + 6 whitening including GDN gate). The GitHub tests reproduce those checks. The separate FLA tests are GPU-conditional and have NOT run.
 
 ## Required H200 gate (before any 50B-token 0.79B training)
 
