@@ -1,0 +1,76 @@
+{
+  "config": {
+    "device": "cuda",
+    "d_key": 256,
+    "history": 256,
+    "chunk": 256,
+    "heads": 6,
+    "batch": 1,
+    "ranks": [
+      32,
+      64,
+      96,
+      128,
+      160
+    ],
+    "gamma": 0.95,
+    "mu": 8.0,
+    "lam": 1.0,
+    "tau": 1.0,
+    "train": true,
+    "warmup": 8,
+    "repeats": 30,
+    "output": "/inspire/hdd/global_user/zhangjiaquan-253108540222/research/DiffRwkv-geodelta-exp/new/fair_mqar_fix/../../results/woodbury_h200_bwd.json"
+  },
+  "hardware": "NVIDIA H200",
+  "scope": "geometry stage only; no claim of LM/GDN speedup",
+  "results": [
+    {
+      "method": "full_dense",
+      "rank": null,
+      "median_ms": 3.900103969499469,
+      "min_ms": 3.866093000397086,
+      "geometry_stage_speedup_vs_dense": 1.0
+    },
+    {
+      "method": "woodbury_r32",
+      "rank": 32,
+      "median_ms": 2.347681438550353,
+      "min_ms": 2.3092590272426605,
+      "tail_covariance_operator_norm_bound": 0.38742296891700173,
+      "geometry_stage_speedup_vs_dense": 1.6612577436859177
+    },
+    {
+      "method": "woodbury_r64",
+      "rank": 64,
+      "median_ms": 2.557551022619009,
+      "min_ms": 2.507415134459734,
+      "tail_covariance_operator_norm_bound": 0.07504827842223204,
+      "geometry_stage_speedup_vs_dense": 1.5249369162166881
+    },
+    {
+      "method": "woodbury_r96",
+      "rank": 96,
+      "median_ms": 2.8615979244932532,
+      "min_ms": 2.80158594250679,
+      "tail_covariance_operator_norm_bound": 0.014537713419225448,
+      "geometry_stage_speedup_vs_dense": 1.3629112378497827
+    },
+    {
+      "method": "woodbury_r128",
+      "rank": 128,
+      "median_ms": 3.0291390139609575,
+      "min_ms": 3.0044461600482464,
+      "tail_covariance_operator_norm_bound": 0.00281612204707043,
+      "geometry_stage_speedup_vs_dense": 1.287528882472654
+    },
+    {
+      "method": "woodbury_r160",
+      "rank": 160,
+      "median_ms": 3.309563035145402,
+      "min_ms": 3.2669801730662584,
+      "tail_covariance_operator_norm_bound": 0.0005455151821543253,
+      "geometry_stage_speedup_vs_dense": 1.1784347142154137
+    }
+  ]
+}

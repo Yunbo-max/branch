@@ -1,0 +1,255 @@
+===== env =====
+NVIDIA H200, 143771 MiB, 570.124.06
+torch 2.8.0a0+5228986c39.nv25.06 cuda True NVIDIA H200
+===== fla check =====
+fla 0.5.0 OK
+delta_rule / gated_delta_rule import OK
+===== GPU-gated tests =====
+Running 3 items in this shard
+...                                                                      [100%]
+3 passed in 140.77s (0:02:20)
+===== woodbury fwd =====
+{'method': 'full_dense', 'rank': None, 'median_ms': 2.076248056255281, 'min_ms': 2.0447680726647377}
+{'method': 'woodbury_r32', 'rank': 32, 'median_ms': 0.916173099540174, 'min_ms': 0.8934789802879095, 'tail_covariance_operator_norm_bound': 0.38742296891700173}
+{'method': 'woodbury_r64', 'rank': 64, 'median_ms': 1.0748610366135836, 'min_ms': 1.0582569520920515, 'tail_covariance_operator_norm_bound': 0.07504827842223204}
+{'method': 'woodbury_r96', 'rank': 96, 'median_ms': 1.2543569318950176, 'min_ms': 1.233319053426385, 'tail_covariance_operator_norm_bound': 0.014537713419225448}
+{'method': 'woodbury_r128', 'rank': 128, 'median_ms': 1.4249604428187013, 'min_ms': 1.396689098328352, 'tail_covariance_operator_norm_bound': 0.00281612204707043}
+{'method': 'woodbury_r160', 'rank': 160, 'median_ms': 1.5976805007085204, 'min_ms': 1.579152885824442, 'tail_covariance_operator_norm_bound': 0.0005455151821543253}
+wrote /inspire/hdd/global_user/zhangjiaquan-253108540222/research/DiffRwkv-geodelta-exp/new/fair_mqar_fix/../../results/woodbury_h200_fwd.json
+===== woodbury bwd =====
+{'method': 'full_dense', 'rank': None, 'median_ms': 3.900103969499469, 'min_ms': 3.866093000397086}
+{'method': 'woodbury_r32', 'rank': 32, 'median_ms': 2.347681438550353, 'min_ms': 2.3092590272426605, 'tail_covariance_operator_norm_bound': 0.38742296891700173}
+{'method': 'woodbury_r64', 'rank': 64, 'median_ms': 2.557551022619009, 'min_ms': 2.507415134459734, 'tail_covariance_operator_norm_bound': 0.07504827842223204}
+{'method': 'woodbury_r96', 'rank': 96, 'median_ms': 2.8615979244932532, 'min_ms': 2.80158594250679, 'tail_covariance_operator_norm_bound': 0.014537713419225448}
+{'method': 'woodbury_r128', 'rank': 128, 'median_ms': 3.0291390139609575, 'min_ms': 3.0044461600482464, 'tail_covariance_operator_norm_bound': 0.00281612204707043}
+{'method': 'woodbury_r160', 'rank': 160, 'median_ms': 3.309563035145402, 'min_ms': 3.2669801730662584, 'tail_covariance_operator_norm_bound': 0.0005455151821543253}
+wrote /inspire/hdd/global_user/zhangjiaquan-253108540222/research/DiffRwkv-geodelta-exp/new/fair_mqar_fix/../../results/woodbury_h200_bwd.json
+===== whitened fla fwd =====
+{'method': 'original_pytorch', 'median_ms': 2.1709995344281197, 'min_ms': 2.1438791882246733}
+{'method': 'whitened_fla', 'median_ms': 1.53601192869246, 'min_ms': 1.5077239368110895}
+{'method': 'native_fla_gdn', 'median_ms': 0.6234570173546672, 'min_ms': 0.6075678393244743}
+wrote /inspire/hdd/global_user/zhangjiaquan-253108540222/research/DiffRwkv-geodelta-exp/new/fair_mqar_fix/../../results/whitened_fla_fwd.json
+===== whitened fla bwd =====
+{'method': 'original_pytorch', 'median_ms': 4.282526089809835, 'min_ms': 4.1167219169437885}
+{'method': 'whitened_fla', 'median_ms': 3.518934012390673, 'min_ms': 3.460329957306385}
+{'method': 'native_fla_gdn', 'median_ms': 2.1337284706532955, 'min_ms': 2.0914850756525993}
+wrote /inspire/hdd/global_user/zhangjiaquan-253108540222/research/DiffRwkv-geodelta-exp/new/fair_mqar_fix/../../results/whitened_fla_bwd.json
+===== DONE =====
+total 400
+drwxr-xr-x 11 root root   8192 Oct 27 18:24 .
+drwxr-xr-x  5 root root   4096 Oct 27 18:00 ..
+-rw-r--r--  1 root root   1228 Oct 27 18:00 STATUS.json
+-rw-r--r--  1 root root  83446 Oct 27 18:00 all_eval_loss.png
+-rw-r--r--  1 root root  99731 Oct 27 18:00 branch_loss.png
+drwxr-xr-x  3 root root   4096 Oct 27 18:00 branch_mqar
+drwxr-xr-x  2 root root   4096 Oct 27 18:00 eval_10k_same_panel
+-rw-r--r--  1 root root   3417 Oct 27 18:24 h200_gate.log
+-rw-r--r--  1 root root 103504 Oct 27 18:00 march_loss.png
+drwxr-xr-x  3 root root   4096 Oct 27 18:00 newmethod_mqar
+drwxr-xr-x  2 root root   4096 Oct 27 18:00 pretrain_chunked_16k
+drwxr-xr-x  2 root root   4096 Oct 27 18:00 pretrain_full
+drwxr-xr-x  2 root root   4096 Oct 27 18:00 pretrain_full_m64
+drwxr-xr-x  2 root root   4096 Oct 27 18:00 pretrain_full_m64_fix
+drwxr-xr-x  2 root root   4096 Oct 27 18:00 pretrain_m8_backup
+drwxr-xr-x  2 root root   4096 Oct 27 18:00 pretrain_march
+-rw-r--r--  1 root root    838 Oct 27 18:24 whitened_fla_bwd.json
+-rw-r--r--  1 root root    840 Oct 27 18:20 whitened_fla_fwd.json
+-rw-r--r--  1 root root   2089 Oct 27 18:18 woodbury_h200_bwd.json
+-rw-r--r--  1 root root   2093 Oct 27 18:18 woodbury_h200_fwd.json
+----- summary of json files -----
+### /inspire/hdd/global_user/zhangjiaquan-253108540222/research/DiffRwkv-geodelta-exp/new/fair_mqar_fix/../../results/woodbury_h200_bwd.json
+{
+ "config": {
+  "device": "cuda",
+  "d_key": 256,
+  "history": 256,
+  "chunk": 256,
+  "heads": 6,
+  "batch": 1,
+  "ranks": [
+   32,
+   64,
+   96,
+   128,
+   160
+  ],
+  "gamma": 0.95,
+  "mu": 8.0,
+  "lam": 1.0,
+  "tau": 1.0,
+  "train": true,
+  "warmup": 8,
+  "repeats": 30,
+  "output": "/inspire/hdd/global_user/zhangjiaquan-253108540222/research/DiffRwkv-geodelta-exp/new/fair_mqar_fix/../../results/woodbury_h200_bwd.json"
+ },
+ "hardware": "NVIDIA H200",
+ "scope": "geometry stage only; no claim of LM/GDN speedup",
+ "results": [
+  {
+   "method": "full_dense",
+   "rank": null,
+   "median_ms": 3.900103969499469,
+   "min_ms": 3.866093000397086,
+   "geometry_stage_speedup_vs_dense": 1.0
+  },
+  {
+   "method": "woodbury_r32",
+   "rank": 32,
+   "median_ms": 2.347681438550353,
+   "min_ms": 2.3092590272426605,
+   "tail_covariance_operator_norm_bound": 0.38742296891700173,
+   "geometry_stage_speedup_vs_dense": 1.6612577436859177
+  },
+  {
+   "method": "woodbury_r64",
+   "rank": 64,
+   "median_ms": 2.557551022619009,
+   "min_ms": 2.507415134459734,
+   "tail_covariance_operator_norm_bound": 0.07504827842223204,
+   "geometry_stage_speedup_vs_dense": 1.5249369162166881
+  },
+  {
+   "method": "woodbury_r96",
+   "rank": 96,
+   "median_ms": 2.8615979244932532,
+   "min_ms": 2.80158594250679,
+   "tail_covariance_operator_norm_bound": 0.014537713419225448,
+   "geometry_stage_speedup_vs_dense": 1.3629112378497827
+  },
+  {
+   "method": "woodbury_r128",
+   "rank": 128,
+   "median_ms": 3.0291390139609575
+### /inspire/hdd/global_user/zhangjiaquan-253108540222/research/DiffRwkv-geodelta-exp/new/fair_mqar_fix/../../results/woodbury_h200_fwd.json
+{
+ "config": {
+  "device": "cuda",
+  "d_key": 256,
+  "history": 256,
+  "chunk": 256,
+  "heads": 6,
+  "batch": 1,
+  "ranks": [
+   32,
+   64,
+   96,
+   128,
+   160
+  ],
+  "gamma": 0.95,
+  "mu": 8.0,
+  "lam": 1.0,
+  "tau": 1.0,
+  "train": false,
+  "warmup": 8,
+  "repeats": 30,
+  "output": "/inspire/hdd/global_user/zhangjiaquan-253108540222/research/DiffRwkv-geodelta-exp/new/fair_mqar_fix/../../results/woodbury_h200_fwd.json"
+ },
+ "hardware": "NVIDIA H200",
+ "scope": "geometry stage only; no claim of LM/GDN speedup",
+ "results": [
+  {
+   "method": "full_dense",
+   "rank": null,
+   "median_ms": 2.076248056255281,
+   "min_ms": 2.0447680726647377,
+   "geometry_stage_speedup_vs_dense": 1.0
+  },
+  {
+   "method": "woodbury_r32",
+   "rank": 32,
+   "median_ms": 0.916173099540174,
+   "min_ms": 0.8934789802879095,
+   "tail_covariance_operator_norm_bound": 0.38742296891700173,
+   "geometry_stage_speedup_vs_dense": 2.2662180949182495
+  },
+  {
+   "method": "woodbury_r64",
+   "rank": 64,
+   "median_ms": 1.0748610366135836,
+   "min_ms": 1.0582569520920515,
+   "tail_covariance_operator_norm_bound": 0.07504827842223204,
+   "geometry_stage_speedup_vs_dense": 1.9316432408757036
+  },
+  {
+   "method": "woodbury_r96",
+   "rank": 96,
+   "median_ms": 1.2543569318950176,
+   "min_ms": 1.233319053426385,
+   "tail_covariance_operator_norm_bound": 0.014537713419225448,
+   "geometry_stage_speedup_vs_dense": 1.655229068745682
+  },
+  {
+   "method": "woodbury_r128",
+   "rank": 128,
+   "median_ms": 1.424960442818
+### /inspire/hdd/global_user/zhangjiaquan-253108540222/research/DiffRwkv-geodelta-exp/new/fair_mqar_fix/../../results/whitened_fla_bwd.json
+{
+ "hardware": "NVIDIA H200",
+ "settings": {
+  "heads": 6,
+  "d_key": 256,
+  "d_value": 256,
+  "chunk": 256,
+  "backward": true
+ },
+ "records": [
+  {
+   "method": "original_pytorch",
+   "median_ms": 4.282526089809835,
+   "min_ms": 4.1167219169437885
+  },
+  {
+   "method": "whitened_fla",
+   "median_ms": 3.518934012390673,
+   "min_ms": 3.460329957306385
+  },
+  {
+   "method": "native_fla_gdn",
+   "median_ms": 2.1337284706532955,
+   "min_ms": 2.0914850756525993
+  }
+ ],
+ "errors": {
+  "mean_output_abs": 0.0007592126494273543,
+  "max_output_abs": 0.006029963493347168,
+  "mean_state_abs": 0.0009077793802134693,
+  "max_state_abs": 0.005418181419372559
+ },
+ "note": "isolated frozen-C block; native FLA GDN is runtime control, not an equivalent objective or full 0.79B LM"
+}
+### /inspire/hdd/global_user/zhangjiaquan-253108540222/research/DiffRwkv-geodelta-exp/new/fair_mqar_fix/../../results/whitened_fla_fwd.json
+{
+ "hardware": "NVIDIA H200",
+ "settings": {
+  "heads": 6,
+  "d_key": 256,
+  "d_value": 256,
+  "chunk": 256,
+  "backward": false
+ },
+ "records": [
+  {
+   "method": "original_pytorch",
+   "median_ms": 2.1709995344281197,
+   "min_ms": 2.1438791882246733
+  },
+  {
+   "method": "whitened_fla",
+   "median_ms": 1.53601192869246,
+   "min_ms": 1.5077239368110895
+  },
+  {
+   "method": "native_fla_gdn",
+   "median_ms": 0.6234570173546672,
+   "min_ms": 0.6075678393244743
+  }
+ ],
+ "errors": {
+  "mean_output_abs": 0.0007592126494273543,
+  "max_output_abs": 0.006029963493347168,
+  "mean_state_abs": 0.0009077793802134693,
+  "max_state_abs": 0.005418181419372559
+ },
+ "note": "isolated frozen-C block; native FLA GDN is runtime control, not an equivalent objective or full 0.79B LM"
+}
