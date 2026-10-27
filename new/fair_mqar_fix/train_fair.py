@@ -11,7 +11,7 @@ import argparse
 import json
 import platform
 import time
-from dataclasses import asdict
+from dataclasses import asdict, replace
 from pathlib import Path
 import sys
 
@@ -21,7 +21,7 @@ _HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(_HERE))
 sys.path.insert(0, str(_HERE.parent / "branch_memory"))
 
-from mqar_adapter import MQARBatch, build_panels, mqar_accuracy, mqar_loss  # noqa: E402
+from mqar_adapter import MQARBatch, build_panels, build_segment, mqar_accuracy, mqar_loss  # noqa: E402
 from fair_models import MIXERS, FairLM, FairLMConfig, count_mixer_parameters  # noqa: E402
 
 
@@ -86,6 +86,11 @@ def add_common_args(p: argparse.ArgumentParser) -> None:
     p.add_argument("--threads", type=int, default=4)
     p.add_argument("--device", default="cpu", choices=["cpu", "cuda"])
     p.add_argument("--log-every", type=int, default=50)
+    p.add_argument("--online-train", action="store_true",
+                   help="generate a fresh, deterministic MQAR training batch every step "
+                        "instead of repeatedly sampling the fixed train panel")
+    p.add_argument("--online-seed-offset", type=int, default=3000001,
+                   help="training-example stream seed offset, separate from held-out panel seeds")
     p.add_argument("--output", type=Path, required=True)
 
 
@@ -141,9 +146,23 @@ def run(a) -> dict:
     with (a.output / "metrics.jsonl").open("w", encoding="utf-8") as log:
         for step in range(1, a.steps + 1):
             model.train()
-            idx = torch.randint(panels["train"].inputs.shape[0], (a.batch_size,), generator=gen)
-            x = panels["train"].inputs[idx].to(device)
-            y = panels["train"].labels[idx].to(device)
+            if a.online_train:
+                # New KV pairings every step. The training stream is deterministic
+                # across arms, independent of the fixed valid/test panels.
+                online_spec = replace(
+                    panels["train"].spec,
+                    num_examples=a.batch_size,
+                    seed=a.seed + a.online_seed_offset + step,
+                )
+                online_batch = build_segment(online_spec)
+                x = online_batch.inputs.to(device)
+                y = online_batch.labels.to(device)
+            else:
+                idx = torch.randint(
+                    panels["train"].inputs.shape[0], (a.batch_size,), generator=gen
+                )
+                x = panels["train"].inputs[idx].to(device)
+                y = panels["train"].labels[idx].to(device)
             optimizer.zero_grad(set_to_none=True)
             logits, _ = model(x)
             loss = mqar_loss(logits, y)
@@ -178,8 +197,14 @@ def run(a) -> dict:
                           "alignment": p.alignment} for name, p in panels.items()},
         "initial": initial,
         "final": final,
-        "training": {"steps": a.steps, "batch_size": a.batch_size, "lr": a.lr,
-                     "wall_seconds": wall, "seconds_per_step": wall / max(a.steps, 1)},
+        "training": {
+            "steps": a.steps, "batch_size": a.batch_size, "lr": a.lr,
+            "online_train": a.online_train,
+            "online_seed_offset": a.online_seed_offset if a.online_train else None,
+            "unique_online_training_examples": a.steps * a.batch_size
+                if a.online_train else None,
+            "wall_seconds": wall, "seconds_per_step": wall / max(a.steps, 1),
+        },
         "environment": {"python": platform.python_version(), "torch": torch.__version__,
                         "device": str(device), "threads": a.threads},
         "history_tail": history[-3:],
