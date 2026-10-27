@@ -1,33 +1,47 @@
-# Step 3 diagnostics: 2-pair easy + gradient-through-C (2026-10-27)
+# Step 3 MQAR diagnostics — corrected interpretation (2026-10-27)
 
-## Easy task (2 KV pairs, seq 64, online)
+## Grounded results
 
-| arm | valid acc | test acc | train acc (last) |
-|---|---|---|---|
-| `delta` (plain DeltaNet) | **0.200** | 0.213 | 0.156 |
-| `single_geo` (Full-C GeoDelta) | 0.079 | 0.085 | 0.047 |
-| `transformer` | 0.994 | 0.991 | 1.0 |
+Same 2,000-step online MQAR setup, distinct train/validation/test examples.
 
-Random chance is ~2% (48 value symbols). Both recurrent arms now learn above
-chance — confirming the 8-pair failure is a **capacity** limit, not a broken
-recurrence. But the full-C geometry is **worse** than plain delta (7.9% vs 20%).
+| task | arm | validation accuracy | test accuracy | last train accuracy |
+|---|---|---:|---:|---:|
+| 2 KV, seq=64, chunk=64 | `delta` (fixed-beta Delta, not learned GDN) | 20.0195% | 21.2891% | 15.6250% |
+| 2 KV, seq=64, chunk=64 | `single_geo` Full | 7.9102% | 8.4961% | 4.6875% |
+| 2 KV, seq=64 | Transformer | 99.4141% | 99.1211% | 100% |
+| 8 KV, seq=128 | `single_geo` Full, stop-gradient C | 0% | 0.0488% | 0% |
+| 8 KV, seq=128 | `single_geo` Full, differentiate C | 0% | 0.0488% | 0% |
 
-## Gradient through C (8 pairs, seq 128)
+The Zoology generator used by `train_fair.py` samples values from `vocab_size//2 ... vocab_size-1`. At vocab_size=8192, **there are 4096 possible value symbols, not 48**; a uniformly random value guess is **1/4096 ≈ 0.0244%**. The previous "2% chance" statement was borrowed from a separate synthetic MQAR configuration with 48 values and does not apply here.
 
-`single_geo` with `--differentiate-covariance`: valid acc 0.0000, test 0.0005.
-Letting gradients flow through the covariance does **not** rescue learning.
+## Critical issue: the 2-KV experiment DID NOT TURN ON THE GEOMETRY
 
-## Conclusion
+The actual `SingleGeometryMixer` initializes `C_0=0` and `S_0=0`. It freezes the geometry at the beginning of each `chunk_len` block. Here `seq_len=chunk_len=64`: exactly one full block, so the only geometry used is
 
-The protection geometry is not just unhelpful — at the capacity boundary where
-both arms can learn, it is **counterproductive** (single_geo ≈ 0.4× delta on the
-2-pair task), and it never rescues the 8-pair case. Combined with the H200
-timing (whitened GeoDelta ≈ 2.5× slower than native GDN), there is no evidence
-justifying further work on the full-C / Gated-Woodbury geometry, nor a 50B-token
-0.79B pretrain of this operator.
+    H_0 = lambda I + mu C_0 = lambda I
+    a_t = k_t / (tau*lambda + ||k_t||²).
 
-## Status
+This is **exactly the isotropic update** for the whole training and evaluation sequence (floating-point implementation aside). The extra chunk-start historical read is likewise zero because `S_0=0`. The Full-C matrix is only accumulated AFTER the only block and cannot influence the sequence's loss.
 
-- Do not integrate Gated Woodbury into 0.79B at this stage.
-- The single-state delta rule itself is capacity-limited (2 pairs OK, 8 pairs fail);
-  exact attention remains the only arm that generalises.
+**Therefore the observed Full-C-vs-plain-Delta gap (7.9% vs 20%) cannot prove that full Query geometry is counterproductive.** The DeltaNetMixer and SingleGeometryMixer have different parameters, architecture/initialization, computation and number of parameters. Comparing these models is an overall-baseline diagnostic, not a controlled intervention on C.
+
+The new control is `run_mqar_geometry_isolation.sh`, which compares **the same SingleGeometryMixer with identical initial weights**:
+- `chunk_len=64`: `full` vs `isotropic` should be numerically equivalent throughout the 64-token sequence, and similar training trajectories.
+- `chunk_len=16`: only from the second chunk can `full` use a nonzero C; compare matched `full` vs `isotropic` here to assess whether Query geometry improves or hurts learning. `read_mode=current_only` removes the independent chunk-start history-read confound.
+
+Regression `tests/test_mqar_geometry_activation.py` specifically checks first-chunk parity, gradients, and second-chunk geometry activity. Both new controls are **committed but not yet run on H100/H200**.
+
+## Second issue: the 8-pair failure does not prove an information-theoretic capacity limit
+
+A single state `S in R^{d_k x d_v}` can in principle represent `m<=d_k` independent key-to-value associations exactly. If `K in R^{d_k x m}` has full column rank, the linear constraints `S^T K=V` have a solution `S^T=V(K^TK)^{-1}K^T`. Thus with `d_k=64` and `m=8`, there is no immediate algebraic impossibility. The learned update dynamics, representation of token keys/values, initialization, missing trainable GDN gates, positional selectivity, or optimization could prevent training from discovering that solution.
+
+In particular, the `delta` baseline here is a **fixed scalar-beta Delta Rule**, not a fully optimized and learnable Gated DeltaNet. The `single_geo` here likewise has no trainable main-memory gate. Do not extend this negative result to all GDN variants.
+
+## Correct next tests
+
+1. Run matched Full-vs-Isotropic controls with `chunk_len=64` (equivalence check) and `chunk_len=16` (real geometry intervention) on 2-pair online MQAR.
+2. Repeat with `chunk_len=16/32`, `read_mode=current_only`, and multiple seeds; record actual `C_b` norms/eigenvalues, `q^T a`, residual norms, training gradients and validation accuracy.
+3. Only if geometry is active and beneficial compare with a genuine learnable-GDN baseline, then decide whether to integrate Gated Woodbury or train 0.79B.
+4. Do not infer anything about long-context performance or 27B/100B scaling from these short-sequence 2,000-step results.
+
+**Conclusion:** online MQAR is a genuine negative result for the tested recurrent training configurations. The prior stronger claims "full C harms learning" and "8-KV exceeds the single-state's fundamental capacity" are **not supported by these experiments**.
