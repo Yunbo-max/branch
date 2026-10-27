@@ -201,7 +201,7 @@ def run(a) -> dict:
             "steps": a.steps, "batch_size": a.batch_size, "lr": a.lr,
             "online_train": a.online_train,
             "online_seed_offset": a.online_seed_offset if a.online_train else None,
-            "unique_online_training_examples": a.steps * a.batch_size
+            "online_examples_generated": a.steps * a.batch_size
                 if a.online_train else None,
             "wall_seconds": wall, "seconds_per_step": wall / max(a.steps, 1),
         },
