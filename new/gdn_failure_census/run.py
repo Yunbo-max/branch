@@ -12,7 +12,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-from backend import LETTERS, PretrainedCausalLM, single_token_choices
+from backend import PretrainedCausalLM, single_token_choices
 from spec import CONDITIONS, make_probe, suite_size
 
 
