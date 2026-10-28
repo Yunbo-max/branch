@@ -17,7 +17,7 @@ from typing import Protocol, Sequence
 LETTERS = ("A", "B", "C", "D")
 CONDITIONS = (
     "plain", "unrelated", "collision", "revision_latest", "revision_earliest",
-    "alias", "two_hop",
+    "alias", "two_hop", "no_target",
 )
 MEMOS = (
     "Field note: the service team completed the routine checklist and filed its report.\n",
@@ -52,6 +52,10 @@ class Probe:
     question_suffix: str
     token_ids: tuple[int, ...]
     prompt_hash: str
+    requested_needle_fraction: float
+    event_placement: str
+    answerable: bool
+    schema_version: int = 2
 
     def to_meta(self) -> dict:
         return {
@@ -110,15 +114,20 @@ def make_probe(
         raise ValueError(f"unknown condition: {condition}")
     if length < 128 or not 0.02 <= needle_fraction <= 0.95:
         raise ValueError("length >= 128 and position fraction in [0.02,0.95] required")
-    if num_events < 0 or event_placement not in ("early", "late"):
+    if not 0 <= num_events <= 8000 or event_placement not in ("early", "late"):
         raise ValueError("invalid event count/placement")
 
     rng = random.Random(seed)
+    # Separate value stream from key generation AND the target answer.
+    # Excluding the target value would let a model solve the task by finding
+    # the missing label, without remembering the requested record at all.
+    value_rng = random.Random(seed ^ 0x714E2B)
     name = _prefix(seed)
     key = f"REC-{name}-{rng.randrange(1000, 9999)}"
     alias = f"ALIAS-{_prefix(seed ^ 0x13AC)}"
     bridge = f"REF-{_prefix(seed ^ 0x4023)}"
-    answer = LETTERS[rng.randrange(4)]
+    # Contiguous seed blocks of four balance the marginal answer distribution.
+    answer = LETTERS[seed % 4]
     latest = answer
 
     header = (
@@ -146,7 +155,7 @@ def make_probe(
         for j in range(num_events):
             if condition.startswith("revision_"):
                 event_key = key
-                event_value = _different_letter(answer, j)
+                event_value = LETTERS[value_rng.randrange(4)]
                 latest = event_value
             elif condition == "collision":
                 # Same 5-letter prefix, different exact identifier.
@@ -155,14 +164,14 @@ def make_probe(
                     if event_key not in seen:
                         break
                 seen.add(event_key)
-                event_value = _different_letter(answer, j)
+                event_value = LETTERS[value_rng.randrange(4)]
             else:
                 while True:
                     event_key = f"REC-{_prefix(seed + 1091 + j)}-{rng.randrange(1000, 9999)}"
                     if event_key not in seen:
                         break
                 seen.add(event_key)
-                event_value = _different_letter(answer, j)
+                event_value = LETTERS[value_rng.randrange(4)]
             events.append(f"Record {event_key}: {event_value}.\n")
 
     if condition == "alias":
@@ -178,10 +187,15 @@ def make_probe(
 
     gold = answer if condition != "revision_latest" else latest
     h, target, ev, q = (
-        _enc(tokenizer, header), _enc(tokenizer, target_text),
-        _enc(tokenizer, "".join(events)) if events else [],
+        list(tokenizer.encode(header, add_special_tokens=True)), _enc(tokenizer, target_text),
+        _enc(tokenizer, "\n" + "".join(events)) if events else [],
         _enc(tokenizer, question)
     )
+    if condition == "no_target":
+        # Match the unrelated condition in every token-budget component but
+        # replace the answer-bearing record with neutral tokens. Its hidden
+        # gold is used ONLY as an information-leakage/chance control.
+        target = _pad(tokenizer, len(target), seed ^ 0xBED5)
     fixed = len(h) + len(target) + len(ev) + len(q)
     available = length - fixed
     if available < 0:
@@ -191,7 +205,9 @@ def make_probe(
         )
     # Place the needle according to an absolute token position, with a
     # conservative post-needle slot for all non-filler interventions.
-    wanted = round(needle_fraction * (length - len(q)))
+    # Absolute token offset must not depend on query wording. Otherwise alias
+    # and revision suffixes move the target and the full matched suite vanishes.
+    wanted = round(needle_fraction * length)
     n_before = min(available, max(0, wanted - len(h)))
     n_after = available - n_before
     before = _pad(tokenizer, n_before, seed ^ 0xDAA1)
@@ -230,6 +246,9 @@ def make_probe(
         answer=gold, initial_answer=answer, latest_answer=latest,
         key=key, seed=seed, question_suffix=question,
         token_ids=tuple(tokens), prompt_hash=prompt_hash,
+        requested_needle_fraction=needle_fraction,
+        event_placement=event_placement,
+        answerable=condition != "no_target",
     )
 
 
@@ -241,3 +260,4 @@ def suite_size(
         len(lengths) * len(seeds) * len(positions) *
         len(event_counts) * len(conditions)
     )
+

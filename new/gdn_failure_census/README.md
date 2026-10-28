@@ -1,173 +1,198 @@
-# GDN Long-Context Failure Census — pre-trained, paired and mechanistic
+# GDN long-context failure census — executable v2
 
-**2026-10-28 · status: executable research harness committed; no H100/H200 large-model benchmark has been run or claimed by this repository branch.** Run the CPU tests and the \`smoke\` stage before any long sweep. This is a **diagnostic benchmark**; it is not a new model architecture or the official RULER benchmark.
+**2026-10-28. Code and CPU verification are implemented. No pretrained GDN/H100/H200 performance result is claimed.** This is a controlled four-choice diagnostic suite, plus separate numerical operator probes. It is not an implementation of the official RULER, BABILong or LongBench benchmarks.
 
-## The question
+The research question is: **after a pretrained GDN can perform a short lookup, which combinations of distance, write load, lexical interference, legitimate revision and query composition cause observable failure?** Start with the measurements, then choose an architectural intervention from the evidence.
 
-Before inventing a memory enhancement for Gated DeltaNet, identify which failure modes are present in a **real pre-trained GDN**:
+## Quick start on the existing GPU host
 
-1. **Simple retention**: can the network retrieve a fact from the same text after longer innocuous filler?
-2. **Memory load**: do many unrelated facts reduce retrieval?
-3. **Address collision**: are similar-but-distinct record keys more damaging than unrelated keys at *the same token length, answer and target location*?
-4. **Memory overwrite vs legitimate revision**: after a repeated-key update, can the model distinguish the earliest and latest value?
-5. **Lost in the middle / location**: same target fact at early, middle and late positions.
-6. **Composition**: can the model retrieve through an alias (one/two links), provided it already passes simple retrieval?
-7. **Direct pre/post edit**: when asked *immediately before* a batch of writes, could the model answer the old fact, and does that exact fact then become inaccessible?
+From your clone of `Yunbo-max/branch`:
 
-The aim is **not** to prove that all failures are due to a state bottleneck. Distinguish task understanding, training-context extrapolation, attention architecture, state memory interference and token-level scoring artifacts.
-
-## Real pre-trained models
-
-| Arm | Checkpoint | Function | Caveat |
-| --- | --- | --- | --- |
-| GDN-340M (first) | [m-a-p/340M-20B-GatedDeltaNet-pure-baseline](https://huggingface.co/m-a-p/340M-20B-GatedDeltaNet-pure-baseline) | Fast screening | 20B training tokens; config head_dim=256, context=2048 |
-| GDN-1.3B (replication) | [m-a-p/1.3B-100B-GatedDeltaNet-pure](https://huggingface.co/m-a-p/1.3B-100B-GatedDeltaNet-pure) | Confirm at more capacity/compute | 100B tokens; config max_position_embeddings=2048 |
-| Hybrid-GDN (control) | [m-a-p/1.3B-100B-GatedDeltaNet-hybrid-6-1](https://huggingface.co/m-a-p/1.3B-100B-GatedDeltaNet-hybrid-6-1) | Compare an attention-augmented model using related training series | Not a strict architecture-only causality claim |
-| Optional other | User-provided valid HF checkpoint path | Compare transformer/Mamba/local MARCH under same prompts | Different pretraining/tokenizer confounds; report explicitly |
-| GDN-2 | [NVlabs/GatedDeltaNet-2](https://github.com/NVlabs/GatedDeltaNet-2) | Future extension after verified trained checkpoint and conversion | Official code/paper alone is NOT a pre-trained model; do not substitute random weights |
-
-**Important:** pre-trained GDN above has config \`max_position_embeddings=2048\`; 4K/8K/16K/32K runs are deliberately **extrapolation**. They do NOT demonstrate forgetting versus a model proven to support that context. The 512/1024/2048 controls are mandatory. Compare GDN pure against hybrid within the same 1.3B/100B series when possible. FLA GDN-2 is available, but a freshly initialized model MUST NOT enter zero-shot benchmark tables.
-
-## Probe design
-
-The suite is synthetic but *tokenizer-exact*. Each case has a unique pseudorandom record key, one status from A/B/C/D, a formatted log and a query. The same record, answer, needle position and token budget are reused across a matched triplet:
-
-- \`plain\`: no additional KV-like records after the target, only neutral filler.
-- \`unrelated\`: same number of irrelevant records with different identifiers.
-- \`collision\`: same number of irrelevant records with the SAME key prefix but distinct complete identifier and conflicting status.
-
-Additional matched variants:
-
-- \`revision_earliest\` and \`revision_latest\`: same intervening repeated-key history, different temporal query (old versus new).
-- \`alias\` and \`two_hop\`: composition with target status in context.
-- \`event_placement=early|late\`: whether the interfering records arrive immediately after the target or just before the query.
-- \`positions\`: needle position fractions 0.12/0.50/0.88.
-- \`events\`: 8/32/64 distracting writes.
-- \`lengths\`: 512/1K/2K/4K/8K/16K/32K tokens.
-
-The generator constructs **exact input token IDs** and fills remaining slots with seeded, neutral sentences. It never truncates a prompt to meet budget. It rejects impossible short-length/high-event combinations. Because interventions contain different words, this is a *paired causal contrast*, not identical token-level input statistics. Every case includes an ID, pair ID, expected answer, exact token length, needle offset, event offset, seed, model ID, tokenizer and prompt hash.
-
-### Scoring — no chat models required
-
-The provided GDN checkpoints are *base* language models. Use a small, fixed two-example demonstration; then score one next-token response constrained to \`A/B/C/D\` by the actual model logits. This avoids variation in free-form decoding, chat templates and generation stopping. Check that each answer label is represented by precisely **one distinct next token** under the **actual tokenizer and suffix**, otherwise FAIL instead of scoring an unrelated ID.
-
-Report both restricted choice accuracy (random baseline 25%), restricted log loss, and the full-vocabulary gold-token NLL. They answer different questions. No training or parameter update occurs.
-
-### Crucial baseline-competence gate
-
-**If the same model fails \`plain\` at 512 tokens (< 60% default), do not call low 8K performance “GDN memory erased.”** The result then demonstrates inability to follow the particular status-lookup format, tokenizer errors, weak model reasoning, or other confounds. First improve prompt validity or choose a benchmark appropriate for pretrained base LMs.
-
-### Direct pre-edit probe
-
-With \`--preedit-probes\`, the evaluator additionally queries a fact **before** the subsequent distractor/revision records are inserted. It scores precisely the *initial* fact at that point. The report estimates:
-
-\[
-P(\mathrm{postwrong}\mid\mathrm{precorrect})
-\]
-
-per length/condition/event count. This is stronger evidence than a simple near-vs-unrelated drop; however it is an explicit query-insertion intervention, **not a readout of GDN internal state**. On revision tasks, post-edit evaluation against the latest value tests update behavior, not arbitrary “damage.”
-
-## Install / preflight
-
-On the H100/H200 host, with compatible CUDA, PyTorch, Triton and pre-existing FLA:
-
-\`\`\`bash
+```bash
 git fetch origin
 git switch exp/gdn-long-context-failure-census-20261028
 git pull --ff-only
 cd new/gdn_failure_census
 
-python -m pytest -q tests/test_census.py
+# Uses numpy only; no model download or GPU use.
+python -m unittest discover -s tests -v
 
-python -c "import torch; import transformers; import fla.models.gated_deltanet; print(torch.__version__, torch.cuda.get_device_name(0))"
-\`\`\`
-
-If FLA is missing, follow the [official FLA installation guide](https://github.com/fla-org/flash-linear-attention/blob/main/INSTALL.md) and verify versions against your installed torch stack. Current FLA CUDA distribution uses \`pip install flash-linear-attention[cuda]\` but **do not blindly replace your CUDA/PyTorch environment**. Use a dedicated environment if necessary. Loading a full model can require several GB of disk and VRAM. Never use \`trust_remote_code=True\` for model loading here.
-
-Optional low-cost manifest-only preflight (downloads tokenizer, not model weights):
-
-\`\`\`bash
-DRY_RUN=1 STAGE=smoke bash run_h100.sh
-\`\`\`
-
-## Run stages (one GPU per process)
-
-**Stage 0 — smoke**, at most 90 paired probe contexts (invalid short-length/high-load or unattainable needle-position cells are skipped as complete groups), with pre-edit interventions:
-
-\`\`\`bash
+# Genuine pretrained checkpoint loading/forward smoke check.
 CUDA_VISIBLE_DEVICES=0 STAGE=smoke bash run_h100.sh
-\`\`\`
 
-**Stage 1 — systematic GDN-340M screening**, a grid of 5 lengths × 20 seeds × 3 positions × 2 event counts × 7 conditions = **4,200 planned cases** (infeasible short-length/high-load cells are omitted as complete matched groups, so the executed count may be lower), plus pre-edit measurements where requested:
+# A smoke run is too small for a memory-mechanism claim.
+CUDA_VISIBLE_DEVICES=0 STAGE=competence bash run_h100.sh
 
-\`\`\`bash
-CUDA_VISIBLE_DEVICES=0 STAGE=screen MODEL_ID=m-a-p/340M-20B-GatedDeltaNet-pure-baseline bash run_h100.sh
-\`\`\`
+# Inspect the competence summary, then conduct the systematic screen.
+CUDA_VISIBLE_DEVICES=0 STAGE=screen bash run_h100.sh
+```
 
-**Stage 2 — GDN-1.3B**, replicate the identified stress strata; do NOT automatically run every 32K cell before 4K smoke passes:
+CPU tests need `numpy` (`python -m pip install -r requirements-cpu.txt`). Real evaluation additionally needs a mutually compatible **PyTorch/CUDA, Transformers, Accelerate, Hugging Face Hub and FLA** environment. Reuse the working GPU environment where possible; follow the [official FLA install instructions](https://github.com/fla-org/flash-linear-attention/blob/main/INSTALL.md) if it is missing. This change does not claim to have verified a new dependency combination or the native FLA forward on this CPU-only workspace. Runtime package versions are recorded and must match on resume.
 
-\`\`\`bash
-CUDA_VISIBLE_DEVICES=0 STAGE=screen MODEL_ID=m-a-p/1.3B-100B-GatedDeltaNet-pure SEEDS=12 LENGTHS=512,1024,2048,4096,8192 bash run_h100.sh
-\`\`\`
+A tokenizer-only preflight writes a separate plan without allocating model weights:
 
-**Stage 3 — attention hybrid control**:
+```bash
+DRY_RUN=1 STAGE=screen bash run_h100.sh
+```
 
-\`\`\`bash
-CUDA_VISIBLE_DEVICES=0 STAGE=screen MODEL_ID=m-a-p/1.3B-100B-GatedDeltaNet-hybrid-6-1 SEEDS=12 LENGTHS=512,1024,2048,4096,8192 bash run_h100.sh
-\`\`\`
+The primary model is a base language model. Evaluation uses a fixed demonstration prompt and **actual next-token A/B/C/D logits**, rather than assuming instruction following or chat generation. All four labels must map to distinct single next tokens after the actual suffix. Full-vocabulary gold-token NLL and restricted four-choice log loss are recorded separately; neither is a full-document language-model perplexity.
 
-**Stage 4 — high-stress census** (not the first action; 7 context lengths through 32K × 48 seeds × 3 positions × 3 event counts × 7 conditions = **21,168 planned cases**, before rejecting infeasible short-context/high-load or invalid needle-position cells, plus optional pre-edit). Use only if the target checkpoint is able to run the length, short-context task is solved, GPU memory is sufficient, and you have defined a compute budget:
+## What v2 changes
 
-\`\`\`bash
-CUDA_VISIBLE_DEVICES=0 STAGE=full MODEL_ID=m-a-p/1.3B-100B-GatedDeltaNet-pure PREEDIT=0 bash run_h100.sh
-\`\`\`
+- Removes an answer shortcut: interfering values are independent uniform A/B/C/D draws. Earlier code always excluded the correct label; a model could find the missing label without reading the target. Revision values also include the original label, and changed/unchanged final labels are reported separately.
+- Adds `no_target`: the target record is replaced by neutral tokens, with the same query, distractors and token budget. Hidden gold measures answer predictability/leakage, not successful retrieval.
+- Uses the same **absolute target offset** across query types. The old suffix-dependent position calculation could reject entire alias/revision matched groups.
+- Includes tokenizer special tokens/BOS once, keeps task records intact, and checks exact input length. Inputs are assembled as token segments; neutral filler may end at a partial sentence, but task records start on a newline and are never truncated.
+- Streams long-token payloads one matched group at planning time and one example at evaluation time. Only compact case metadata remains in the plan.
+- Pins weights and tokenizer independently; records source/dependency identities; refuses mismatched resume or duplicate results; retains error rows.
+- Rejects missing/unexpected/mismatched checkpoint weights instead of silently evaluating partially initialized parameters.
+- Requests last-position-only logits when the model explicitly supports `logits_to_keep`/`num_logits_to_keep`; otherwise retains the normal forward. This avoids materializing every vocabulary logit for supported implementations.
+- Adds whole-group sample/token budgets, a cumulative soft wall budget, output locking, compatible shard merging, and seed-clustered statistics.
+- Makes mock execution explicit and excludes its rows from scientific score tables.
 
-Every stage writes under \`results/gdn_failure_census/<model>_<stage>_s<seedstart>_n<nseeds>/\`: \`manifest.json\` (including counts of skipped infeasible grid cells), \`cases.jsonl\`, \`results.jsonl\`, \`summary.json\`, \`groups.csv\`, \`paired.csv\`, \`preedit.csv\` and \`revisions.csv\`. The exact checkpoint and schema are recorded. The launcher uses \`set -euo pipefail\` so it will stop on a model/evaluation error. To resume an interrupted identical run:
+V2 changes prompts, label draws and provenance. **Do not resume v1 output or combine v1/v2 results.** Use a fresh output directory; v1 history is preserved on GitHub.
 
-\`\`\`bash
-RESUME=1 STAGE=screen bash run_h100.sh
-\`\`\`
+## Verified checkpoint identities
 
-For multiple GPUs, shard *seeds* using \`SEED_START=1000,1020,...\` and different \`OUT_DIR\` locations, then analyze each shard separately (a merge script can be added once GPU tests pass). Do not treat shards from different tokenizers as identical token positions.
+These are public **m-a-p releases**, separate from the original NVlabs code release. The checkpoint names contain nominal scale/training-budget labels; no identical training protocol is inferred from their names. The inspected model pages lack a full model card.
 
-## What would constitute meaningful evidence?
+| Arm | Model ID | Immutable model/tokenizer revision |
+| --- | --- | --- |
+| Initial screen | `m-a-p/340M-20B-GatedDeltaNet-pure-baseline` | `14661a98768e1f5d5493ff7b18f2d6809717a4c8` |
+| Scale replication | `m-a-p/1.3B-100B-GatedDeltaNet-pure` | `930ed6ae4ac629c86cb9855bb3dcb0a0974a29aa` |
+| Attention-containing comparison | `m-a-p/1.3B-100B-GatedDeltaNet-hybrid-6-1` | `b2a4ecf3ee629e8ad5538d4ab18e5068b69b341f` |
 
-1. Short plain lookup >=60% accuracy in a base model, with no tokenization errors.
-2. Random/unrelated controls remain measurably stronger than near-key collision under equal token budgets.
-3. **Paired CI** for \(\Delta_{\mathrm{collision}}=\mathrm{Acc}(\mathrm{collision})-\mathrm{Acc}(\mathrm{unrelated})\) excludes 0, preferably at both 340M and 1.3B, within 2K first.
-4. Cases correct before the interfering writes fail after them, and errors track interference load and key similarity, not just elapsed distance.
-5. Hybrid GDN mitigates a specific GDN-pure failure on the same high-level setup, while being explicit about architectural and pretraining differences.
-6. A legitimate update is assessed separately: “earliest” should preserve history and “latest” should reflect the most recent assertion. Avoid a mechanism that blindly restores obsolete values.
+`provenance.py` uses those revisions by default. All three inspected configs specify `max_position_embeddings=2048`. **4K–32K are explicit configured-context extrapolation tests.** That configuration is not independent proof of training-length exposure; the tokenizer's huge maximum-length sentinel is not a context capability claim. Pure configs have `attn=null`; the hybrid includes attention at layers `[6,11,17,23]`. It provides a descriptive comparison, not isolated causal identification of GDN versus attention.
 
-**Do not** jump from “8K NIAH failed” to “we need a history bank.” Once a reproducible failure type emerges, inspect gate/state behavior on a small sample of trained GDN, then choose the *smallest* architectural intervention and compare with MARCH and HOLA under a fixed memory and compute budget.
+Custom HF repositories/local checkpoints are accepted through `MODEL_ID`/`--model`. Remote branch names resolve to exact commit SHAs; local checkpoint/tokenizer files are hashed (this can take time for large weights). Model and tokenizer must match the implementation. No random checkpoint is substituted on a load error, and remote model code is not trusted automatically.
 
-## External benchmarks for validation
+Sources and limitations: [SOURCE_PROTOCOL_REVIEW.md](SOURCE_PROTOCOL_REVIEW.md).
 
-Our cases are not official benchmark scores. Separately replicate the **exact official tasks** before making performance claims:
+## Implemented conditions
 
-- [NVIDIA/RULER](https://github.com/NVIDIA/RULER): S-NIAH, MK-NIAH, variable tracing, common words, aggregation; key tests: 2K/4K/8K/16K.
-- [NoLiMa](https://github.com/adobe-research/NoLiMa): lexical-disjoint semantic retrieval.
-- [BABILong](https://github.com/booydar/babilong): reasoning over distributed facts.
-- [HELM Long Context](https://crfm.stanford.edu/helm/long-context/latest/): standard tasks and evaluation protocol.
-- [MARCH](https://arxiv.org/abs/2608.12435): a reference architecture storing *cumulative* state snapshots; do not compare an untrained local approximation as if it were the trained original.
+| Condition | Measurement | Interpretation |
+| --- | --- | --- |
+| `plain` | Retrieve one target after neutral filler | Distance/position and baseline task competence |
+| `unrelated` | Add unrelated record writes | Information/write-load sensitivity |
+| `collision` | Same value sequence, similar identifier prefixes | **Lexical interference proxy**; learned key overlap is not measured |
+| `revision_earliest` | Read original status after genuine updates | Historical retention |
+| `revision_latest` | Read final status from the same record history | Correct updating; not same-fact erasure |
+| `alias` | Follow one alias to the target | Local composition followed by a long gap |
+| `two_hop` | Follow two adjacent links | Local two-link composition, not distributed document reasoning |
+| `no_target` | Remove the target but retain query and unrelated writes | Chance/leakage control; task deliberately unanswerable |
 
-The official benchmark wrappers are **not yet integrated** here. Those evaluations require their own original datasets, prompts, score rules and checkpoint loading. No official RULER score can be claimed from this census.
+Matched groups share seed, initial target, target location and total input length. Unrelated/collision cases share the exact interfering **value sequence**, while identifier strings differ. Revision pairs share the record history but have different natural-language queries; differing suffix lengths can slightly change neutral filler/event offsets. Do not claim identical full input bytes.
 
-## Research integrity and compute control
+Four axes are explicit: total length, target position, number of writes, and early/late write placement. This separates passive distance from activity between target and query. Requested/realized offsets are saved. A group is rejected in full if support cannot fit or its target location is unattainable; the manifest reports why. Rejected configurations are not counted as model mistakes or silently dropped from a matched comparison.
 
-This branch uses only publicly described model IDs; no checkpoint weights are bundled. \`--allow-extrapolation\` is explicit and stored in the manifest. A 32K failure could be due to context extrapolation or model kernel limitations, not necessarily memory capacity. Report OOM/unsupported-context separately from accuracy. Each suite runs on one GPU; 4,200×4K FLA forwards may be expensive, and optional pre-edit scoring adds extra forwards.
+## Large-test stages and size
 
-The branch is deliberately independent of GeoDelta Full-C and changes **no existing training code or results**. A successful census should identify a concrete failure to justify an architecture, not be used to retrofit a claim that a pre-selected new memory design works.
+Counts below are **planned before feasibility filtering**, for one model and one event-placement setting. Pre-edit probes add forwards, not independent examples.
 
+| Stage | Lengths | Seeds | Positions × write counts × conditions | Planned cases |
+| --- | --- | ---: | --- | ---: |
+| `smoke` | 512, 1K, 2K | 3 | 2 × 1 × 6 | 108 |
+| `competence` | 512, 1K | 40 | 1 × 1 × 8 | 640 |
+| `screen` | 512, 1K, 2K, 4K, 8K | 20 | 3 × 2 × 8 | 4,800 |
+| `full` | 512, 1K, 2K, 4K, 8K, 16K, 32K | 48 | 3 × 3 × 8 | 24,192 |
 
-### Optional plots
+`screen`/`full` explicitly opt into extrapolation; `smoke`/`competence` do not. Override with `ALLOW_EXTRAPOLATION=0` when only supported-context results are desired. Each stage prints the **actual planned forward-input tokens**, including requested pre-edit evaluation. Estimate GPU time from measured native pilot throughput at representative lengths; there is no fabricated H100 runtime estimate.
 
-After a valid run and \`summarize.py\`, install \`matplotlib\` in a separate evaluation environment if it is not present and run:
+After initial screening, freeze a small set of contrasts, exact prompts, scoring, lengths and effect-size/precision targets. Confirm on a disjoint seed block (e.g. `SEED_START=100000`) instead of treating exploratory confidence intervals over thousands of cells as confirmatory evidence. The stage launcher accepts `LENGTHS`, `EVENTS`, `POSITIONS`, `CONDITIONS`, `SEEDS`, and `SEED_START` overrides.
 
-\`\`\`bash
-python plot.py --run ../../results/gdn_failure_census/m-a-p__340M-20B-GatedDeltaNet-pure-baseline_smoke_s1000_n3
-\`\`\`
+```bash
+# Same screen, writes near the query instead of immediately after the target.
+CUDA_VISIBLE_DEVICES=0 STAGE=screen EVENT_PLACEMENT=late bash run_h100.sh
 
-Creates \`retrieval_accuracy.png\` (length × task) and \`paired_collision_effect.png\` (same-length near-key collision penalty). No plotted value is fabricated; files only exist after real GPU model evaluation.
+# Replicate with a larger pure model; inspect native smoke first.
+CUDA_VISIBLE_DEVICES=0 STAGE=smoke \
+  MODEL_ID=m-a-p/1.3B-100B-GatedDeltaNet-pure bash run_h100.sh
+CUDA_VISIBLE_DEVICES=0 STAGE=screen \
+  MODEL_ID=m-a-p/1.3B-100B-GatedDeltaNet-pure bash run_h100.sh
 
-**CPU test evidence:** GitHub Actions workflow \`.github/workflows/gdn-census-cpu.yml\` exercises \`tests/test_census.py\` without installing \`torch\`, downloading any checkpoint or touching remote accelerators. Green CI means the deterministic probe/analysis plumbing passes; it is not a pretrained GDN benchmark result.
+# Related attention-containing comparison.
+CUDA_VISIBLE_DEVICES=0 STAGE=screen \
+  MODEL_ID=m-a-p/1.3B-100B-GatedDeltaNet-hybrid-6-1 bash run_h100.sh
+
+# Larger descriptive census after competence, feasibility and resource checks.
+CUDA_VISIBLE_DEVICES=0 STAGE=full PREEDIT=0 \
+  MODEL_ID=m-a-p/1.3B-100B-GatedDeltaNet-pure bash run_h100.sh
+```
+
+### Budgets and interruption
+
+```bash
+STAGE=screen MAX_INPUT_TOKENS=20000000 MAX_RUNTIME_SECONDS=7200 bash run_h100.sh
+RESUME=1 STAGE=screen MAX_INPUT_TOKENS=20000000 MAX_RUNTIME_SECONDS=7200 bash run_h100.sh
+```
+
+`MAX_INPUT_TOKENS` caps the planned input volume, including pre-edit probes. `MAX_SAMPLES` rounds down to whole condition groups. The wall limit is cumulative over resumptions and is checked between groups; **one complete group's evaluation may overrun it**. It excludes model loading/tokenizer planning. A budget exit is status `partial`/exit 75, never completion. Increasing compute requires an explicit new plan/run; the launcher does not silently enlarge limits.
+
+A stop-on-error is written as an error row before exiting. Resume preserves terminal errors and does not silently retry/replace them. For corrected-code/retried evaluation, use a new output and retain the failed run. A process interrupted while writing its final JSONL line is refused on resume until the original is preserved and the incomplete trailing line is reviewed. Plan/code/tokenizer changes, mixed mock/real results and duplicate rows are refused.
+
+### Several GPUs
+
+Use a separate process/output per GPU with disjoint seed ranges and otherwise identical settings. The merger refuses overlap and checks config, exact weight/tokenizer pins, inference code, loaded architecture/precision, and package versions. It preserves errors and partial coverage.
+
+```bash
+CUDA_VISIBLE_DEVICES=0 STAGE=screen SEED_START=1000 OUT_DIR=/absolute/path/run_a bash run_h100.sh
+CUDA_VISIBLE_DEVICES=1 STAGE=screen SEED_START=1020 OUT_DIR=/absolute/path/run_b bash run_h100.sh
+
+python merge_runs.py --inputs /absolute/path/run_a /absolute/path/run_b --out /absolute/path/merged
+python summarize.py --run /absolute/path/merged
+```
+
+Launch the first two commands in separate terminals to run concurrently. Merge after the writers stop. Merged outputs are analysis artifacts, not resumable evaluations.
+
+## Outputs and decision criteria
+
+Each run stores `manifest.json`, compact `cases.jsonl`, append-only `results.jsonl`, `summary.json`, and `groups.csv`, `paired.csv`, `preedit.csv`, `revisions.csv` when applicable. Config, model/tokenizer SHAs, inference-code hash, dependency versions, planned/invalid/deferred/missing counts, errors, GPU peak allocated/reserved bytes, and latency are retained. Timing is a synchronized model forward plus score extraction, **not TTFT or full decoding throughput**. Cold initialization/kernel effects can affect the earliest measured case; inspect representative pilot measurements rather than extrapolating from only that first case.
+
+A short-lookup competence pass requires the shortest eligible plain control at **≤1024 tokens**, within configured context, at least **20 independent data seeds**, and the seed-bootstrap 95% lower confidence bound at or above **60%**. A three-seed smoke can establish executability, not a scientific pass. Data seeds are not independently trained model seeds.
+
+Inspect the paired effect `collision accuracy − unrelated accuracy`, the load effect `unrelated − plain`, history/update separation, position effects and no-target predictability. Confidence intervals resample **whole seeds**, keeping repeated positions/loads within the same seed together. OOM, unsupported inputs, missing cases and incomplete triplets remain separate from accuracy. Cellwise intervals are exploratory; selected findings need new-seed confirmation and relevant multiplicity control before strong claims.
+
+The optional pre-edit read asks the initial fact just before interfering writes. It can estimate loss conditional on successful pre-edit retrieval for the same target; it is a **query insertion intervention**, not a measurement of the hidden recurrent state. `revision_latest` changes the target and is never called loss of that same fact.
+
+Optional plots, after real evaluation:
+
+```bash
+python plot.py --run /absolute/path/run
+```
+
+Plotting needs matplotlib. Pooled length curves are descriptive: feasible load/position populations can differ by length. Use matched cells for mechanism claims.
+
+## Separate numerical operator probes
+
+```bash
+python operator_probe.py --out /absolute/path/operator_probe.json
+```
+
+This uses numpy, never a trained model. It verifies the original scalar-gated recurrence in `[key,value]` orientation:
+
+```text
+decayed = alpha * state
+state = decayed + beta * outer(key, value - key @ decayed)
+```
+
+Four probe families check decay alone, orthogonal writes, controlled correlated writes and memory load. Closed-form cases validate implementation. Artificial gates/random keys do not establish real language-model failures. Exact configurations and all operator results are labeled accordingly.
+
+## CPU plumbing without downloads
+
+```bash
+python run.py --backend mock --device cpu --lengths 4096 --positions .2 \
+  --events 8 --seeds 2 --preedit-probes --out /absolute/path/new_mock_run
+python summarize.py --run /absolute/path/new_mock_run
+```
+
+Mock lengths are character-test units and responses are deliberately artificial. Summary output is `DIAGNOSTIC_ONLY` with empty scientific score tables; the merge tool rejects mock data. No GPU results should be inferred from passing CPU checks.
+
+## What remains after this code update
+
+1. Run native pretrained smoke and confirm the checkpoint exactly loads into the installed FLA implementation.
+2. Establish short-context task competence and inspect no-target leakage, then run the large grid within the selected resources.
+3. Replicate the strongest effects with the larger pure model and related hybrid, using disjoint confirmation seeds.
+4. Inspect trained-model gates/keys/states on those failure cases to connect textual interference to an internal mechanism.
+5. Validate selected findings with original [RULER](https://github.com/NVIDIA/RULER), [BABILong](https://github.com/booydar/babilong), and/or [LongBench v2](https://github.com/THUDM/LongBench) runners and their official metrics. These adapters are not integrated in this commit.
+
+No training script, old model checkpoint, historical result, or proposed GeoDelta/MARCH mechanism is changed by this diagnostic update.
