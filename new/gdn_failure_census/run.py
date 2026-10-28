@@ -56,6 +56,8 @@ def parse_args(argv=None):
     p.add_argument("--out", type=Path, required=True)
     p.add_argument("--allow-extrapolation", action="store_true",
                    help="explicitly evaluate lengths beyond model config position limit")
+    p.add_argument("--preedit-probes", action="store_true",
+                   help="also test the SAME fact immediately before interfering records")
     p.add_argument("--dry-run", action="store_true",
                    help="prepare an auditable case manifest without loading model weights")
     p.add_argument("--resume", action="store_true",
@@ -77,6 +79,7 @@ def _config(a) -> dict:
         "model", "tokenizer", "revision", "dtype", "device", "lengths",
         "seed_start", "seeds", "positions", "events", "conditions",
         "event_placement", "allow_extrapolation", "max_samples",
+        "preedit_probes",
     )
     return {k: getattr(a, k) for k in fields}
 
@@ -192,6 +195,17 @@ def main(argv=None) -> int:
                 choice_cache[suffix] = single_token_choices(tok, suffix)
             try:
                 r = evaluator.score(p.token_ids, choice_cache[suffix])
+                before = None
+                if a.preedit_probes and p.event_token is not None:
+                    # No future-event tokens enter this probe. The query is
+                    # inserted immediately before the first interfering write.
+                    # Revision probes ask for the most-recent/earliest value:
+                    # before all revisions both should equal initial_answer.
+                    pre_ids = (
+                        p.token_ids[:p.event_token]
+                        + tuple(tok.encode(suffix, add_special_tokens=False))
+                    )
+                    before = evaluator.score(pre_ids, choice_cache[suffix])
                 margin = (
                     r["log_prob_choice"][p.answer]
                     - max(v for k, v in r["log_prob_choice"].items() if k != p.answer)
@@ -209,6 +223,15 @@ def main(argv=None) -> int:
                     "is_context_extrapolated": bool(
                         evaluator.context is not None and p.actual_length > evaluator.context
                     ),
+                    "preedit_correct": (
+                        int(before["prediction"] == p.initial_answer)
+                        if before is not None else None
+                    ),
+                    "preedit_gold_conditional_nll": (
+                        -before["log_prob_choice"][p.initial_answer]
+                        if before is not None else None
+                    ),
+                    "preedit_prompt_tokens": len(pre_ids) if before is not None else None,
                 }
             except Exception as exc:
                 if a.error_policy == "stop":
