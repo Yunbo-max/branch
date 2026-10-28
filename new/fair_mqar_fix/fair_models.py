@@ -20,7 +20,12 @@ if str(_BRANCH_DIR) not in sys.path:
     sys.path.insert(0, str(_BRANCH_DIR))
 
 from march_mixer import MARCHCache, MARCHMemoryConfig, MARCHMixer  # noqa: E402
-from baseline_mixers import BaselineConfig, DeltaNetMixer, TransformerMixer  # noqa: E402
+from baseline_mixers import (  # noqa: E402
+    BaselineConfig,
+    DeltaNetMixer,
+    GatedDeltaNetMixer,
+    TransformerMixer,
+)
 
 MIXERS = (
     "march",
@@ -30,6 +35,7 @@ MIXERS = (
     "chunked",
     "single_geo",
     "delta",
+    "gated_delta",
     "transformer",
 )
 
@@ -92,6 +98,18 @@ def build_mixer(cfg: FairLMConfig) -> nn.Module:
         )
     if cfg.mixer == "delta":
         return DeltaNetMixer(
+            BaselineConfig(
+                d_model=cfg.d_model,
+                n_heads=cfg.n_heads,
+                d_key=cfg.d_key,
+                d_value=cfg.d_value,
+                conv_kernel=cfg.conv_kernel,
+                tau=cfg.tau,
+                ridge=cfg.ridge,
+            )
+        )
+    if cfg.mixer == "gated_delta":
+        return GatedDeltaNetMixer(
             BaselineConfig(
                 d_model=cfg.d_model,
                 n_heads=cfg.n_heads,

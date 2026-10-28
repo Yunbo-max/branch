@@ -140,6 +140,68 @@ class DeltaNetMixer(nn.Module):
         return out, new_cache, _empty_stats(x, b, t, h, dtype, active=1)
 
 
+class GatedDeltaNetMixer(nn.Module):
+    """Gated DeltaNet (GDN) with a learnable input-dependent forget gate.
+
+    S_t = alpha_t S_{t-1} + beta_t k_t (v_t - (alpha_t S_{t-1})^T k_t)^T,
+    alpha_t = sigmoid(W_g x_t + b_g) per head, beta_t = 1 / (tau*ridge + ||k_t||^2).
+
+    beta matches single_geo ``isotropic`` so the only difference vs that arm is
+    the scalar forget gate. Init biases alpha_t to ~0.88 so the model starts
+    near the ungated delta rule and can learn to forget.
+    """
+
+    def __init__(self, config: BaselineConfig) -> None:
+        super().__init__()
+        self.config = config
+        c = config
+        self.conv = nn.Conv1d(c.d_model, c.d_model, c.conv_kernel, groups=c.d_model, bias=False)
+        self.q_proj = nn.Linear(c.d_model, c.n_heads * c.d_key, bias=False)
+        self.k_proj = nn.Linear(c.d_model, c.n_heads * c.d_key, bias=False)
+        self.v_proj = nn.Linear(c.d_model, c.n_heads * c.d_value, bias=False)
+        self.out_proj = nn.Linear(c.n_heads * c.d_value, c.d_model, bias=False)
+        self.gate_proj = nn.Linear(c.d_model, c.n_heads, bias=True)
+        nn.init.zeros_(self.gate_proj.weight)
+        nn.init.constant_(self.gate_proj.bias, 2.0)  # sigmoid(2.0) ~= 0.88
+
+    def initial_cache(self, x: Tensor) -> DeltaCache:
+        c = self.config
+        b = x.shape[0]
+        dtype = torch.float64 if x.dtype == torch.float64 else torch.float32
+        state = torch.zeros(b, c.n_heads, c.d_key, c.d_value, device=x.device, dtype=dtype)
+        return DeltaCache(x.new_zeros(b, c.d_model, c.conv_kernel - 1), state, 0, 0)
+
+    def forward(self, x: Tensor, cache: DeltaCache | None = None):
+        c = self.config
+        if x.ndim != 3 or x.shape[-1] != c.d_model:
+            raise ValueError("x must be [B,T,d_model]")
+        b, t, _ = x.shape
+        h = c.n_heads
+        cache = cache or self.initial_cache(x)
+        dtype = cache.state.dtype
+
+        local, next_context = _causal_conv(x, self.conv, cache.conv_context, c.conv_kernel)
+        q = F.normalize(self.q_proj(local).view(b, t, h, c.d_key).to(dtype), dim=-1, eps=1e-6)
+        k = F.normalize(self.k_proj(local).view(b, t, h, c.d_key).to(dtype), dim=-1, eps=1e-6)
+        v = torch.tanh(self.v_proj(local).view(b, t, h, c.d_value).to(dtype))
+        gate = torch.sigmoid(self.gate_proj(local).to(dtype))  # [B, T, H]
+        state = cache.state
+
+        outs = []
+        for i in range(t):
+            kt, vt, qt = k[:, i], v[:, i], q[:, i]
+            alpha = gate[:, i].unsqueeze(-1).unsqueeze(-1)  # [B, H, 1, 1]
+            state = alpha * state  # forget on the old state
+            residual = vt - torch.einsum("bhkv,bhk->bhv", state, kt)  # [B,H,V]
+            beta = 1.0 / (c.tau * c.ridge + (kt * kt).sum(-1))  # [B,H]
+            state = state + beta.unsqueeze(-1).unsqueeze(-1) * kt.unsqueeze(-1) * residual.unsqueeze(-2)
+            outs.append(torch.einsum("bhkv,bhk->bhv", state, qt))
+
+        out = self.out_proj(torch.stack(outs, 1).reshape(b, t, h * c.d_value).to(local.dtype))
+        new_cache = DeltaCache(next_context, state, cache.step + t, 0)
+        return out, new_cache, _empty_stats(x, b, t, h, dtype, active=1)
+
+
 class TransformerMixer(nn.Module):
     """Causal multi-head attention with RoPE and an incremental KV cache."""
 
