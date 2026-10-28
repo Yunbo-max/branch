@@ -49,6 +49,7 @@ class Probe:
     latest_answer: str
     key: str
     seed: int
+    question_suffix: str
     token_ids: tuple[int, ...]
     prompt_hash: str
 
@@ -227,7 +228,8 @@ def make_probe(
         needle_fraction=needle_idx / length, needle_token=needle_idx,
         event_token=ev_idx, num_events=num_events,
         answer=gold, initial_answer=answer, latest_answer=latest,
-        key=key, seed=seed, token_ids=tuple(tokens), prompt_hash=prompt_hash,
+        key=key, seed=seed, question_suffix=question,
+        token_ids=tuple(tokens), prompt_hash=prompt_hash,
     )
 
 
