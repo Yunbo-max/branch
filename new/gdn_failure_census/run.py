@@ -91,17 +91,42 @@ def _write_json(path: Path, obj: dict) -> None:
 
 
 def _cases(a, tok):
+    # Only emit COMPLETE matched groups. If short context cannot fit 32/64
+    # distractors, discard every condition for that cell (including plain);
+    # otherwise comparisons would silently use unequal case populations.
     for length in a.lengths:
         for seed in range(a.seed_start, a.seed_start + a.seeds):
             for depth in a.positions:
                 for n in a.events:
+                    group = []
+                    invalid = False
                     for condition in a.conditions:
-                        yield make_probe(
-                            tok, length=length, seed=seed,
-                            needle_fraction=depth, num_events=n,
-                            condition=condition,
-                            event_placement=a.event_placement,
-                        )
+                        try:
+                            case = make_probe(
+                                tok, length=length, seed=seed,
+                                needle_fraction=depth, num_events=n,
+                                condition=condition,
+                                event_placement=a.event_placement,
+                            )
+                        except ValueError as exc:
+                            if "required text" not in str(exc):
+                                raise
+                            invalid = True
+                            break
+                        # The demanded needle location must actually be realized.
+                        # Short texts with many events cannot be forced to .88
+                        # without clipping, which would confound the position study.
+                        if abs(case.needle_fraction - depth) > 0.10:
+                            invalid = True
+                            break
+                        group.append(case)
+                    if invalid:
+                        continue
+                    if len({x.needle_token for x in group}) != 1:
+                        # Same target at different positions is not a paired
+                        # comparison: reject it rather than silently average.
+                        continue
+                    yield from group
 
 
 def main(argv=None) -> int:
@@ -149,6 +174,14 @@ def main(argv=None) -> int:
             "planned_cases": len(probes),
             "full_grid_cases": suite_size(
                 a.lengths, list(range(a.seeds)), a.positions, a.events, a.conditions
+            ),
+            "skipped_invalid_grid_cases": (
+                suite_size(a.lengths, list(range(a.seeds)), a.positions, a.events, a.conditions)
+                - len(probes)
+            ) if not a.max_samples else None,
+            "skipping_policy": (
+                "Discard entire matched group when required text does not fit, "
+                "needle placement is off by >0.10 fraction, or matched target offsets differ."
             ),
             "notes": (
                 "Synthetic probes are NOT official RULER. GDN checkpoints with "
