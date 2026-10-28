@@ -165,6 +165,12 @@ def main(argv=None) -> int:
     if not probes:
         raise RuntimeError("empty census")
 
+    # Validate actual checkpoint-tokenizer response labels *before* loading
+    # potentially several GB of pretrained model weights. Each query type
+    # shares the same Answer: boundary; 40 distinct probes cover lexical IDs.
+    for case in probes[:40]:
+        single_token_choices(tok, case.question_suffix)
+
     if not manifest_path.exists():
         manifest = {
             "schema": "gdn-long-context-census.v1",
