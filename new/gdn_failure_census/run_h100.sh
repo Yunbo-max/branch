@@ -14,6 +14,9 @@ SEED_START=${SEED_START:-1000}
 DRY_RUN=${DRY_RUN:-0}
 RESUME=${RESUME:-0}
 PREEDIT=${PREEDIT:-1}
+EVENT_PLACEMENT=${EVENT_PLACEMENT:-early}
+ERROR_POLICY=${ERROR_POLICY:-stop}
+MAX_SAMPLES=${MAX_SAMPLES:-0}
 
 case "$STAGE" in
   smoke)
@@ -59,9 +62,11 @@ ARGS=(
   --lengths "$LENGTHS" --positions "$POSITIONS"
   --events "$EVENTS" --conditions "$CONDITIONS"
   --seed-start "$SEED_START" --seeds "$SEEDS" --out "$OUT_DIR"
+  --event-placement "$EVENT_PLACEMENT" --error-policy "$ERROR_POLICY"
   --allow-extrapolation
 )
 if [[ "$PREEDIT" == "1" ]]; then ARGS+=(--preedit-probes); fi
+if [[ "$MAX_SAMPLES" != "0" ]]; then ARGS+=(--max-samples "$MAX_SAMPLES"); fi
 if [[ "$DRY_RUN" == "1" ]]; then ARGS+=(--dry-run); fi
 if [[ "$RESUME" == "1" ]]; then ARGS+=(--resume); fi
 python3 run.py "${ARGS[@]}" 2>&1 | tee "$OUT_ROOT/$(basename "$OUT_DIR").log"
