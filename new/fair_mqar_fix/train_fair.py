@@ -11,7 +11,7 @@ import argparse
 import json
 import platform
 import time
-from dataclasses import asdict
+from dataclasses import asdict, replace
 from pathlib import Path
 import sys
 
@@ -21,7 +21,7 @@ _HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(_HERE))
 sys.path.insert(0, str(_HERE.parent / "branch_memory"))
 
-from mqar_adapter import MQARBatch, build_panels, mqar_accuracy, mqar_loss  # noqa: E402
+from mqar_adapter import MQARBatch, build_panels, build_segment, mqar_accuracy, mqar_loss  # noqa: E402
 from fair_models import MIXERS, FairLM, FairLMConfig, count_mixer_parameters  # noqa: E402
 
 
@@ -36,6 +36,7 @@ def default_config(a) -> FairLMConfig:
         fork_cost=a.fork_cost, protection_decay=a.protection_decay,
         covariance=a.covariance, differentiate_covariance=a.differentiate_covariance,
         solver_refresh=a.solver_refresh, chunk_len=a.chunk_len,
+        geometry_mode=a.geometry_mode, read_mode=a.read_mode,
     )
 
 
@@ -69,7 +70,11 @@ def add_common_args(p: argparse.ArgumentParser) -> None:
     p.add_argument("--protection-decay", type=float, default=0.95)
     p.add_argument("--covariance", choices=["full", "diagonal"], default="full")
     p.add_argument("--chunk-len", type=int, default=64,
-                   help="chunked arm: tokens per Python iteration")
+                   help="geometry update interval / chunked recurrence length")
+    p.add_argument("--geometry-mode", choices=["full", "isotropic", "rayleigh"],
+                   default="full", help="single_geo write geometry: matched architecture")
+    p.add_argument("--read-mode", choices=["chunk_start", "current_only"],
+                   default="chunk_start", help="single_geo historical-read ablation")
     p.add_argument("--solver-refresh", type=int, default=1,
                    help="branch_cached only: reuse the SPD factorization for N tokens")
     p.add_argument("--differentiate-covariance", action="store_true")
@@ -86,6 +91,11 @@ def add_common_args(p: argparse.ArgumentParser) -> None:
     p.add_argument("--threads", type=int, default=4)
     p.add_argument("--device", default="cpu", choices=["cpu", "cuda"])
     p.add_argument("--log-every", type=int, default=50)
+    p.add_argument("--online-train", action="store_true",
+                   help="generate a fresh, deterministic MQAR training batch every step "
+                        "instead of repeatedly sampling the fixed train panel")
+    p.add_argument("--online-seed-offset", type=int, default=3000001,
+                   help="training-example stream seed offset, separate from held-out panel seeds")
     p.add_argument("--output", type=Path, required=True)
 
 
@@ -141,9 +151,23 @@ def run(a) -> dict:
     with (a.output / "metrics.jsonl").open("w", encoding="utf-8") as log:
         for step in range(1, a.steps + 1):
             model.train()
-            idx = torch.randint(panels["train"].inputs.shape[0], (a.batch_size,), generator=gen)
-            x = panels["train"].inputs[idx].to(device)
-            y = panels["train"].labels[idx].to(device)
+            if a.online_train:
+                # New KV pairings every step. The training stream is deterministic
+                # across arms, independent of the fixed valid/test panels.
+                online_spec = replace(
+                    panels["train"].spec,
+                    num_examples=a.batch_size,
+                    seed=a.seed + a.online_seed_offset + step,
+                )
+                online_batch = build_segment(online_spec)
+                x = online_batch.inputs.to(device)
+                y = online_batch.labels.to(device)
+            else:
+                idx = torch.randint(
+                    panels["train"].inputs.shape[0], (a.batch_size,), generator=gen
+                )
+                x = panels["train"].inputs[idx].to(device)
+                y = panels["train"].labels[idx].to(device)
             optimizer.zero_grad(set_to_none=True)
             logits, _ = model(x)
             loss = mqar_loss(logits, y)
@@ -178,8 +202,16 @@ def run(a) -> dict:
                           "alignment": p.alignment} for name, p in panels.items()},
         "initial": initial,
         "final": final,
-        "training": {"steps": a.steps, "batch_size": a.batch_size, "lr": a.lr,
-                     "wall_seconds": wall, "seconds_per_step": wall / max(a.steps, 1)},
+        "training": {
+            "steps": a.steps, "batch_size": a.batch_size, "lr": a.lr,
+            "geometry_mode": a.geometry_mode if a.mixer == "single_geo" else None,
+            "read_mode": a.read_mode if a.mixer == "single_geo" else None,
+            "online_train": a.online_train,
+            "online_seed_offset": a.online_seed_offset if a.online_train else None,
+            "online_examples_generated": a.steps * a.batch_size
+                if a.online_train else None,
+            "wall_seconds": wall, "seconds_per_step": wall / max(a.steps, 1),
+        },
         "environment": {"python": platform.python_version(), "torch": torch.__version__,
                         "device": str(device), "threads": a.threads},
         "history_tail": history[-3:],

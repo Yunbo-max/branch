@@ -1,0 +1,150 @@
+{
+  "mixer": "single_geo",
+  "scope": "fair paired MQAR pilot; identical backbone, data, optimiser and budget",
+  "config": {
+    "mixer": "single_geo",
+    "vocab_size": 8192,
+    "d_model": 256,
+    "n_layers": 2,
+    "n_heads": 4,
+    "d_key": 64,
+    "d_value": 64,
+    "ff_mult": 2,
+    "ff_extra": 0,
+    "conv_kernel": 3,
+    "anchor_interval": 16,
+    "max_anchors": 16,
+    "read_topk": 4,
+    "d_route": 32,
+    "max_states": 8,
+    "tau": 1.0,
+    "ridge": 1.0,
+    "protect": 8.0,
+    "fork_cost": 0.02,
+    "protection_decay": 0.95,
+    "covariance": "full",
+    "differentiate_covariance": false,
+    "solver_refresh": 1,
+    "chunk_len": 64,
+    "delta_tile_len": 0,
+    "geometry_mode": "full",
+    "geometry_threshold": 0.1,
+    "read_mode": "current_only",
+    "grad_checkpoint": false
+  },
+  "parameters": {
+    "mixer": 627208,
+    "backbone_and_head": 4722688,
+    "total": 5349896
+  },
+  "panels": {
+    "train": {
+      "sha256": "2839dd9811905353852e7b4a8d6504078bb545b45c8c56c49a3af3232168cf49",
+      "examples": 8192,
+      "alignment": {
+        "rows": 8192,
+        "labeled_positions": 16384,
+        "labels_per_row": 2,
+        "context_tokens": 4,
+        "answer_position_rule": "label[t] is the value for the key at inputs[t]"
+      }
+    },
+    "valid": {
+      "sha256": "ed24a882cd5c74e3d93cb0ad4adbf186a74694d4606de670464db69bbb4c0c73",
+      "examples": 512,
+      "alignment": {
+        "rows": 2048,
+        "labeled_positions": 4096,
+        "labels_per_row": 2,
+        "context_tokens": 4,
+        "answer_position_rule": "label[t] is the value for the key at inputs[t]"
+      }
+    },
+    "test": {
+      "sha256": "b98c57c679829af898a91762b5c73bef122ff72b13c7d46c166ce084c555222c",
+      "examples": 512,
+      "alignment": {
+        "rows": 2048,
+        "labeled_positions": 4096,
+        "labels_per_row": 2,
+        "context_tokens": 4,
+        "answer_position_rule": "label[t] is the value for the key at inputs[t]"
+      }
+    }
+  },
+  "initial": {
+    "valid": {
+      "loss": 9.181991696357727,
+      "accuracy": 0.0,
+      "labeled_positions": 1024
+    },
+    "test": {
+      "loss": 9.15659511089325,
+      "accuracy": 0.0009765625,
+      "labeled_positions": 1024
+    }
+  },
+  "final": {
+    "valid": {
+      "loss": 8.376057147979736,
+      "accuracy": 0.0009765625,
+      "labeled_positions": 1024
+    },
+    "test": {
+      "loss": 8.353257894515991,
+      "accuracy": 0.0009765625,
+      "labeled_positions": 1024
+    }
+  },
+  "training": {
+    "steps": 1000,
+    "batch_size": 32,
+    "lr": 0.001,
+    "geometry_mode": "full",
+    "read_mode": "current_only",
+    "online_train": true,
+    "online_seed_offset": 3000001,
+    "online_examples_generated": 32000,
+    "wall_seconds": 23.024371781997615,
+    "seconds_per_step": 0.023024371781997614
+  },
+  "environment": {
+    "python": "3.12.3",
+    "torch": "2.8.0a0+5228986c39.nv25.06",
+    "device": "cuda",
+    "threads": 8
+  },
+  "history_tail": [
+    {
+      "step": 998,
+      "train_loss": 8.371051788330078,
+      "train_accuracy": 0.0,
+      "grad_norm": 0.6709639430046082,
+      "elapsed_seconds": 22.875437255999714
+    },
+    {
+      "step": 999,
+      "train_loss": 8.35257339477539,
+      "train_accuracy": 0.0,
+      "grad_norm": 0.6864029765129089,
+      "elapsed_seconds": 22.8963446419948
+    },
+    {
+      "step": 1000,
+      "train_loss": 8.327729225158691,
+      "train_accuracy": 0.0,
+      "grad_norm": 0.6726343631744385,
+      "elapsed_seconds": 22.917186868995486,
+      "valid": {
+        "loss": 8.376057147979736,
+        "accuracy": 0.0009765625,
+        "labeled_positions": 1024
+      },
+      "test": {
+        "loss": 8.353257894515991,
+        "accuracy": 0.0009765625,
+        "labeled_positions": 1024
+      }
+    }
+  ]
+}

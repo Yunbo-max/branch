@@ -11,7 +11,12 @@ import torch
 _HERE = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(_HERE))
 
-from baseline_mixers import BaselineConfig, DeltaNetMixer, TransformerMixer  # noqa: E402
+from baseline_mixers import (  # noqa: E402
+    BaselineConfig,
+    DeltaNetMixer,
+    GatedDeltaNetMixer,
+    TransformerMixer,
+)
 from fair_models import FairLM, FairLMConfig, MIXERS  # noqa: E402
 
 
@@ -21,7 +26,7 @@ def bcfg(**kw) -> BaselineConfig:
     return BaselineConfig(**base)
 
 
-@pytest.mark.parametrize("cls", [DeltaNetMixer, TransformerMixer])
+@pytest.mark.parametrize("cls", [DeltaNetMixer, GatedDeltaNetMixer, TransformerMixer])
 def test_forward_shape_and_cache(cls):
     m = cls(bcfg()).double().eval()
     x = torch.randn(2, 7, 16, dtype=torch.double)
@@ -33,7 +38,7 @@ def test_forward_shape_and_cache(cls):
     assert set(stats) >= {"active_states", "fork", "historical_candidates", "write_cost"}
 
 
-@pytest.mark.parametrize("cls", [DeltaNetMixer, TransformerMixer])
+@pytest.mark.parametrize("cls", [DeltaNetMixer, GatedDeltaNetMixer, TransformerMixer])
 def test_causality_and_streaming(cls):
     torch.manual_seed(0)
     m = cls(bcfg()).double().eval()
@@ -66,6 +71,26 @@ def test_delta_state_is_single_and_recurrent():
     with torch.no_grad():
         _, c, _ = m(torch.randn(3, 5, 16, dtype=torch.double))
     assert c.state.shape == (3, 2, 4, 4)   # B H K V, no anchor/states dimension
+
+
+def test_gated_delta_gate_changes_memory_behavior():
+    m0 = GatedDeltaNetMixer(bcfg()).double().eval()
+    m1 = GatedDeltaNetMixer(bcfg()).double().eval()
+    m1.load_state_dict(m0.state_dict())
+    with torch.no_grad():
+        m0.gate_proj.weight.zero_(); m0.gate_proj.bias.fill_(-20.0)  # forget everything
+        m1.gate_proj.weight.zero_(); m1.gate_proj.bias.fill_(20.0)   # remember everything
+        x = torch.randn(1, 5, 16, dtype=torch.double)
+        o0, _, _ = m0(x)
+        o1, _, _ = m1(x)
+    # full-forgetting vs full-remembering must give different outputs
+    assert not torch.allclose(o0, o1, atol=1e-9)
+
+
+def test_gated_delta_has_gate_parameters():
+    m = GatedDeltaNetMixer(bcfg())
+    p = dict(m.named_parameters())
+    assert "gate_proj.weight" in p and "gate_proj.bias" in p
 
 
 def test_all_four_arms_build_in_the_shared_lm():
