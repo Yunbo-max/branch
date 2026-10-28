@@ -48,7 +48,9 @@ esac
 
 if [[ -z "${OUT_DIR:-}" ]]; then
   SAFE_ID="${MODEL_ID//\//__}"
-  OUT_DIR="$OUT_ROOT/${SAFE_ID}_${STAGE}_s${SEED_START}_n${SEEDS}"
+  SUFFIX=""
+  if [[ "$DRY_RUN" == "1" ]]; then SUFFIX="_dryrun"; fi
+  OUT_DIR="$OUT_ROOT/${SAFE_ID}_${STAGE}_s${SEED_START}_n${SEEDS}${SUFFIX}"
 fi
 mkdir -p "$OUT_ROOT"
 echo "GDN CENSUS: model=$MODEL_ID stage=$STAGE device=$DEVICE dtype=$DTYPE output=$OUT_DIR"
