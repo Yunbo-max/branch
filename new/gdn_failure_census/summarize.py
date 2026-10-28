@@ -101,6 +101,29 @@ def summarize_records(records: list[dict], *, min_short_accuracy: float = 0.6) -
             rec[f"{name}_hi"] = hi
         paired_rows.append(rec)
 
+    # Direct within-example pre-edit vs post-edit probe isolates actual
+    # lost retrieval of a fact that was accessible BEFORE intervening writes.
+    preedit_groups: dict[tuple, list[dict]] = defaultdict(list)
+    for r in ok:
+        if r.get("preedit_correct") is not None:
+            preedit_groups[(r["actual_length"], r["condition"], r["num_events"])].append(r)
+    preedit_rows = []
+    for (length, condition, events), group in sorted(preedit_groups.items()):
+        n_pre = sum(r["preedit_correct"] for r in group)
+        n_damaged = sum(
+            int(r["preedit_correct"] and not r["correct"])
+            for r in group
+        )
+        preedit_rows.append({
+            "length": length, "condition": condition, "events": events,
+            "n": len(group), "n_correct_before_edit": n_pre,
+            "preedit_accuracy": statistics.fmean(r["preedit_correct"] for r in group),
+            "postedit_accuracy": statistics.fmean(r["correct"] for r in group),
+            "lost_after_edit_given_preedit_correct": (
+                n_damaged / n_pre if n_pre else None
+            ),
+        })
+
     # Compare latest and earliest retrieval on *the same revision history*.
     revisions = []
     for key, recs in paired.items():
@@ -144,6 +167,7 @@ def summarize_records(records: list[dict], *, min_short_accuracy: float = 0.6) -
         "groups": rows,
         "paired": paired_rows,
         "revisions": revision_rows,
+        "preedit": preedit_rows,
         "context_extrapolation_n": sum(bool(r["is_context_extrapolated"]) for r in ok),
         "warnings": [
             "Synthetic diagnostic, not official RULER/NoLiMa benchmark.",
@@ -153,6 +177,9 @@ def summarize_records(records: list[dict], *, min_short_accuracy: float = 0.6) -
             "Paired edits change text tokens; exact lengths and target positions are controlled, "
             "but content distribution is not identical.",
             "Errors/OOM are excluded from accuracy denominators and reported separately.",
+            "Pre-edit vs post-edit is a probe-insertion intervention, not a direct hidden-state trace.",
+            "Revision-latest post-edit mismatch may be a legitimate overwrite failure, "
+            "not accidental corruption; analyse revision separately.",
         ],
     }
 
@@ -181,7 +208,7 @@ def main():
                 rows.append(json.loads(line))
     result = summarize_records(rows, min_short_accuracy=args.min_short_accuracy)
     (args.run / "summary.json").write_text(json.dumps(result, indent=2) + "\n")
-    for name in ("groups", "paired", "revisions"):
+    for name in ("groups", "paired", "revisions", "preedit"):
         _save_csv(args.run / f"{name}.csv", result.get(name, []))
     print(f"OK {result['n_ok']} / errors {result['n_error']}")
     ctrl = result.get("short_control", {})
