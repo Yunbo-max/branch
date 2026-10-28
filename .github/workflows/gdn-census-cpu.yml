@@ -1,0 +1,27 @@
+name: GDN failure census CPU checks
+on:
+  push:
+    branches:
+      - exp/gdn-long-context-failure-census-20261028
+    paths:
+      - "new/gdn_failure_census/**"
+      - ".github/workflows/gdn-census-cpu.yml"
+  pull_request:
+    paths:
+      - "new/gdn_failure_census/**"
+      - ".github/workflows/gdn-census-cpu.yml"
+jobs:
+  unit:
+    name: Synthetic probe and analysis tests (no model downloads)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install minimal CPU test dependencies
+        run: python -m pip install -U pytest
+      - name: Unit tests
+        working-directory: new/gdn_failure_census
+        run: python -m pytest -q tests/test_census.py
