@@ -92,13 +92,13 @@ DRY_RUN=1 STAGE=smoke bash run_h100.sh
 
 ## Run stages (one GPU per process)
 
-**Stage 0 — smoke**, ~90 probe contexts with pre-edit interventions:
+**Stage 0 — smoke**, at most 90 paired probe contexts (invalid short-length/high-load or unattainable needle-position cells are skipped as complete groups), with pre-edit interventions:
 
 \`\`\`bash
 CUDA_VISIBLE_DEVICES=0 STAGE=smoke bash run_h100.sh
 \`\`\`
 
-**Stage 1 — systematic GDN-340M screening**, 5 lengths × 20 seeds × 3 positions × 2 event counts × 7 conditions = **4,200 cases**, plus pre-edit measurements where requested:
+**Stage 1 — systematic GDN-340M screening**, a grid of 5 lengths × 20 seeds × 3 positions × 2 event counts × 7 conditions = **4,200 planned cases** (infeasible short-length/high-load cells are omitted as complete matched groups, so the executed count may be lower), plus pre-edit measurements where requested:
 
 \`\`\`bash
 CUDA_VISIBLE_DEVICES=0 STAGE=screen MODEL_ID=m-a-p/340M-20B-GatedDeltaNet-pure-baseline bash run_h100.sh
@@ -116,13 +116,13 @@ CUDA_VISIBLE_DEVICES=0 STAGE=screen MODEL_ID=m-a-p/1.3B-100B-GatedDeltaNet-pure 
 CUDA_VISIBLE_DEVICES=0 STAGE=screen MODEL_ID=m-a-p/1.3B-100B-GatedDeltaNet-hybrid-6-1 SEEDS=12 LENGTHS=512,1024,2048,4096,8192 bash run_h100.sh
 \`\`\`
 
-**Stage 4 — high-stress census** (not the first action; 7 context lengths through 32K × 48 seeds × 3 positions × 3 event counts × 7 conditions = **21,168 cases**, plus optional pre-edit). Use only if the target checkpoint is able to run the length, short-context task is solved, GPU memory is sufficient, and you have defined a compute budget:
+**Stage 4 — high-stress census** (not the first action; 7 context lengths through 32K × 48 seeds × 3 positions × 3 event counts × 7 conditions = **21,168 planned cases**, before rejecting infeasible short-context/high-load or invalid needle-position cells, plus optional pre-edit). Use only if the target checkpoint is able to run the length, short-context task is solved, GPU memory is sufficient, and you have defined a compute budget:
 
 \`\`\`bash
 CUDA_VISIBLE_DEVICES=0 STAGE=full MODEL_ID=m-a-p/1.3B-100B-GatedDeltaNet-pure PREEDIT=0 bash run_h100.sh
 \`\`\`
 
-Every stage writes under \`results/gdn_failure_census/<model>_<stage>_s<seedstart>_n<nseeds>/\`: \`manifest.json\`, \`cases.jsonl\`, \`results.jsonl\`, \`summary.json\`, \`groups.csv\`, \`paired.csv\`, \`preedit.csv\` and \`revisions.csv\`. The exact checkpoint and schema are recorded. The launcher uses \`set -euo pipefail\` so it will stop on a model/evaluation error. To resume an interrupted identical run:
+Every stage writes under \`results/gdn_failure_census/<model>_<stage>_s<seedstart>_n<nseeds>/\`: \`manifest.json\` (including counts of skipped infeasible grid cells), \`cases.jsonl\`, \`results.jsonl\`, \`summary.json\`, \`groups.csv\`, \`paired.csv\`, \`preedit.csv\` and \`revisions.csv\`. The exact checkpoint and schema are recorded. The launcher uses \`set -euo pipefail\` so it will stop on a model/evaluation error. To resume an interrupted identical run:
 
 \`\`\`bash
 RESUME=1 STAGE=screen bash run_h100.sh
@@ -158,3 +158,16 @@ The official benchmark wrappers are **not yet integrated** here. Those evaluatio
 This branch uses only publicly described model IDs; no checkpoint weights are bundled. \`--allow-extrapolation\` is explicit and stored in the manifest. A 32K failure could be due to context extrapolation or model kernel limitations, not necessarily memory capacity. Report OOM/unsupported-context separately from accuracy. Each suite runs on one GPU; 4,200×4K FLA forwards may be expensive, and optional pre-edit scoring adds extra forwards.
 
 The branch is deliberately independent of GeoDelta Full-C and changes **no existing training code or results**. A successful census should identify a concrete failure to justify an architecture, not be used to retrofit a claim that a pre-selected new memory design works.
+
+
+### Optional plots
+
+After a valid run and \`summarize.py\`, install \`matplotlib\` in a separate evaluation environment if it is not present and run:
+
+\`\`\`bash
+python plot.py --run ../../results/gdn_failure_census/m-a-p__340M-20B-GatedDeltaNet-pure-baseline_smoke_s1000_n3
+\`\`\`
+
+Creates \`retrieval_accuracy.png\` (length × task) and \`paired_collision_effect.png\` (same-length near-key collision penalty). No plotted value is fabricated; files only exist after real GPU model evaluation.
+
+**CPU test evidence:** GitHub Actions workflow \`.github/workflows/gdn-census-cpu.yml\` exercises \`tests/test_census.py\` without installing \`torch\`, downloading any checkpoint or touching remote accelerators. Green CI means the deterministic probe/analysis plumbing passes; it is not a pretrained GDN benchmark result.
