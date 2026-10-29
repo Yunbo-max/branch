@@ -1,5 +1,7 @@
 # GDN long-context failure census — executable v2
 
+**Update 2026-10-29:** The CPU/software pipeline is validated; `m-a-p/*` checkpoints FAIL strict stock-FLA 0.5.0 loading because 24 `model.layers.*.attn.D` tensors are unexpected. The selected `puigde/gated-deltanet-360M-15B-slimpajama` is downloaded to the project GPU host and has a compatible-looking config, but has **NOT passed a real FLA native forward**. H100 smoke remains blocked by reported queue congestion. The launcher now defaults to the puigde checkpoint, and adds a CPU-only local-weights preflight. Do not interpret CPU/operator or mock evidence as pretrained-model accuracy.
+
 **2026-10-28. Code and CPU verification are implemented. No pretrained GDN/H100/H200 performance result is claimed.** This is a controlled four-choice diagnostic suite, plus separate numerical operator probes. It is not an implementation of the official RULER, BABILong or LongBench benchmarks.
 
 The research question is: **after a pretrained GDN can perform a short lookup, which combinations of distance, write load, lexical interference, legitimate revision and query composition cause observable failure?** Start with the measurements, then choose an architectural intervention from the evidence.
@@ -52,21 +54,37 @@ The primary model is a base language model. Evaluation uses a fixed demonstratio
 
 V2 changes prompts, label draws and provenance. **Do not resume v1 output or combine v1/v2 results.** Use a fresh output directory; v1 history is preserved on GitHub.
 
-## Verified checkpoint identities
+## Which checkpoint is actually suitable?
 
-These are public **m-a-p releases**, separate from the original NVlabs code release. The checkpoint names contain nominal scale/training-budget labels; no identical training protocol is inferred from their names. The inspected model pages lack a full model card.
+**Recommended first GPU smoke:** [puigde/gated-deltanet-360M-15B-slimpajama](https://huggingface.co/puigde/gated-deltanet-360M-15B-slimpajama) (21 layers, 1024 hidden, 4 heads, 357.8M parameters, trained on 15B SlimPajama tokens, 2,048 configured context). The previous cluster log states that the safetensors weights have already been downloaded to:
 
-| Arm | Model ID | Immutable model/tokenizer revision |
-| --- | --- | --- |
-| Initial screen | `m-a-p/340M-20B-GatedDeltaNet-pure-baseline` | `14661a98768e1f5d5493ff7b18f2d6809717a4c8` |
-| Scale replication | `m-a-p/1.3B-100B-GatedDeltaNet-pure` | `930ed6ae4ac629c86cb9855bb3dcb0a0974a29aa` |
-| Attention-containing comparison | `m-a-p/1.3B-100B-GatedDeltaNet-hybrid-6-1` | `b2a4ecf3ee629e8ad5538d4ab18e5068b69b341f` |
+```text
+/inspire/hdd/global_user/zhangjiaquan-253108540222/gdn_models/puigde_360M
+```
 
-`provenance.py` uses those revisions by default. All three inspected configs specify `max_position_embeddings=2048`. **4K–32K are explicit configured-context extrapolation tests.** That configuration is not independent proof of training-length exposure; the tokenizer's huge maximum-length sentinel is not a context capability claim. Pure configs have `attn=null`; the hybrid includes attention at layers `[6,11,17,23]`. It provides a descriptive comparison, not isolated causal identification of GDN versus attention.
+The model card provides standard `import fla.models` + `AutoModelForCausalLM` examples; use `trust_remote_code=False` with the registered FLA architecture. Its config and weight header are *candidates* for compatibility, not a substitute for a successful strict loading test.
 
-Custom HF repositories/local checkpoints are accepted through `MODEL_ID`/`--model`. Remote branch names resolve to exact commit SHAs; local checkpoint/tokenizer files are hashed (this can take time for large weights). Model and tokenizer must match the implementation. No random checkpoint is substituted on a load error, and remote model code is not trusted automatically.
+**Prior planned m-a-p releases are NOT usable with the installed stock FLA 0.5.0**: they have `attn.D` per layer and `qk_activation/qk_norm/use_beta` settings from the FLAME training fork. We observed `unexpected_keys` on all three. This applies to `m-a-p/340M-20B-GatedDeltaNet-pure-baseline`, `m-a-p/1.3B-100B-GatedDeltaNet-pure`, and `m-a-p/1.3B-100B-GatedDeltaNet-hybrid-6-1`; do not silently ignore these weights or claim they were evaluated. To include them requires an exact compatible FLAME implementation and numerical parity validation, not a generic `strict=False` load.
 
-Sources and limitations: [SOURCE_PROTOCOL_REVIEW.md](SOURCE_PROTOCOL_REVIEW.md).
+**No-GPU local weight/header/tokenizer preflight (run before queueing H100):**
+
+```bash
+MODEL_DIR=/inspire/hdd/global_user/zhangjiaquan-253108540222/gdn_models/puigde_360M
+python checkpoint_preflight.py --model-dir "$MODEL_DIR" --check-tokenizer \
+  --expected-weight-sha256 603d6619216ea86d639e7c0c65ac37459e632cc5f80c1cba5c6068571162c1f7
+```
+
+This scans only safetensors **headers** (except optional streaming SHA-256), config and tokenizer. It does not load tensors into GPU memory, guarantee output correctness, or reserve H100.
+
+**Genuine short H100 smoke (when available):**
+
+```bash
+CUDA_VISIBLE_DEVICES=0 MODEL_ID="$MODEL_DIR" STAGE=smoke bash run_h100.sh
+```
+
+The launcher auto-runs local CPU preflight; it can optionally enforce the known weight SHA-256 with `EXPECTED_WEIGHT_SHA256`. For an online checkpoint instead, `MODEL_ID=puigde/gated-deltanet-360M-15B-slimpajama` is the default and requires a functioning HF download/cache.
+
+All 4K–32K tests with this 2,048-context model are **length extrapolation** and must be separated from within-context evidence. Later 1.3B pure/hybrid replication remains blocked until actually compatible pretrained checkpoints are found, loaded without missing/unexpected weights, and their training contexts documented.
 
 ## Implemented conditions
 
@@ -106,17 +124,17 @@ CUDA_VISIBLE_DEVICES=0 STAGE=screen EVENT_PLACEMENT=late bash run_h100.sh
 
 # Replicate with a larger pure model; inspect native smoke first.
 CUDA_VISIBLE_DEVICES=0 STAGE=smoke \
-  MODEL_ID=m-a-p/1.3B-100B-GatedDeltaNet-pure bash run_h100.sh
+  MODEL_ID=<verified-compatible-pretrained-1.3B-pure> bash run_h100.sh
 CUDA_VISIBLE_DEVICES=0 STAGE=screen \
-  MODEL_ID=m-a-p/1.3B-100B-GatedDeltaNet-pure bash run_h100.sh
+  MODEL_ID=<verified-compatible-pretrained-1.3B-pure> bash run_h100.sh
 
 # Related attention-containing comparison.
 CUDA_VISIBLE_DEVICES=0 STAGE=screen \
-  MODEL_ID=m-a-p/1.3B-100B-GatedDeltaNet-hybrid-6-1 bash run_h100.sh
+  MODEL_ID=<verified-compatible-pretrained-hybrid> bash run_h100.sh
 
 # Larger descriptive census after competence, feasibility and resource checks.
 CUDA_VISIBLE_DEVICES=0 STAGE=full PREEDIT=0 \
-  MODEL_ID=m-a-p/1.3B-100B-GatedDeltaNet-pure bash run_h100.sh
+  MODEL_ID=<verified-compatible-pretrained-1.3B-pure> bash run_h100.sh
 ```
 
 ### Budgets and interruption
