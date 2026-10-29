@@ -1,5 +1,16 @@
 # Branch Memory vs MARCH — fair long-context comparison
 
+## Current GDN diagnostic experiment (2026-10-28)
+
+The executable **pretrained GDN failure census v2** is in
+[`new/gdn_failure_census/`](new/gdn_failure_census/README.md), on branch
+`exp/gdn-long-context-failure-census-20261028`. It includes pinned checkpoint
+loading, eight paired conditions, 512–32K length sweeps, streaming plans,
+resume/shard validation, seed-clustered summaries, and separate numerical
+operator probes. CPU tests validate the harness; **native pretrained GPU
+evaluation has not been run in this code update**. Start with its `smoke`
+and `competence` launch stages before the large census.
+
 > **Status (2026-10-22): legacy pilot, not a valid method comparison.**
 > Two correctness issues reproduced on CPU invalidate the capacity/routing claims below:
 > (1) the chunked Branch fork allocator never allocates a child, so the "64-state" run is
@@ -118,3 +129,4 @@ bash new/fair_mqar/run_march_pretrain.sh  # MARCH port
 
 The `qz_job_*.json` files record the exact platform submissions used for the runs in
 `results/`.
+

@@ -1,0 +1,50 @@
+{
+  "date_utc": "2026-10-28",
+  "base_commit": "428c509d05edda22b3d5de91f675a47da64839ce",
+  "schema": "gdn-census-validation.v2",
+  "code_fingerprint": "91dbce76258f3f12496f4c39156fc5a0ec69c75983feebdd15a47a971acc4fd4",
+  "runtime": {
+    "python": "3.12.14",
+    "torch": null,
+    "transformers": null,
+    "flash-linear-attention": null,
+    "fla-core": null,
+    "triton": null,
+    "huggingface-hub": null
+  },
+  "unit_tests": {
+    "command": "python -m unittest discover -s tests -v",
+    "passed": 75,
+    "failed": 0,
+    "log_sha256": "544002057150cdf5add72e403f446f84009921e635ac01dd69c861eabe705ea1"
+  },
+  "shell_syntax": "passed",
+  "compileall": "passed",
+  "mock_end_to_end": {
+    "planned_cases": 128,
+    "completed_cases": 128,
+    "actual_pretrained_evaluations": 0,
+    "summary_gate": "DIAGNOSTIC_ONLY",
+    "scientific_score_tables_empty": true,
+    "plan_sha256": "86e6677965ed184e7ac1d3a2777fa7e744ec93e35b07dfbf3c71747c100f6888"
+  },
+  "operator": {
+    "trained_model_evaluated": false,
+    "rows": 774,
+    "raw_report_sha256": "f63bd02e385bed0b7c444ad394609b3acbcf8c7f2aa91d17e2879cb438d50619",
+    "report_path": "validation/operator_probe.json.gz",
+    "max_abs_analytic_error": 6.661338147750939e-16
+  },
+  "not_run": [
+    "Native PyTorch/FLA checkpoint loading",
+    "CUDA/H100/H200 inference",
+    "Pretrained long-context performance evaluation",
+    "Official external benchmark runners"
+  ],
+  "claim": "CPU numerical and software validation only. No GDN model failure or architecture efficacy result.",
+  "launcher_mock_smoke": {
+    "completed_cases": 6,
+    "summary_gate": "DIAGNOSTIC_ONLY",
+    "real_model_evaluated": false
+  }
+}

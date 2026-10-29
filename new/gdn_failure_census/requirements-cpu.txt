@@ -1,0 +1,2 @@
+# Operator probes and the CPU-only unittest suite; no pretrained inference deps.
+numpy>=1.24,<3
