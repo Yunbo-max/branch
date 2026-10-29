@@ -16,6 +16,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from backend import PretrainedCausalLM, single_token_choices
+from provenance import hub_revision, resolve_inputs
 from spec import make_probe
 
 
@@ -30,10 +31,11 @@ def audit_scores(result: dict) -> None:
     norm = sum(math.exp(v) for v in values)
     if not math.isclose(norm, 1.0, abs_tol=2e-5, rel_tol=2e-5):
         raise ValueError(f"four-choice probabilities do not sum to one: {norm}")
-    if not isinstance(result.get("prediction"), str) or result["prediction"] not in "ABCD":
+    if not isinstance(result.get("prediction"), str) or result["prediction"] not in ("A", "B", "C", "D"):
         raise ValueError("Native model produced invalid choice")
-    if not isinstance(result.get("latency_ms"), (float, int)) or result["latency_ms"] < 0:
-        raise ValueError("Native smoke missing timing")
+    latency = result.get("latency_ms")
+    if type(latency) not in (float, int) or not math.isfinite(latency) or latency < 0:
+        raise ValueError("Native smoke requires finite nonnegative timing")
 
 
 def run_native(model: str, *, tokenizer_id: str | None = None,
@@ -42,9 +44,18 @@ def run_native(model: str, *, tokenizer_id: str | None = None,
                length: int = 512) -> dict:
     if length < 512:
         raise ValueError("native smoke expects at least 512 tokens for the full task")
+    # Use the same identity policy as the census runner: immutable Hub commits
+    # or a fingerprint of local checkpoint/tokenizer bytes. Local fingerprints
+    # belong in the receipt, never in the Hugging Face revision argument.
+    inputs = resolve_inputs(argparse.Namespace(
+        backend="hf", model=model, tokenizer=tokenizer_id,
+        revision=revision, tokenizer_revision=tokenizer_revision,
+    ))
     evaluator = PretrainedCausalLM(
-        model, tokenizer_id=tokenizer_id, revision=revision,
-        tokenizer_revision=tokenizer_revision, device=device, dtype=dtype,
+        inputs["model_id"], tokenizer_id=inputs["tokenizer_id"],
+        revision=hub_revision(inputs["model_revision"]),
+        tokenizer_revision=hub_revision(inputs["tokenizer_revision"]),
+        device=device, dtype=dtype,
         allow_extrapolation=False,
     )
     tok = evaluator.tok
@@ -60,6 +71,7 @@ def run_native(model: str, *, tokenizer_id: str | None = None,
         "created_utc": datetime.now(timezone.utc).isoformat(),
         "native_forward_success": True,
         "model_info": evaluator.info.__dict__,
+        "input_provenance": inputs,
         "python": platform.python_version(),
         "probe": {
             "tokens": length, "condition": "plain",
