@@ -9,6 +9,7 @@ from pathlib import Path
 
 # Public HF repository revisions verified 2026-10-28; same repo supplies tokenizer.
 MODEL_PINS = {
+    "puigde/gated-deltanet-360M-15B-slimpajama": "1d1a7bf99323601635f3d63f67c97614f9c2ec10",
     "m-a-p/340M-20B-GatedDeltaNet-pure-baseline": "14661a98768e1f5d5493ff7b18f2d6809717a4c8",
     "m-a-p/1.3B-100B-GatedDeltaNet-pure": "930ed6ae4ac629c86cb9855bb3dcb0a0974a29aa",
     "m-a-p/1.3B-100B-GatedDeltaNet-hybrid-6-1": "b2a4ecf3ee629e8ad5538d4ab18e5068b69b341f",
