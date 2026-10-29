@@ -44,7 +44,7 @@ def csv_conditions(text):
 
 def parse_args(argv=None):
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument('--model', default='m-a-p/340M-20B-GatedDeltaNet-pure-baseline')
+    p.add_argument('--model', default='puigde/gated-deltanet-360M-15B-slimpajama')
     p.add_argument('--tokenizer')
     p.add_argument('--revision')
     p.add_argument('--tokenizer-revision')
