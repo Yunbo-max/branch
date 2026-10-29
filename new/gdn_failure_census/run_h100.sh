@@ -4,11 +4,12 @@ set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$HERE"
 STAGE=${STAGE:-smoke}
-MODEL_ID=${MODEL_ID:-m-a-p/340M-20B-GatedDeltaNet-pure-baseline}
+MODEL_ID=${MODEL_ID:-puigde/gated-deltanet-360M-15B-slimpajama}
 OUT_ROOT=${OUT_ROOT:-"$HERE/../../results/gdn_failure_census"}
 DEVICE=${DEVICE:-cuda}
 DTYPE=${DTYPE:-bf16}
 BACKEND=${BACKEND:-hf}
+EXPECTED_WEIGHT_SHA256=${EXPECTED_WEIGHT_SHA256:-}
 SEED_START=${SEED_START:-1000}
 DRY_RUN=${DRY_RUN:-0}
 RESUME=${RESUME:-0}
@@ -53,6 +54,14 @@ if [[ -z "${OUT_DIR:-}" ]]; then
 fi
 mkdir -p "$OUT_ROOT"
 echo "GDN census: model=$MODEL_ID stage=$STAGE output=$OUT_DIR"
+if [[ "$BACKEND" == hf && -d "$MODEL_ID" ]]; then
+  echo "Checkpoint local preflight (CPU only; not a model forward)"
+  CHECK_ARGS=(--model-dir "$MODEL_ID" --check-tokenizer)
+  if [[ -n "$EXPECTED_WEIGHT_SHA256" ]]; then
+    CHECK_ARGS+=(--expected-weight-sha256 "$EXPECTED_WEIGHT_SHA256")
+  fi
+  python3 checkpoint_preflight.py "${CHECK_ARGS[@]}"
+fi
 ARGS=(--model "$MODEL_ID" --backend "$BACKEND" --device "$DEVICE" --dtype "$DTYPE"
       --lengths "$LENGTHS" --positions "$POSITIONS" --events "$EVENTS" --conditions "$CONDITIONS"
       --seed-start "$SEED_START" --seeds "$SEEDS" --out "$OUT_DIR"
