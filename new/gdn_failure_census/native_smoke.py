@@ -30,7 +30,7 @@ def audit_scores(result: dict) -> None:
     norm = sum(math.exp(v) for v in values)
     if not math.isclose(norm, 1.0, abs_tol=2e-5, rel_tol=2e-5):
         raise ValueError(f"four-choice probabilities do not sum to one: {norm}")
-    if result.get("prediction") not in "ABCD":
+    if not isinstance(result.get("prediction"), str) or result["prediction"] not in "ABCD":
         raise ValueError("Native model produced invalid choice")
     if not isinstance(result.get("latency_ms"), (float, int)) or result["latency_ms"] < 0:
         raise ValueError("Native smoke missing timing")
