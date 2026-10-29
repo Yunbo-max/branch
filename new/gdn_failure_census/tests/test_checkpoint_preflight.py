@@ -70,6 +70,20 @@ class CheckpointPreflightTests(unittest.TestCase):
             self.assertIn("attn.D tensors", " ".join(result["issues"]))
             self.assertEqual(main(["--model-dir", str(root)]), 2)
 
+    def test_flame_specific_operator_fields_block_stock_fla(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            fake_checkpoint(root)
+            config_path = root / "config.json"
+            cfg = json.loads(config_path.read_text())
+            cfg["qk_activation"] = "silu"
+            cfg["qk_norm"] = "l2"
+            cfg["use_beta"] = True
+            config_path.write_text(json.dumps(cfg))
+            result = inspect_local_checkpoint(root)
+            self.assertEqual(result["status"], "blocked")
+            self.assertIn("FLAME-specific GDN operator", " ".join(result["issues"]))
+
     def test_bad_sha_and_correct_sha(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
