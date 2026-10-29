@@ -2,7 +2,7 @@
 # Pretraining pilot on the packed 16K corpus, chunked Branch Memory, 1xH100.
 set -euo pipefail
 
-REPO=/inspire/hdd/global_user/zhangjiaquan-253108540222/research/DiffRwkv
+REPO=/inspire/hdd/global_user/zhangjiaquan-253108540222/baseline/Deltanet
 cd "$REPO/new/fair_mqar"
 
 export OMP_NUM_THREADS=8

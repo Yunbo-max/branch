@@ -5,7 +5,7 @@
   "name": "fair-mqar-4arms-screen-1h100",
   "description": "Four-arm native MQAR screen (MARCH / Branch Memory / DeltaNet / Transformer), identical backbone+data+budget, matched params, 3 seeds, 1xH100",
   "framework": "pytorch",
-  "command": "mkdir -p /inspire/hdd/global_user/zhangjiaquan-253108540222/research/DiffRwkv/logs/qz && cd /inspire/hdd/global_user/zhangjiaquan-253108540222/research/DiffRwkv/new/fair_mqar && bash run_gpu_screen.sh > /inspire/hdd/global_user/zhangjiaquan-253108540222/research/DiffRwkv/logs/qz/fair-mqar-4arms-screen-1h100.log 2>&1",
+  "command": "mkdir -p /inspire/hdd/global_user/zhangjiaquan-253108540222/baseline/Deltanet/logs/qz && cd /inspire/hdd/global_user/zhangjiaquan-253108540222/baseline/Deltanet/new/fair_mqar && bash run_gpu_screen.sh > /inspire/hdd/global_user/zhangjiaquan-253108540222/baseline/Deltanet/logs/qz/fair-mqar-4arms-screen-1h100.log 2>&1",
   "max_running_time_ms": "7200000",
   "task_priority": 4,
   "framework_config": [

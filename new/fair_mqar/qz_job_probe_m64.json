@@ -5,7 +5,7 @@
   "name": "branch-probe-m64-1h100",
   "description": "M=64 Branch Memory memory probe after fixing the duplicate --grad-checkpoint argparse bug: chunk 256, grad checkpoint, batches 1/2/4. 1xH100, minutes.",
   "framework": "pytorch",
-  "command": "mkdir -p /inspire/hdd/global_user/zhangjiaquan-253108540222/research/DiffRwkv/logs/qz && cd /inspire/hdd/global_user/zhangjiaquan-253108540222/research/DiffRwkv/new/fair_mqar && bash run_probe_batch_m64.sh > /inspire/hdd/global_user/zhangjiaquan-253108540222/research/DiffRwkv/logs/qz/branch-probe-m64-1h100.log 2>&1",
+  "command": "mkdir -p /inspire/hdd/global_user/zhangjiaquan-253108540222/baseline/Deltanet/logs/qz && cd /inspire/hdd/global_user/zhangjiaquan-253108540222/baseline/Deltanet/new/fair_mqar && bash run_probe_batch_m64.sh > /inspire/hdd/global_user/zhangjiaquan-253108540222/baseline/Deltanet/logs/qz/branch-probe-m64-1h100.log 2>&1",
   "max_running_time_ms": "3600000",
   "task_priority": 4,
   "framework_config": [

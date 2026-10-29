@@ -5,7 +5,7 @@
   "name": "bench-geometry-lm-10k-1h100",
   "description": "Single-state LM geometry ablation: H=lambda I (protect=0) vs H=lambda I+mu C (protect=8), M=1, same backbone/chunk/data order/split/panel, 10k steps each, sequential on 1xH100. Only H changes.",
   "framework": "pytorch",
-  "command": "mkdir -p /inspire/hdd/global_user/zhangjiaquan-253108540222/research/DiffRwkv/logs/qz && cd /inspire/hdd/global_user/zhangjiaquan-253108540222/research/DiffRwkv/new/fair_mqar_fix && bash run_geometry_lm.sh > /inspire/hdd/global_user/zhangjiaquan-253108540222/research/DiffRwkv/logs/qz/bench-geometry-lm-10k-1h100.log 2>&1",
+  "command": "mkdir -p /inspire/hdd/global_user/zhangjiaquan-253108540222/baseline/Deltanet/logs/qz && cd /inspire/hdd/global_user/zhangjiaquan-253108540222/baseline/Deltanet/new/fair_mqar_fix && bash run_geometry_lm.sh > /inspire/hdd/global_user/zhangjiaquan-253108540222/baseline/Deltanet/logs/qz/bench-geometry-lm-10k-1h100.log 2>&1",
   "max_running_time_ms": "72000000",
   "task_priority": 4,
   "framework_config": [

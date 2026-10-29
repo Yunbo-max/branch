@@ -5,7 +5,7 @@
   "name": "probe-batch-16k-1h100",
   "description": "Measure peak GPU memory and s/step at batch 4/8/16, 16K context, chunk 256. 1xH100",
   "framework": "pytorch",
-  "command": "mkdir -p /inspire/hdd/global_user/zhangjiaquan-253108540222/research/DiffRwkv/logs/qz && cd /inspire/hdd/global_user/zhangjiaquan-253108540222/research/DiffRwkv/new/fair_mqar && bash run_probe_batch.sh > /inspire/hdd/global_user/zhangjiaquan-253108540222/research/DiffRwkv/logs/qz/probe-batch-16k-1h100.log 2>&1",
+  "command": "mkdir -p /inspire/hdd/global_user/zhangjiaquan-253108540222/baseline/Deltanet/logs/qz && cd /inspire/hdd/global_user/zhangjiaquan-253108540222/baseline/Deltanet/new/fair_mqar && bash run_probe_batch.sh > /inspire/hdd/global_user/zhangjiaquan-253108540222/baseline/Deltanet/logs/qz/probe-batch-16k-1h100.log 2>&1",
   "max_running_time_ms": "3600000",
   "task_priority": 4,
   "framework_config": [

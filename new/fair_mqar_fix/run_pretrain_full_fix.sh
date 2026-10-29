@@ -2,7 +2,7 @@
 # Corrected full-corpus chunked Branch Memory run, 1xH100, isolated from the legacy run.
 set -euo pipefail
 
-REPO=/inspire/hdd/global_user/zhangjiaquan-253108540222/research/DiffRwkv
+REPO=/inspire/hdd/global_user/zhangjiaquan-253108540222/baseline/Deltanet
 cd "$REPO/new/fair_mqar_fix"
 
 export OMP_NUM_THREADS=8

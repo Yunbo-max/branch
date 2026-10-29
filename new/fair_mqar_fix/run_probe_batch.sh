@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-REPO=/inspire/hdd/global_user/zhangjiaquan-253108540222/research/DiffRwkv
+REPO=/inspire/hdd/global_user/zhangjiaquan-253108540222/baseline/Deltanet
 cd "$REPO/new/fair_mqar"
 export OMP_NUM_THREADS=8 MKL_NUM_THREADS=8 PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True CUDA_VISIBLE_DEVICES=0
 python3 probe_batch.py --packed-dir "$REPO/new/MARCH/data/packed_16k" \

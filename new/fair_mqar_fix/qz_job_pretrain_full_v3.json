@@ -5,7 +5,7 @@
   "name": "branch-chunked-full-68b-fork-v3-1h100",
   "description": "Full-corpus chunked Branch Memory with copy-on-write forks; 68.77B packed 16K tokens; d_model 256 / 2 layers; fixed chunk 256 (1.65 s/step measured); ckpt/10k; 4 days. 1xH100",
   "framework": "pytorch",
-  "command": "mkdir -p /inspire/hdd/global_user/zhangjiaquan-253108540222/research/DiffRwkv/logs/qz && cd /inspire/hdd/global_user/zhangjiaquan-253108540222/research/DiffRwkv/new/fair_mqar && bash run_pretrain_full.sh > /inspire/hdd/global_user/zhangjiaquan-253108540222/research/DiffRwkv/logs/qz/branch-chunked-full-68b-fork-v3-1h100.log 2>&1",
+  "command": "mkdir -p /inspire/hdd/global_user/zhangjiaquan-253108540222/baseline/Deltanet/logs/qz && cd /inspire/hdd/global_user/zhangjiaquan-253108540222/baseline/Deltanet/new/fair_mqar && bash run_pretrain_full.sh > /inspire/hdd/global_user/zhangjiaquan-253108540222/baseline/Deltanet/logs/qz/branch-chunked-full-68b-fork-v3-1h100.log 2>&1",
   "max_running_time_ms": "432000000",
   "task_priority": 4,
   "framework_config": [

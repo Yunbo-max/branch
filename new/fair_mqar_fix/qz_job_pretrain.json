@@ -5,7 +5,7 @@
   "name": "branch-chunked-pretrain-16k-pilot-1h100",
   "description": "Chunked Branch Memory pretraining pilot on the packed Long-Data-Collections corpus: seq_len 16384, chunk_len 128, d_model 256, 2 layers, batch 4, 4h budget. 1xH100",
   "framework": "pytorch",
-  "command": "mkdir -p /inspire/hdd/global_user/zhangjiaquan-253108540222/research/DiffRwkv/logs/qz && cd /inspire/hdd/global_user/zhangjiaquan-253108540222/research/DiffRwkv/new/fair_mqar && bash run_pretrain_chunked.sh > /inspire/hdd/global_user/zhangjiaquan-253108540222/research/DiffRwkv/logs/qz/branch-chunked-pretrain-16k-pilot-1h100.log 2>&1",
+  "command": "mkdir -p /inspire/hdd/global_user/zhangjiaquan-253108540222/baseline/Deltanet/logs/qz && cd /inspire/hdd/global_user/zhangjiaquan-253108540222/baseline/Deltanet/new/fair_mqar && bash run_pretrain_chunked.sh > /inspire/hdd/global_user/zhangjiaquan-253108540222/baseline/Deltanet/logs/qz/branch-chunked-pretrain-16k-pilot-1h100.log 2>&1",
   "max_running_time_ms": "18000000",
   "task_priority": 4,
   "framework_config": [

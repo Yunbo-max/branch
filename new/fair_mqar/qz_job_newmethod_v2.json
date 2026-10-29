@@ -5,7 +5,7 @@
   "name": "branch-newmethod-mqar-100k-v2-1h100",
   "description": "NEW METHOD (cached SPD factorization, refresh=8) on native MQAR, 100k-example pool, eval panels capped at 1024 examples (v2: fixes a step-time measurement artifact that capped the previous run at 270 steps). Reference (refresh=1) runs afterwards as control. 1xH100",
   "framework": "pytorch",
-  "command": "mkdir -p /inspire/hdd/global_user/zhangjiaquan-253108540222/research/DiffRwkv/logs/qz && cd /inspire/hdd/global_user/zhangjiaquan-253108540222/research/DiffRwkv/new/fair_mqar && bash run_newmethod_mqar.sh > /inspire/hdd/global_user/zhangjiaquan-253108540222/research/DiffRwkv/logs/qz/branch-newmethod-mqar-100k-v2-1h100.log 2>&1",
+  "command": "mkdir -p /inspire/hdd/global_user/zhangjiaquan-253108540222/baseline/Deltanet/logs/qz && cd /inspire/hdd/global_user/zhangjiaquan-253108540222/baseline/Deltanet/new/fair_mqar && bash run_newmethod_mqar.sh > /inspire/hdd/global_user/zhangjiaquan-253108540222/baseline/Deltanet/logs/qz/branch-newmethod-mqar-100k-v2-1h100.log 2>&1",
   "max_running_time_ms": "21600000",
   "task_priority": 4,
   "framework_config": [

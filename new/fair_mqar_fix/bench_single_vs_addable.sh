@@ -2,7 +2,7 @@
 # Run each benchmark arm in its own process so CUDA memory is measured cleanly.
 set -euo pipefail
 
-REPO=/inspire/hdd/global_user/zhangjiaquan-253108540222/research/DiffRwkv
+REPO=/inspire/hdd/global_user/zhangjiaquan-253108540222/baseline/Deltanet
 cd "$REPO/new/fair_mqar_fix"
 
 export OMP_NUM_THREADS=8

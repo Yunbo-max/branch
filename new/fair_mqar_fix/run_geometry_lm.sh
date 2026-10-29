@@ -3,7 +3,7 @@
 # Both arms: M=1, same backbone, chunk length, data order, split, panel and budget.
 set -euo pipefail
 
-REPO=/inspire/hdd/global_user/zhangjiaquan-253108540222/research/DiffRwkv
+REPO=/inspire/hdd/global_user/zhangjiaquan-253108540222/baseline/Deltanet
 cd "$REPO/new/fair_mqar_fix"
 
 export OMP_NUM_THREADS=8

@@ -5,7 +5,7 @@
   "name": "branch-chunked-full-68b-m64-v2-1h100",
   "description": "M=64 Branch Memory, capacity-matched to MARCH (64 states vs 64 anchors). Fixes the duplicate --grad-checkpoint argparse bug that killed both earlier m64 submissions. Probe measured 40.46 GiB / 4.73 s per step at batch 4 x 16K, chunk 256, grad checkpoint. d_model 256 / 2 layers, ckpt/10k, output results/pretrain_full_m64. 1xH100, 4-day budget.",
   "framework": "pytorch",
-  "command": "mkdir -p /inspire/hdd/global_user/zhangjiaquan-253108540222/research/DiffRwkv/logs/qz && cd /inspire/hdd/global_user/zhangjiaquan-253108540222/research/DiffRwkv/new/fair_mqar && bash run_pretrain_full.sh > /inspire/hdd/global_user/zhangjiaquan-253108540222/research/DiffRwkv/logs/qz/branch-chunked-full-68b-m64-v2-1h100.log 2>&1",
+  "command": "mkdir -p /inspire/hdd/global_user/zhangjiaquan-253108540222/baseline/Deltanet/logs/qz && cd /inspire/hdd/global_user/zhangjiaquan-253108540222/baseline/Deltanet/new/fair_mqar && bash run_pretrain_full.sh > /inspire/hdd/global_user/zhangjiaquan-253108540222/baseline/Deltanet/logs/qz/branch-chunked-full-68b-m64-v2-1h100.log 2>&1",
   "max_running_time_ms": "432000000",
   "task_priority": 4,
   "framework_config": [

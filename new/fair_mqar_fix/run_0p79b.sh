@@ -5,7 +5,7 @@ set -euo pipefail
 
 ARM=${1:?arm: march | single_full | fork | isotropic | rayleigh | delta_chunked | transformer25}
 STEPS=${2:-11921}
-REPO=/inspire/hdd/global_user/zhangjiaquan-253108540222/research/DiffRwkv
+REPO=/inspire/hdd/global_user/zhangjiaquan-253108540222/baseline/Deltanet
 cd "$REPO/new/fair_mqar_fix"
 
 export OMP_NUM_THREADS=8

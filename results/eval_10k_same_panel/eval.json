@@ -2,7 +2,7 @@
   "panel_sha256": "9c3736a6c36af11fed7bc0e9eb1109e8f3aaf649ca6b5c8a0df7899f4791db2a",
   "checkpoints": {
     "march": {
-      "path": "/inspire/hdd/global_user/zhangjiaquan-253108540222/research/DiffRwkv/results/pretrain_march/checkpoint_10000.pt",
+      "path": "/inspire/hdd/global_user/zhangjiaquan-253108540222/baseline/Deltanet/results/pretrain_march/checkpoint_10000.pt",
       "step": 10000,
       "config": {
         "mixer": "march_chunked",
@@ -36,7 +36,7 @@
       "tokens": 262128
     },
     "legacy_replace": {
-      "path": "/inspire/hdd/global_user/zhangjiaquan-253108540222/research/DiffRwkv/results/pretrain_full_m64/checkpoint_10000.pt",
+      "path": "/inspire/hdd/global_user/zhangjiaquan-253108540222/baseline/Deltanet/results/pretrain_full_m64/checkpoint_10000.pt",
       "step": 10000,
       "config": {
         "mixer": "chunked",
@@ -70,7 +70,7 @@
       "tokens": 262128
     },
     "fix_fork": {
-      "path": "/inspire/hdd/global_user/zhangjiaquan-253108540222/research/DiffRwkv/results/pretrain_full_m64_fix/checkpoint_10000.pt",
+      "path": "/inspire/hdd/global_user/zhangjiaquan-253108540222/baseline/Deltanet/results/pretrain_full_m64_fix/checkpoint_10000.pt",
       "step": 10000,
       "config": {
         "mixer": "chunked",
@@ -104,7 +104,7 @@
       "tokens": 262128
     },
     "single_isotropic": {
-      "path": "/inspire/hdd/global_user/zhangjiaquan-253108540222/research/DiffRwkv/results/bench_geometry_lm/isotropic/checkpoint_10000.pt",
+      "path": "/inspire/hdd/global_user/zhangjiaquan-253108540222/baseline/Deltanet/results/bench_geometry_lm/isotropic/checkpoint_10000.pt",
       "step": 10000,
       "config": {
         "mixer": "chunked",

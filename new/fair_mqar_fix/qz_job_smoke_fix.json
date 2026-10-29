@@ -5,7 +5,7 @@
   "name": "smoke-fix-correctness-1h100",
   "description": "30-minute 1xH100 smoke test for the corrected chunked Branch fork/routing, fixed split panel, config wiring, and CUDA forced-fork path.",
   "framework": "pytorch",
-  "command": "mkdir -p /inspire/hdd/global_user/zhangjiaquan-253108540222/research/DiffRwkv/logs/qz && cd /inspire/hdd/global_user/zhangjiaquan-253108540222/research/DiffRwkv/new/fair_mqar_fix && bash smoke_fix.sh > /inspire/hdd/global_user/zhangjiaquan-253108540222/research/DiffRwkv/logs/qz/smoke-fix-correctness-1h100.log 2>&1",
+  "command": "mkdir -p /inspire/hdd/global_user/zhangjiaquan-253108540222/baseline/Deltanet/logs/qz && cd /inspire/hdd/global_user/zhangjiaquan-253108540222/baseline/Deltanet/new/fair_mqar_fix && bash smoke_fix.sh > /inspire/hdd/global_user/zhangjiaquan-253108540222/baseline/Deltanet/logs/qz/smoke-fix-correctness-1h100.log 2>&1",
   "max_running_time_ms": "1800000",
   "task_priority": 4,
   "framework_config": [

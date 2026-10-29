@@ -5,7 +5,7 @@
   "name": "march-chunked-pretrain-68b-1h100",
   "description": "MARCH reproduction on the same packed 16K corpus and budget as the Branch Memory run: d_model 256 / 2 layers, chunk 256, Top-4 anchors, 64 anchor slots, ckpt/10k, 4 days. 1xH100",
   "framework": "pytorch",
-  "command": "mkdir -p /inspire/hdd/global_user/zhangjiaquan-253108540222/research/DiffRwkv/logs/qz && cd /inspire/hdd/global_user/zhangjiaquan-253108540222/research/DiffRwkv/new/fair_mqar && bash run_march_pretrain.sh > /inspire/hdd/global_user/zhangjiaquan-253108540222/research/DiffRwkv/logs/qz/march-chunked-pretrain-68b-1h100.log 2>&1",
+  "command": "mkdir -p /inspire/hdd/global_user/zhangjiaquan-253108540222/baseline/Deltanet/logs/qz && cd /inspire/hdd/global_user/zhangjiaquan-253108540222/baseline/Deltanet/new/fair_mqar && bash run_march_pretrain.sh > /inspire/hdd/global_user/zhangjiaquan-253108540222/baseline/Deltanet/logs/qz/march-chunked-pretrain-68b-1h100.log 2>&1",
   "max_running_time_ms": "432000000",
   "task_priority": 4,
   "framework_config": [
