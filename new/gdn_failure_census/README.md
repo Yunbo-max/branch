@@ -43,7 +43,7 @@ The primary model is a base language model. Evaluation uses a fixed demonstratio
 
 The CPU preflight above **does not** establish compatibility of the loaded weights with the installed FLA kernels. Before committing to the 108-case smoke, run exactly **one strict forward** (no long-text performance claim) on an available CUDA GPU:
 
-\`\`\`bash
+```bash
 # In the project checkout; use the model already downloaded on the remote host.
 cd new/gdn_failure_census
 MODEL_DIR=/inspire/hdd/global_user/zhangjiaquan-253108540222/gdn_models/puigde_360M
@@ -61,11 +61,11 @@ CUDA_VISIBLE_DEVICES=0 python native_smoke.py --model "$MODEL_DIR" \
 CUDA_VISIBLE_DEVICES=0 MODEL_ID="$MODEL_DIR" STAGE=smoke MAX_SAMPLES=12 \
   OUT_DIR=../../results/gdn_failure_census/puigde_real_smoke12 \
   bash run_h100.sh
-\`\`\`
+```
 
-Any available **RTX 4090, H100, or H200** with working BF16 CUDA/FLA can run this 360M smoke. The path above is on the previously reported remote cluster host; if using another machine, copy or download the model and set \`MODEL_DIR\` accordingly. Never interpret the 4090 smoke runtime as H100/H200 throughput. The only architectural conclusions supported by this one-forward gate are that strict model loading works and the inference interface returns finite, correctly-shaped logits.
+Any available **RTX 4090, H100, or H200** with working BF16 CUDA/FLA can run this 360M smoke. The path above is on the previously reported remote cluster host; if using another machine, copy or download the model and set `MODEL_DIR` accordingly. Never interpret the 4090 smoke runtime as H100/H200 throughput. The only architectural conclusions supported by this one-forward gate are that strict model loading works and the inference interface returns finite, correctly-shaped logits.
 
-For a full scientific \`competence\` gate, run the fixed 512/1024 controls with >=20 independent seeds before interpreting long-context failure. GitHub CPU CI passing does not fulfill this criterion.
+For a full scientific `competence` gate, run the fixed 512/1024 controls with >=20 independent seeds before interpreting long-context failure. GitHub CPU CI passing does not fulfill this criterion.
 
 ## What v2 changes
 
