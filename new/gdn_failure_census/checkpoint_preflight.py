@@ -98,9 +98,11 @@ def inspect_local_checkpoint(
         )
     optional_fork_fields = sorted(set(config).intersection({"qk_activation", "qk_norm", "use_beta"}))
     if optional_fork_fields:
-        warnings.append(
-            "checkpoint has FLAME-specific extra config fields "
-            f"{optional_fork_fields}; verify exact implementation compatibility"
+        issues.append(
+            "checkpoint has FLAME-specific GDN operator fields "
+            f"{optional_fork_fields}; stock FLA 0.5.0's gated_deltanet "
+            "configuration does not implement their documented semantics. "
+            "Use the matching fork and independently verify numerical parity."
         )
 
     layers = sorted({int(m.group(1)) for k in all_keys if (m := LAYER_PATTERN.search(k))})
