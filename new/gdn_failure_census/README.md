@@ -39,6 +39,34 @@ DRY_RUN=1 STAGE=screen bash run_h100.sh
 
 The primary model is a base language model. Evaluation uses a fixed demonstration prompt and **actual next-token A/B/C/D logits**, rather than assuming instruction following or chat generation. All four labels must map to distinct single next tokens after the actual suffix. Full-vocabulary gold-token NLL and restricted four-choice log loss are recorded separately; neither is a full-document language-model perplexity.
 
+## Fastest next executable check — native pretrained GPU forward
+
+The CPU preflight above **does not** establish compatibility of the loaded weights with the installed FLA kernels. Before committing to the 108-case smoke, run exactly **one strict forward** (no long-text performance claim) on an available CUDA GPU:
+
+\`\`\`bash
+# In the project checkout; use the model already downloaded on the remote host.
+cd new/gdn_failure_census
+MODEL_DIR=/inspire/hdd/global_user/zhangjiaquan-253108540222/gdn_models/puigde_360M
+
+# No GPU needed. Reject known FLAME-only attn.D tensors and verify local SHA.
+python checkpoint_preflight.py --model-dir "$MODEL_DIR" --check-tokenizer \
+  --expected-weight-sha256 603d6619216ea86d639e7c0c65ac37459e632cc5f80c1cba5c6068571162c1f7
+
+# Needs CUDA and compatible FLA + Transformers; strict weights, ONE 512-token forward.
+CUDA_VISIBLE_DEVICES=0 python native_smoke.py --model "$MODEL_DIR" \
+  --device cuda --dtype bf16 \
+  --out ../../results/gdn_failure_census/puigde_native_smoke.json
+
+# Then a limited, real 2-group (12-case) census. Use a new output directory.
+CUDA_VISIBLE_DEVICES=0 MODEL_ID="$MODEL_DIR" STAGE=smoke MAX_SAMPLES=12 \
+  OUT_DIR=../../results/gdn_failure_census/puigde_real_smoke12 \
+  bash run_h100.sh
+\`\`\`
+
+Any available **RTX 4090, H100, or H200** with working BF16 CUDA/FLA can run this 360M smoke. The path above is on the previously reported remote cluster host; if using another machine, copy or download the model and set \`MODEL_DIR\` accordingly. Never interpret the 4090 smoke runtime as H100/H200 throughput. The only architectural conclusions supported by this one-forward gate are that strict model loading works and the inference interface returns finite, correctly-shaped logits.
+
+For a full scientific \`competence\` gate, run the fixed 512/1024 controls with >=20 independent seeds before interpreting long-context failure. GitHub CPU CI passing does not fulfill this criterion.
+
 ## What v2 changes
 
 - Removes an answer shortcut: interfering values are independent uniform A/B/C/D draws. Earlier code always excluded the correct label; a model could find the missing label without reading the target. Revision values also include the original label, and changed/unchanged final labels are reported separately.
