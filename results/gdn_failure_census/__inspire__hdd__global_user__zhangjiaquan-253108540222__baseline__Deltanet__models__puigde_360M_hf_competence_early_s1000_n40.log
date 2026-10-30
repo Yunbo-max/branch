@@ -1,0 +1,29 @@
+You are using a model of type `gated_deltanet` to instantiate a model of type ``. This may be expected if you are loading a checkpoint that shares a subset of the architecture (e.g., loading a `sam2_video` checkpoint into `Sam2Model`), but is otherwise not supported and can yield errors. Please verify that the checkpoint is compatible with the model you are instantiating.
+Plan: 640 cases, 703,652 forward input tokens including requested pre-edit probes
+Loading weights:   0%|          | 0/381 [00:00<?, ?it/s]Loading weights:   4%|▍         | 17/381 [00:00<00:03, 96.89it/s]Loading weights:  46%|████▌     | 175/381 [00:00<00:00, 761.45it/s]Loading weights:  71%|███████▏  | 272/381 [00:00<00:00, 809.14it/s]Loading weights:  97%|█████████▋| 369/381 [00:00<00:00, 864.80it/s]Loading weights: 100%|██████████| 381/381 [00:00<00:00, 775.68it/s]
+25/640 attempted; plain 512 tokens; ok
+50/640 attempted; unrelated 512 tokens; ok
+75/640 attempted; collision 512 tokens; ok
+100/640 attempted; revision_latest 512 tokens; ok
+125/640 attempted; revision_earliest 512 tokens; ok
+150/640 attempted; alias 512 tokens; ok
+175/640 attempted; two_hop 512 tokens; ok
+200/640 attempted; no_target 512 tokens; ok
+225/640 attempted; plain 512 tokens; ok
+250/640 attempted; unrelated 512 tokens; ok
+275/640 attempted; collision 512 tokens; ok
+300/640 attempted; revision_latest 512 tokens; ok
+325/640 attempted; revision_earliest 1024 tokens; ok
+350/640 attempted; alias 1024 tokens; ok
+375/640 attempted; two_hop 1024 tokens; ok
+400/640 attempted; no_target 1024 tokens; ok
+425/640 attempted; plain 1024 tokens; ok
+450/640 attempted; unrelated 1024 tokens; ok
+475/640 attempted; collision 1024 tokens; ok
+500/640 attempted; revision_latest 1024 tokens; ok
+525/640 attempted; revision_earliest 1024 tokens; ok
+550/640 attempted; alias 1024 tokens; ok
+575/640 attempted; two_hop 1024 tokens; ok
+600/640 attempted; no_target 1024 tokens; ok
+625/640 attempted; plain 1024 tokens; ok
+640/640 attempted; no_target 1024 tokens; ok

@@ -9,3 +9,6 @@ core.*
 data/
 checkpoint*/
 wandb/
+
+# local baseline artifacts (not tracked)
+/models/

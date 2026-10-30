@@ -1,0 +1,4 @@
+length,events,n,n_independent_seeds,latest_accuracy,latest_accuracy_ci_low,latest_accuracy_ci_high,earliest_accuracy,earliest_accuracy_ci_low,earliest_accuracy_ci_high,both_correct,both_correct_ci_low,both_correct_ci_high,n_changed_target_labels,changed_target_latest_accuracy,changed_target_earliest_accuracy,n_unchanged_target_labels,unchanged_target_latest_accuracy,unchanged_target_earliest_accuracy
+512,8,3,3,0.0,0.0,0.0,0.3333333333333333,0.0,1.0,0.0,0.0,0.0,3,0.0,0.3333333333333333,0,,
+1024,8,3,3,0.3333333333333333,0.0,1.0,0.6666666666666666,0.0,1.0,0.3333333333333333,0.0,1.0,3,0.3333333333333333,0.6666666666666666,0,,
+2048,8,6,3,0.16666666666666666,0.0,0.5,0.6666666666666666,0.5,1.0,0.0,0.0,0.0,6,0.16666666666666666,0.6666666666666666,0,,

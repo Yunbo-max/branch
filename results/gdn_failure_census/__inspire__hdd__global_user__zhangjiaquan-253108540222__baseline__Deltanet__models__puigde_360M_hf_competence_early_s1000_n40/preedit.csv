@@ -1,0 +1,13 @@
+length,condition,events,n,n_independent_seeds,n_correct_before_edit,preedit_accuracy,preedit_accuracy_ci_low,preedit_accuracy_ci_high,postedit_accuracy,postedit_accuracy_ci_low,postedit_accuracy_ci_high,prepost_same_target,lost_after_edit_given_preedit_correct,lost_after_edit_ci_low,lost_after_edit_ci_high,interpretation
+512,alias,8,40,40,12,0.3,0.175,0.45,0.275,0.15,0.425,True,0.08333333333333333,0.0,0.2727272727272727,same-target query-insertion contrast
+512,collision,8,40,40,38,0.95,0.875,1.0,0.475,0.325,0.625,True,0.5,0.35,0.6666666666666666,same-target query-insertion contrast
+512,revision_earliest,8,40,40,38,0.95,0.875,1.0,0.65,0.5,0.8,True,0.3157894736842105,0.16216216216216217,0.46153846153846156,same-target query-insertion contrast
+512,revision_latest,8,40,40,33,0.825,0.7,0.925,0.225,0.1,0.35,False,,,,changed/absent target; not same-fact memory loss
+512,two_hop,8,40,40,10,0.25,0.125,0.4,0.25,0.125,0.4,True,0.0,0.0,0.0,same-target query-insertion contrast
+512,unrelated,8,40,40,38,0.95,0.875,1.0,0.4,0.25,0.55,True,0.5789473684210527,0.425,0.7297297297297297,same-target query-insertion contrast
+1024,alias,8,40,40,11,0.275,0.15,0.425,0.275,0.15,0.425,True,0.0,0.0,0.0,same-target query-insertion contrast
+1024,collision,8,40,40,38,0.95,0.875,1.0,0.5,0.35,0.65,True,0.47368421052631576,0.32432432432432434,0.6388888888888888,same-target query-insertion contrast
+1024,revision_earliest,8,40,40,39,0.975,0.925,1.0,0.7,0.55,0.85,True,0.28205128205128205,0.15,0.4358974358974359,same-target query-insertion contrast
+1024,revision_latest,8,40,40,36,0.9,0.8,0.975,0.275,0.125,0.425,False,,,,changed/absent target; not same-fact memory loss
+1024,two_hop,8,40,40,10,0.25,0.125,0.4,0.25,0.125,0.4,True,0.0,0.0,0.0,same-target query-insertion contrast
+1024,unrelated,8,40,40,38,0.95,0.875,1.0,0.425,0.275,0.575,True,0.5526315789473685,0.39473684210526316,0.7142857142857143,same-target query-insertion contrast
