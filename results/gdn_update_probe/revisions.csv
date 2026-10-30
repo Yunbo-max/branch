@@ -1,0 +1,6 @@
+length,events,n,n_independent_seeds,latest_accuracy,latest_accuracy_ci_low,latest_accuracy_ci_high,earliest_accuracy,earliest_accuracy_ci_low,earliest_accuracy_ci_high,both_correct,both_correct_ci_low,both_correct_ci_high,n_changed_target_labels,changed_target_latest_accuracy,changed_target_earliest_accuracy,n_unchanged_target_labels,unchanged_target_latest_accuracy,unchanged_target_earliest_accuracy
+1024,1,40,40,0.4,0.25,0.55,0.825,0.7,0.95,0.275,0.15,0.425,30,0.26666666666666666,0.7666666666666667,10,0.8,1.0
+1024,2,40,40,0.45,0.3,0.6,0.7,0.55,0.85,0.275,0.15,0.425,29,0.3448275862068966,0.6206896551724138,11,0.7272727272727273,0.9090909090909091
+1024,4,40,40,0.15,0.05,0.275,0.7,0.55,0.85,0.1,0.025,0.2,30,0.1,0.7,10,0.3,0.7
+1024,8,40,40,0.275,0.125,0.425,0.7,0.55,0.85,0.225,0.1,0.375,32,0.1875,0.6875,8,0.625,0.75
+1024,16,40,40,0.15,0.05,0.275,0.7,0.55,0.85,0.125,0.025,0.25,31,0.03225806451612903,0.7096774193548387,9,0.5555555555555556,0.6666666666666666
