@@ -1,0 +1,5 @@
+length,condition,events,needle_region,n,n_independent_seeds,n_missing_seed,accuracy,accuracy_ci_low,accuracy_ci_high,conditional_nll,margin,gold_full_nll,n_gold_full_nll,answerable_control,interpretation,median_latency_ms,mean_latency_ms
+1024,repeat_same,2,middle,40,40,0,0.85,0.725,0.95,0.8131942749023438,0.490625,2.7127480268478394,40,True,answerable task accuracy,47.72326163947582,416.1527057411149
+1024,repeat_same,4,middle,40,40,0,0.85,0.725,0.95,0.8320454120635986,0.440625,2.7117218017578124,40,True,answerable task accuracy,47.937866766005754,48.377094767056406
+1024,repeat_same,8,middle,40,40,0,0.825,0.7,0.925,0.8122873544692993,0.49453125,2.6081892251968384,40,True,answerable task accuracy,47.90483135730028,47.93223461601883
+1024,repeat_same,16,middle,40,40,0,0.75,0.625,0.875,0.8268763303756714,0.47890625,2.543795680999756,40,True,answerable task accuracy,47.91369196027517,48.053868394345045

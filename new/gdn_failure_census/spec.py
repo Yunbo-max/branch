@@ -18,6 +18,12 @@ LETTERS = ("A", "B", "C", "D")
 CONDITIONS = (
     "plain", "unrelated", "collision", "revision_latest", "revision_earliest",
     "alias", "two_hop", "no_target",
+    # Discriminating controls (2026-10-30): isolate whether the revision_latest
+    # failure is query-wording, update-mechanism, or repetition-conflict.
+    "latest_alone",       # single record, ask MOST RECENT
+    "earliest_alone",     # single record, ask EARLIEST
+    "explicit_update",    # record A, then explicit "updated to B", ask MOST RECENT
+    "repeat_same",        # record A, then num_events repeats of the same A
 )
 MEMOS = (
     "Field note: the service team completed the routine checklist and filed its report.\n",
@@ -151,7 +157,15 @@ def make_probe(
 
     events: list[str] = []
     seen = {key}
-    if condition != "plain":
+    if condition == "explicit_update":
+        # One explicit, differently-worded update: "updated to <new>".
+        latest = _different_letter(answer, 0)
+        events.append(f"Record {key}: updated to {latest}.\n")
+    elif condition == "repeat_same":
+        # num_events repeats of the SAME value (repetition without value change).
+        for _ in range(num_events):
+            events.append(f"Record {key}: {answer}.\n")
+    elif condition not in ("plain", "latest_alone", "earliest_alone"):
         for j in range(num_events):
             if condition.startswith("revision_"):
                 event_key = key
@@ -178,14 +192,14 @@ def make_probe(
         question = f"\nQuestion: What is the status of the record named by alias {alias}?\nAnswer:"
     elif condition == "two_hop":
         question = f"\nQuestion: What is the status of the record reached from alias {alias}?\nAnswer:"
-    elif condition == "revision_earliest":
+    elif condition in ("revision_earliest", "earliest_alone"):
         question = f"\nQuestion: What was the EARLIEST recorded status of {key}?\nAnswer:"
-    elif condition == "revision_latest":
+    elif condition in ("revision_latest", "latest_alone", "explicit_update", "repeat_same"):
         question = f"\nQuestion: What was the MOST RECENT recorded status of {key}?\nAnswer:"
     else:
         question = f"\nQuestion: What is the status of record {key}?\nAnswer:"
 
-    gold = answer if condition != "revision_latest" else latest
+    gold = latest if condition in ("revision_latest", "explicit_update") else answer
     h, target, ev, q = (
         list(tokenizer.encode(header, add_special_tokens=True)), _enc(tokenizer, target_text),
         _enc(tokenizer, "\n" + "".join(events)) if events else [],

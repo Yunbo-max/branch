@@ -1,0 +1,91 @@
+{
+  "schema": "gdn-long-context-census.v2",
+  "created_utc": "2026-10-30T14:33:04.454412+00:00",
+  "config": {
+    "model": "/inspire/hdd/global_user/zhangjiaquan-253108540222/baseline/Deltanet/models/puigde_360M",
+    "tokenizer": null,
+    "revision": null,
+    "tokenizer_revision": null,
+    "backend": "hf",
+    "dtype": "bf16",
+    "device": "cuda",
+    "lengths": [
+      1024
+    ],
+    "seed_start": 1000,
+    "seeds": 40,
+    "positions": [
+      0.5
+    ],
+    "events": [
+      1
+    ],
+    "conditions": [
+      "latest_alone",
+      "earliest_alone",
+      "explicit_update",
+      "repeat_same"
+    ],
+    "event_placement": "early",
+    "allow_extrapolation": false,
+    "max_samples": 0,
+    "preedit_probes": false,
+    "max_input_tokens": 0,
+    "max_runtime_seconds": 0,
+    "error_policy": "stop"
+  },
+  "backend": "hf",
+  "dry_run": false,
+  "resolved": {
+    "model_id": "/inspire/hdd/global_user/zhangjiaquan-253108540222/baseline/Deltanet/models/puigde_360M",
+    "model_revision": "local-sha256:02b8cc6f119580f3f748492931427fbed00ca02aa70caa7ed0f6d710d071f4a4",
+    "tokenizer_id": "/inspire/hdd/global_user/zhangjiaquan-253108540222/baseline/Deltanet/models/puigde_360M",
+    "tokenizer_revision": "local-sha256:02b8cc6f119580f3f748492931427fbed00ca02aa70caa7ed0f6d710d071f4a4"
+  },
+  "code_fingerprint": "1f6d078746d6415c22c1316cd20b829f0ec48a00e0848e46d7ce51f5f0b1761b",
+  "runtime": {
+    "python": "3.12.3",
+    "torch": "2.8.0a0+5228986c39.nv25.6",
+    "transformers": "5.3.0",
+    "flash-linear-attention": "0.5.0",
+    "fla-core": "0.5.0",
+    "triton": null,
+    "huggingface-hub": "1.6.0"
+  },
+  "planned_cases": 160,
+  "planned_input_tokens": 163840,
+  "full_grid_cases": 160,
+  "skipped_invalid_grid_cases": 0,
+  "invalid_group_reasons": {},
+  "deferred_grid_cases": 0,
+  "planning_stop_reason": null,
+  "plan_sha256": "51b07a627fbf9640dbf2486343edc04e612299c9739376a70589cda774a1ff73",
+  "execution": {
+    "status": "completed",
+    "consumed_evaluation_seconds": 85.4874100908637,
+    "completed_cases": 160
+  },
+  "notes": [
+    "Configured model context is not proof of training exposure.",
+    "Synthetic diagnostics are not official benchmark scores.",
+    "No-target gold labels measure leakage/chance, not answerable-task ability.",
+    "Filler is assembled in token space; task/query are never truncated."
+  ],
+  "loaded_model": {
+    "model_id": "/inspire/hdd/global_user/zhangjiaquan-253108540222/baseline/Deltanet/models/puigde_360M",
+    "revision": null,
+    "tokenizer_id": "/inspire/hdd/global_user/zhangjiaquan-253108540222/baseline/Deltanet/models/puigde_360M",
+    "tokenizer_revision": null,
+    "configured_context": 2048,
+    "parameters": 357781928,
+    "backend": "GatedDeltaNetForCausalLM",
+    "device": "cuda",
+    "dtype": "bf16",
+    "last_logits_policy": {
+      "logits_to_keep": 1
+    },
+    "model_type": "gated_deltanet",
+    "attention_config": null,
+    "allow_neg_eigval": false
+  }
+}
