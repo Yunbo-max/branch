@@ -325,6 +325,10 @@ def main(argv=None):
         save_json(args.out/'after.json',evaluate(runner,evaluation,args.out/'after_rows.jsonl'))
         if schema!={k:tuple(v.shape) for k,v in model.state_dict().items()}:
             raise RuntimeError('native state_dict schema changed; refusing export')
+        # FLA 0.5.0 declares _tied_weights_keys as a list; transformers 5.x
+        # save_pretrained calls .keys() on it. The config here is untied, so {}.
+        if isinstance(getattr(model, "_tied_weights_keys", None), (list, tuple)):
+            model._tied_weights_keys = {}
         model.save_pretrained(args.out/'model',safe_serialization=True)
         tok.save_pretrained(args.out/'model')
         save_json(args.out/'status.json',{'status':'completed','native_export':'model',
