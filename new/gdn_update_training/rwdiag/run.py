@@ -88,6 +88,7 @@ def assess(a,e,r):
             address_ids=tuple(e.tok.encode('Record identifier: '+s.x,add_special_tokens=True));address=e.call(address_ids)[1]['k'][-1]
             prev_state={}
             for p,t,d in cells(a):
+                print(f'[rwdiag eval scene {i}/{a.scenes}] {p} {t} d={d}',flush=True)
                 states=[]
                 if not a.route_only:
                     for w in (0,1):
@@ -96,7 +97,7 @@ def assess(a,e,r):
                     row=render(e.tok,s,p,w,t,d,q);seq=row.prefix+row.question;last=len(seq)-1
                     z,base=e.call(seq);feat=e.features(row);direction=like(r.q(feat),base['q'][-1]);qd=('q',last,direction);lock=('q',last,base['q'][-1]);labels=list(row.ids)
                     def emit(arm,scores):
-                        rr=record(row,s,p,w,t,d,q,arm,scores);rows.append(rr);f.write(json.dumps(rr,allow_nan=False)+'\n')
+                        rr=record(row,s,p,w,t,d,q,arm,scores);rows.append(rr);f.write(json.dumps(rr,allow_nan=False)+'\n');f.flush()
                     def native(arm,patches):emit(arm,e.call(seq,patches)[0][labels])
                     emit('native',z[labels]);native('q',[qd]);native('q_sham',[('q',last,sham(base['q'][-1],direction,s.id+q))]);
                     wrongq='y_now' if q.startswith('x') else 'x_now';wf=e.features(render(e.tok,s,p,w,t,d,wrongq));native('q_wrong_entity',[('q',last,like(r.q(wf),base['q'][-1]))])
