@@ -28,6 +28,7 @@ def parse(argv=None):
     p.add_argument('--seed',type=int,default=17);p.add_argument('--data-seed',type=int,default=9001);p.add_argument('--layer',type=int,default=10);p.add_argument('--head',type=int,default=0);p.add_argument('--rank',type=int,default=16)
     p.add_argument('--scenes',type=int,default=24);p.add_argument('--steps',type=int,default=192);p.add_argument('--lr',type=float,default=.001);p.add_argument('--split',choices=('train','dev','test'));p.add_argument('--reader',type=Path)
     p.add_argument('--panels',nargs='+',choices=PANELS,default=['swap','cross']);p.add_argument('--stages',nargs='+',choices=STAGES,default=['write','other','neutral','records']);p.add_argument('--distances',type=int,nargs='+',default=[128,512]);p.add_argument('--questions',nargs='+',choices=QUESTIONS,default=list(QUESTIONS));p.add_argument('--beta',type=float,default=.9);p.add_argument('--span',choices=('value','terminal','record'),default='value');p.add_argument('--rounds',type=int,default=1000)
+    p.add_argument('--route-only',action='store_true',help='only native/q/q_sham/q_wrong_entity arms (route decision); skip probes, write interventions and donor captures')
     a=p.parse_args(argv);a.split=a.split or ('train' if a.action=='fit' else 'dev')
     if a.action=='fit' and a.split!='train' or a.action=='eval' and (a.split=='train' or not a.reader):p.error('fit=train only; eval=dev/test with --reader FIT_DIRECTORY')
     if min(a.scenes,a.rank,a.steps)<=0 or a.scenes%24 or min(a.layer,a.head,*a.distances)<0 or a.rounds<100 or not 0<a.lr<1 or not 0<=a.beta<=1:p.error('invalid budget/site; --scenes must be a positive multiple of 24')
@@ -88,8 +89,9 @@ def assess(a,e,r):
             prev_state={}
             for p,t,d in cells(a):
                 states=[]
-                for w in (0,1):
-                    rr=render(e.tok,s,p,w,t,d,'x_now');states.append(e.prefix_state(rr))
+                if not a.route_only:
+                    for w in (0,1):
+                        rr=render(e.tok,s,p,w,t,d,'x_now');states.append(e.prefix_state(rr))
                 for w,q in itertools.product((0,1),a.questions):
                     row=render(e.tok,s,p,w,t,d,q);seq=row.prefix+row.question;last=len(seq)-1
                     z,base=e.call(seq);feat=e.features(row);direction=like(r.q(feat),base['q'][-1]);qd=('q',last,direction);lock=('q',last,base['q'][-1]);labels=list(row.ids)
@@ -98,10 +100,11 @@ def assess(a,e,r):
                     def native(arm,patches):emit(arm,e.call(seq,patches)[0][labels])
                     emit('native',z[labels]);native('q',[qd]);native('q_sham',[('q',last,sham(base['q'][-1],direction,s.id+q))]);
                     wrongq='y_now' if q.startswith('x') else 'x_now';wf=e.features(render(e.tok,s,p,w,t,d,wrongq));native('q_wrong_entity',[('q',last,like(r.q(wf),base['q'][-1]))])
-                    emit('probe',r.state_logits(states[w],feat));emit('probe_state_swap',r.state_logits(states[1-w],feat));emit('probe_zero',r.state_logits(torch.zeros_like(states[w]),feat));emit('probe_permuted_labels',r.state_logits(states[w],feat,True));emit('question_only',r.question_only(feat))
+                    if not a.route_only:
+                        emit('probe',r.state_logits(states[w],feat));emit('probe_state_swap',r.state_logits(states[1-w],feat));emit('probe_zero',r.state_logits(torch.zeros_like(states[w]),feat));emit('probe_permuted_labels',r.state_logits(states[w],feat,True));emit('question_only',r.question_only(feat))
                     # Baseline accuracy for the swapped probe is scored against RECIPIENT gold;
                     # to test donor-following, use donor gold in the opposite-world raw row.
-                    if t=='pre' or p=='absent':continue
+                    if t=='pre' or p=='absent' or a.route_only:continue
                     sites={'value':[row.write],'terminal':[row.end-1],'record':range(row.start,row.end)}[a.span]
                     clean=render(e.tok,s,p,w,t,d,q,'clean');wrong=render(e.tok,s,p,w,t,d,q,'wrong')
                     if (row.write,row.end,len(row.prefix))!=(clean.write,clean.end,len(clean.prefix)) or (row.write,row.end,len(row.prefix))!=(wrong.write,wrong.end,len(wrong.prefix)):raise ValueError('unaligned donor spans')

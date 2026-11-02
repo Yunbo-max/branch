@@ -41,13 +41,18 @@ def validate(cfg, manifest, decision, status, fit):
             and decision['reader_sha256']==status.get('readers_sha256')==fit.get('readers_sha256'))
     if not good: raise ValueError('Not a matched, completed, frozen binding-v2 dev pilot with value-span controls.')
 
-def commands(cfg, reader, root):
+def commands(cfg, reader, root, fast=False):
     def cmd(module,*args): return [sys.executable,'-m',module,*map(str,args)]
     dest=root/'test'; score='rwdiag.binding_score'
     ev=cmd('rwdiag.run','eval','--reader',reader,'--out',dest,'--split','test','--scenes',N,
            '--panels',*P,'--questions',*Q,'--stages','write','other','neutral','records','--distances',128,1024)
     for key in ('model','layer','head','rank','dtype','data_seed','beta','span','revision','seed'):
         if cfg.get(key) is not None: ev.extend(['--'+key.replace('_','-'),str(cfg[key])])
+    if fast:
+        ev.append('--route-only')
+        return [cmd(score,'check-reader','--reader',reader),
+                cmd(score,'audit','--split','test','--scenes',N,'--seed',cfg['data_seed'],'--out',root/'audit.json'),
+                ev]
     return [cmd(score,'check-reader','--reader',reader),
             cmd(score,'audit','--split','test','--scenes',N,'--seed',cfg['data_seed'],'--out',root/'audit.json'),
             ev,cmd('rwdiag.report',dest,'--out',dest/'base_report.json'),cmd(score,'report',dest,'--out',dest/'decision.json')]
@@ -126,20 +131,25 @@ def decision_card(dest,candidate):
 
 def main():
     a=argparse.ArgumentParser(description=__doc__);a.add_argument('--pilot',type=Path);a.add_argument('--plan',action='store_true')
+    a.add_argument('--fast',action='store_true',help='route-only eval (native/q/q_sham/q_wrong_entity); skips write/probe arms and binding_score report')
     a.add_argument('--candidate',choices=CONTROLS,default='q',help='one primary hypothesis, chosen before test; default q')
     args=a.parse_args(); pilot=(args.pilot or discover(ROOT/'runs/binding_v2')).resolve(); dev=pilot/'dev'; cfg=read(dev/'config.json')
     reader=Path(cfg['reader']);reader=(ROOT/reader).resolve() if not reader.is_absolute() else reader
     m=read(dev/'manifest.json');d=read(dev/'decision.json');validate(cfg,m,d,read(dev/'status.json'),read(reader/'status.json'))
     if hashlib.sha256((reader/'readers.pt').read_bytes()).hexdigest()!=d['reader_sha256']:raise ValueError('reader weights changed')
-    out=pilot/'design_confirmation'; cmds=commands(cfg,reader,out)
+    out=pilot/'design_confirmation'; cmds=commands(cfg,reader,out,fast=args.fast)
     lock=dict(version=1,candidate=args.candidate,controls=CONTROLS[args.candidate],test_scenes=N,base_question_rows=N*6*2*4*6,
               primary='bind_x_xy/yx, X current, records, 1024 filler, mean across 2 worlds x 2 orders per scene',
               gate='gain >=5pp, paired 95% lower >0 vs native and named controls; each protected lower >-5pp',
               fallback='begin same-data behavioral update prototype; do not select a new primary on these test rows',
-              reader_sha256=d['reader_sha256'],dev_rows_sha256=d['input_rows_sha256'],site=m['identity'],commands=cmds)
+              reader_sha256=d['reader_sha256'],dev_rows_sha256=d['input_rows_sha256'],site=m['identity'],commands=cmds,fast=args.fast)
     if args.plan: print(json.dumps(lock,indent=2));return
     out.mkdir(exist_ok=False);write(out/'lock.json',lock);print('Locked confirmation:',out,flush=True)
     for c in cmds: subprocess.run(c,cwd=ROOT,check=True)
+    if args.fast:
+        # route-only: reconstruct the two hashes decision_card needs without the full binding_score report.
+        dest=out/'test'; h=hashlib.sha256((dest/'rows.jsonl').read_bytes()).hexdigest()
+        write(dest/'decision.json',dict(protocol='rwdiag.binding-v2',input_rows_sha256=h,reader_sha256=d['reader_sha256']))
     write(out/'route.json',decision_card(out/'test',args.candidate)); print('Finished:',out/'route.json',flush=True)
 
 if __name__=='__main__':main()
