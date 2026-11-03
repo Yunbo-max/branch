@@ -1,0 +1,56 @@
+{
+  "route": "behavioral_prototype_only",
+  "candidate": "q",
+  "scene_count": 48,
+  "paired_contrasts": {
+    "primary": [
+      0.0,
+      -0.026041666666666668,
+      0.020833333333333332
+    ],
+    "against_q_sham": [
+      0.0,
+      -0.026041666666666668,
+      0.020833333333333332
+    ],
+    "protected_y_now": [
+      0.020833333333333332,
+      0.0,
+      0.052083333333333336
+    ],
+    "protected_x_first": [
+      0.026041666666666668,
+      -0.03125,
+      0.08854166666666667
+    ],
+    "protected_z_now": [
+      0.0,
+      -0.015625,
+      0.015625
+    ]
+  },
+  "secondary_patterns": {
+    "eligible_y_scenes": 20,
+    "y_follow_aligned_minus_swapped": [
+      0.1125,
+      0.025,
+      0.2
+    ],
+    "neutral_1024_minus_128": [
+      0.010416666666666666,
+      0.0,
+      0.026041666666666668
+    ],
+    "records_minus_neutral_1024": [
+      -0.078125,
+      -0.14583333333333334,
+      -0.010416666666666666
+    ],
+    "exploratory_design_lead": "fixed_budget_write_isolation"
+  },
+  "scale": "fractions: estimate, lower, upper; scene-level percentile bootstrap",
+  "scope": "one nominated intervention/site/checkpoint; candidate sufficiency, not necessity",
+  "input_rows_sha256": "3d2497757abb064edfbc584382c7dcb8476970a176002ad0c7fdc6b6b3603f95",
+  "reader_sha256": "e2f21cc315fa48e723148b467a01f0cb68d657d26b35351b633281bc6c252a8e",
+  "secondary": "See test/decision.json for state swap, joint binding, cross-talk and matched records-minus-neutral. Negative gate means no mechanism claim, not absence of information."
+}

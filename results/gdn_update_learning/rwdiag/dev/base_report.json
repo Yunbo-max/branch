@@ -1,0 +1,23 @@
+{
+  "all_eight": [],
+  "donor_following": [],
+  "records_minus_neutral": [],
+  "hidden_label_rows": 0,
+  "unit": "one scene = two worlds; within-cell paired bootstrap; null X queries excluded",
+  "input_rows_sha256": "555052cd4c2cdca809d77124dae2bedbc853c6b4e743fb0a7174bbd723434180",
+  "reader_sha256": "e2f21cc315fa48e723148b467a01f0cb68d657d26b35351b633281bc6c252a8e",
+  "identity": {
+    "resolved": {
+      "model_id": "/inspire/hdd/global_user/zhangjiaquan-253108540222/baseline/Deltanet/models/puigde_360M",
+      "model_revision": "local-sha256:02b8cc6f119580f3f748492931427fbed00ca02aa70caa7ed0f6d710d071f4a4",
+      "tokenizer_id": "/inspire/hdd/global_user/zhangjiaquan-253108540222/baseline/Deltanet/models/puigde_360M",
+      "tokenizer_revision": "local-sha256:02b8cc6f119580f3f748492931427fbed00ca02aa70caa7ed0f6d710d071f4a4"
+    },
+    "layer": 10,
+    "head": 0,
+    "rank": 16,
+    "dtype": "bf16",
+    "code": "3880bb9ef54d2ed335286486d122fcfde870eb3437e4d831bb112fc17127d982",
+    "data_seed": 9001
+  }
+}

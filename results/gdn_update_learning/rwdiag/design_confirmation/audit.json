@@ -1,0 +1,10 @@
+{
+  "evidence": "symbolic_stimulus_audit_not_model_accuracy",
+  "scene_count": 48,
+  "signed_pairs_redacted": 384,
+  "same_value_rows": 106,
+  "swap_first_update_all8": 0.0,
+  "swap_last_update_all8": 0.0,
+  "redacted_changed_pair_ceiling": 0,
+  "ceiling_scope": "deterministic predictor; identical redacted inputs and question but opposite golds; both worlds must be right"
+}

@@ -1,0 +1,46 @@
+{
+  "action": "eval",
+  "out": "/inspire/hdd/global_user/zhangjiaquan-253108540222/baseline/Deltanet/new/gdn_update_training/runs/binding_v2/pilot_WWS2kLuP/design_confirmation/test",
+  "model": "/inspire/hdd/global_user/zhangjiaquan-253108540222/baseline/Deltanet/models/puigde_360M",
+  "revision": null,
+  "dtype": "bf16",
+  "allow_extrapolation": false,
+  "seed": 17,
+  "data_seed": 9001,
+  "layer": 10,
+  "head": 0,
+  "rank": 16,
+  "scenes": 48,
+  "steps": 192,
+  "lr": 0.001,
+  "split": "test",
+  "reader": "/inspire/hdd/global_user/zhangjiaquan-253108540222/baseline/Deltanet/new/gdn_update_training/runs/binding_v2/pilot_WWS2kLuP/fit",
+  "panels": [
+    "bind_x_xy",
+    "bind_x_yx",
+    "bind_y_xy",
+    "bind_y_yx",
+    "bind_swap_xy",
+    "bind_swap_yx"
+  ],
+  "stages": [
+    "write",
+    "other",
+    "neutral",
+    "records"
+  ],
+  "distances": [
+    128,
+    1024
+  ],
+  "questions": [
+    "x_now",
+    "y_now",
+    "x_first",
+    "z_now"
+  ],
+  "beta": 0.9,
+  "span": "value",
+  "rounds": 1000,
+  "route_only": true
+}

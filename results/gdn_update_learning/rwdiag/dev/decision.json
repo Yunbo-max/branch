@@ -1,0 +1,2888 @@
+{
+  "protocol": "rwdiag.binding-v2",
+  "input_rows_sha256": "555052cd4c2cdca809d77124dae2bedbc853c6b4e743fb0a7174bbd723434180",
+  "reader_sha256": "e2f21cc315fa48e723148b467a01f0cb68d657d26b35351b633281bc6c252a8e",
+  "identity": {
+    "resolved": {
+      "model_id": "/inspire/hdd/global_user/zhangjiaquan-253108540222/baseline/Deltanet/models/puigde_360M",
+      "model_revision": "local-sha256:02b8cc6f119580f3f748492931427fbed00ca02aa70caa7ed0f6d710d071f4a4",
+      "tokenizer_id": "/inspire/hdd/global_user/zhangjiaquan-253108540222/baseline/Deltanet/models/puigde_360M",
+      "tokenizer_revision": "local-sha256:02b8cc6f119580f3f748492931427fbed00ca02aa70caa7ed0f6d710d071f4a4"
+    },
+    "layer": 10,
+    "head": 0,
+    "rank": 16,
+    "dtype": "bf16",
+    "code": "3880bb9ef54d2ed335286486d122fcfde870eb3437e4d831bb112fc17127d982",
+    "data_seed": 9001
+  },
+  "crossed_binding": [
+    {
+      "family": "bind_swap",
+      "stage": "other",
+      "distance": 0,
+      "arm": "beta",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "y_now": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "rescued_rows": 0,
+      "broken_rows": 0,
+      "net_row_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "donor_follow_all_changed": null,
+      "xy_crosstalk_eligible": 0,
+      "xy_crosstalk_all4": null
+    },
+    {
+      "family": "bind_swap",
+      "stage": "other",
+      "distance": 0,
+      "arm": "beta_free_q",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "y_now": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "rescued_rows": 0,
+      "broken_rows": 0,
+      "net_row_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "donor_follow_all_changed": null,
+      "xy_crosstalk_eligible": 0,
+      "xy_crosstalk_all4": null
+    },
+    {
+      "family": "bind_swap",
+      "stage": "other",
+      "distance": 0,
+      "arm": "beta_wrong_site",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "y_now": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "rescued_rows": 0,
+      "broken_rows": 0,
+      "net_row_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "donor_follow_all_changed": null,
+      "xy_crosstalk_eligible": 0,
+      "xy_crosstalk_all4": null
+    },
+    {
+      "family": "bind_swap",
+      "stage": "other",
+      "distance": 0,
+      "arm": "k",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "y_now": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "rescued_rows": 1,
+      "broken_rows": 0,
+      "net_row_delta": [
+        0.005208333333333333,
+        0.0,
+        0.015625
+      ],
+      "donor_follow_all_changed": null,
+      "xy_crosstalk_eligible": 0,
+      "xy_crosstalk_all4": null
+    },
+    {
+      "family": "bind_swap",
+      "stage": "other",
+      "distance": 0,
+      "arm": "k_free_q",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "y_now": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "rescued_rows": 1,
+      "broken_rows": 0,
+      "net_row_delta": [
+        0.005208333333333333,
+        0.0,
+        0.015625
+      ],
+      "donor_follow_all_changed": null,
+      "xy_crosstalk_eligible": 0,
+      "xy_crosstalk_all4": null
+    },
+    {
+      "family": "bind_swap",
+      "stage": "other",
+      "distance": 0,
+      "arm": "k_sham",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "y_now": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "rescued_rows": 1,
+      "broken_rows": 0,
+      "net_row_delta": [
+        0.005208333333333333,
+        0.0,
+        0.015625
+      ],
+      "donor_follow_all_changed": null,
+      "xy_crosstalk_eligible": 0,
+      "xy_crosstalk_all4": null
+    },
+    {
+      "family": "bind_swap",
+      "stage": "other",
+      "distance": 0,
+      "arm": "k_wrong_site",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "y_now": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "rescued_rows": 1,
+      "broken_rows": 0,
+      "net_row_delta": [
+        0.005208333333333333,
+        0.0,
+        0.015625
+      ],
+      "donor_follow_all_changed": null,
+      "xy_crosstalk_eligible": 0,
+      "xy_crosstalk_all4": null
+    },
+    {
+      "family": "bind_swap",
+      "stage": "other",
+      "distance": 0,
+      "arm": "native",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "y_now": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "rescued_rows": 0,
+      "broken_rows": 0,
+      "net_row_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "donor_follow_all_changed": null,
+      "xy_crosstalk_eligible": 0,
+      "xy_crosstalk_all4": null
+    },
+    {
+      "family": "bind_swap",
+      "stage": "other",
+      "distance": 0,
+      "arm": "probe",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "y_now": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "rescued_rows": 17,
+      "broken_rows": 27,
+      "net_row_delta": [
+        -0.052083333333333336,
+        -0.12513020833333333,
+        0.020833333333333332
+      ],
+      "donor_follow_all_changed": null,
+      "xy_crosstalk_eligible": 0,
+      "xy_crosstalk_all4": null
+    },
+    {
+      "family": "bind_swap",
+      "stage": "other",
+      "distance": 0,
+      "arm": "probe_permuted_labels",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "y_now": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "rescued_rows": 11,
+      "broken_rows": 25,
+      "net_row_delta": [
+        -0.07291666666666667,
+        -0.16666666666666666,
+        0.005208333333333333
+      ],
+      "donor_follow_all_changed": null,
+      "xy_crosstalk_eligible": 0,
+      "xy_crosstalk_all4": null
+    },
+    {
+      "family": "bind_swap",
+      "stage": "other",
+      "distance": 0,
+      "arm": "probe_state_swap",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "y_now": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "rescued_rows": 17,
+      "broken_rows": 27,
+      "net_row_delta": [
+        -0.052083333333333336,
+        -0.12513020833333333,
+        0.020833333333333332
+      ],
+      "donor_follow_all_changed": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "xy_crosstalk_eligible": 0,
+      "xy_crosstalk_all4": null
+    },
+    {
+      "family": "bind_swap",
+      "stage": "other",
+      "distance": 0,
+      "arm": "probe_zero",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "y_now": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "rescued_rows": 44,
+      "broken_rows": 58,
+      "net_row_delta": [
+        -0.07291666666666667,
+        -0.21875,
+        0.078125
+      ],
+      "donor_follow_all_changed": null,
+      "xy_crosstalk_eligible": 0,
+      "xy_crosstalk_all4": null
+    },
+    {
+      "family": "bind_swap",
+      "stage": "other",
+      "distance": 0,
+      "arm": "q",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "y_now": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "rescued_rows": 3,
+      "broken_rows": 1,
+      "net_row_delta": [
+        0.010416666666666666,
+        0.0,
+        0.026041666666666668
+      ],
+      "donor_follow_all_changed": null,
+      "xy_crosstalk_eligible": 0,
+      "xy_crosstalk_all4": null
+    },
+    {
+      "family": "bind_swap",
+      "stage": "other",
+      "distance": 0,
+      "arm": "q+beta",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "y_now": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "rescued_rows": 3,
+      "broken_rows": 1,
+      "net_row_delta": [
+        0.010416666666666666,
+        0.0,
+        0.026041666666666668
+      ],
+      "donor_follow_all_changed": null,
+      "xy_crosstalk_eligible": 0,
+      "xy_crosstalk_all4": null
+    },
+    {
+      "family": "bind_swap",
+      "stage": "other",
+      "distance": 0,
+      "arm": "q+k",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "y_now": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "rescued_rows": 3,
+      "broken_rows": 1,
+      "net_row_delta": [
+        0.010416666666666666,
+        0.0,
+        0.026041666666666668
+      ],
+      "donor_follow_all_changed": null,
+      "xy_crosstalk_eligible": 0,
+      "xy_crosstalk_all4": null
+    },
+    {
+      "family": "bind_swap",
+      "stage": "other",
+      "distance": 0,
+      "arm": "q+v",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "y_now": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "rescued_rows": 3,
+      "broken_rows": 1,
+      "net_row_delta": [
+        0.010416666666666666,
+        0.0,
+        0.026041666666666668
+      ],
+      "donor_follow_all_changed": null,
+      "xy_crosstalk_eligible": 0,
+      "xy_crosstalk_all4": null
+    },
+    {
+      "family": "bind_swap",
+      "stage": "other",
+      "distance": 0,
+      "arm": "q_sham",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "y_now": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "rescued_rows": 0,
+      "broken_rows": 0,
+      "net_row_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "donor_follow_all_changed": null,
+      "xy_crosstalk_eligible": 0,
+      "xy_crosstalk_all4": null
+    },
+    {
+      "family": "bind_swap",
+      "stage": "other",
+      "distance": 0,
+      "arm": "q_wrong_entity",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "y_now": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "rescued_rows": 3,
+      "broken_rows": 1,
+      "net_row_delta": [
+        0.010416666666666666,
+        0.0,
+        0.026041666666666668
+      ],
+      "donor_follow_all_changed": null,
+      "xy_crosstalk_eligible": 0,
+      "xy_crosstalk_all4": null
+    },
+    {
+      "family": "bind_swap",
+      "stage": "other",
+      "distance": 0,
+      "arm": "question_only",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "y_now": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "rescued_rows": 13,
+      "broken_rows": 29,
+      "net_row_delta": [
+        -0.08333333333333333,
+        -0.17708333333333334,
+        0.0
+      ],
+      "donor_follow_all_changed": null,
+      "xy_crosstalk_eligible": 0,
+      "xy_crosstalk_all4": null
+    },
+    {
+      "family": "bind_swap",
+      "stage": "other",
+      "distance": 0,
+      "arm": "v",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "y_now": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "rescued_rows": 0,
+      "broken_rows": 0,
+      "net_row_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "donor_follow_all_changed": null,
+      "xy_crosstalk_eligible": 0,
+      "xy_crosstalk_all4": null
+    },
+    {
+      "family": "bind_swap",
+      "stage": "other",
+      "distance": 0,
+      "arm": "v_free_q",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "y_now": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "rescued_rows": 0,
+      "broken_rows": 0,
+      "net_row_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "donor_follow_all_changed": null,
+      "xy_crosstalk_eligible": 0,
+      "xy_crosstalk_all4": null
+    },
+    {
+      "family": "bind_swap",
+      "stage": "other",
+      "distance": 0,
+      "arm": "v_wrong_site",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "y_now": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "rescued_rows": 0,
+      "broken_rows": 0,
+      "net_row_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "donor_follow_all_changed": null,
+      "xy_crosstalk_eligible": 0,
+      "xy_crosstalk_all4": null
+    },
+    {
+      "family": "bind_swap",
+      "stage": "other",
+      "distance": 0,
+      "arm": "v_wrong_value",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "y_now": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "rescued_rows": 1,
+      "broken_rows": 0,
+      "net_row_delta": [
+        0.005208333333333333,
+        0.0,
+        0.015625
+      ],
+      "donor_follow_all_changed": null,
+      "xy_crosstalk_eligible": 0,
+      "xy_crosstalk_all4": null
+    },
+    {
+      "family": "bind_x",
+      "stage": "other",
+      "distance": 0,
+      "arm": "beta",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.08333333333333333,
+          0.0,
+          0.20833333333333334
+        ],
+        "y_now": [
+          0.16666666666666666,
+          0.041666666666666664,
+          0.3333333333333333
+        ]
+      },
+      "rescued_rows": 0,
+      "broken_rows": 0,
+      "net_row_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "donor_follow_all_changed": null,
+      "xy_crosstalk_eligible": 0,
+      "xy_crosstalk_all4": null
+    },
+    {
+      "family": "bind_x",
+      "stage": "other",
+      "distance": 0,
+      "arm": "beta_free_q",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.08333333333333333,
+          0.0,
+          0.20833333333333334
+        ],
+        "y_now": [
+          0.16666666666666666,
+          0.041666666666666664,
+          0.3333333333333333
+        ]
+      },
+      "rescued_rows": 0,
+      "broken_rows": 0,
+      "net_row_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "donor_follow_all_changed": null,
+      "xy_crosstalk_eligible": 0,
+      "xy_crosstalk_all4": null
+    },
+    {
+      "family": "bind_x",
+      "stage": "other",
+      "distance": 0,
+      "arm": "beta_wrong_site",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.08333333333333333,
+          0.0,
+          0.20833333333333334
+        ],
+        "y_now": [
+          0.16666666666666666,
+          0.041666666666666664,
+          0.3333333333333333
+        ]
+      },
+      "rescued_rows": 0,
+      "broken_rows": 0,
+      "net_row_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "donor_follow_all_changed": null,
+      "xy_crosstalk_eligible": 0,
+      "xy_crosstalk_all4": null
+    },
+    {
+      "family": "bind_x",
+      "stage": "other",
+      "distance": 0,
+      "arm": "k",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.08333333333333333,
+          0.0,
+          0.20833333333333334
+        ],
+        "y_now": [
+          0.16666666666666666,
+          0.041666666666666664,
+          0.3333333333333333
+        ]
+      },
+      "rescued_rows": 0,
+      "broken_rows": 0,
+      "net_row_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "donor_follow_all_changed": null,
+      "xy_crosstalk_eligible": 0,
+      "xy_crosstalk_all4": null
+    },
+    {
+      "family": "bind_x",
+      "stage": "other",
+      "distance": 0,
+      "arm": "k_free_q",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.08333333333333333,
+          0.0,
+          0.20833333333333334
+        ],
+        "y_now": [
+          0.16666666666666666,
+          0.041666666666666664,
+          0.3333333333333333
+        ]
+      },
+      "rescued_rows": 0,
+      "broken_rows": 0,
+      "net_row_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "donor_follow_all_changed": null,
+      "xy_crosstalk_eligible": 0,
+      "xy_crosstalk_all4": null
+    },
+    {
+      "family": "bind_x",
+      "stage": "other",
+      "distance": 0,
+      "arm": "k_sham",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.08333333333333333,
+          0.0,
+          0.20833333333333334
+        ],
+        "y_now": [
+          0.16666666666666666,
+          0.041666666666666664,
+          0.3333333333333333
+        ]
+      },
+      "rescued_rows": 0,
+      "broken_rows": 0,
+      "net_row_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "donor_follow_all_changed": null,
+      "xy_crosstalk_eligible": 0,
+      "xy_crosstalk_all4": null
+    },
+    {
+      "family": "bind_x",
+      "stage": "other",
+      "distance": 0,
+      "arm": "k_wrong_site",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.08333333333333333,
+          0.0,
+          0.20833333333333334
+        ],
+        "y_now": [
+          0.16666666666666666,
+          0.041666666666666664,
+          0.3333333333333333
+        ]
+      },
+      "rescued_rows": 0,
+      "broken_rows": 0,
+      "net_row_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "donor_follow_all_changed": null,
+      "xy_crosstalk_eligible": 0,
+      "xy_crosstalk_all4": null
+    },
+    {
+      "family": "bind_x",
+      "stage": "other",
+      "distance": 0,
+      "arm": "native",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.08333333333333333,
+          0.0,
+          0.20833333333333334
+        ],
+        "y_now": [
+          0.16666666666666666,
+          0.041666666666666664,
+          0.3333333333333333
+        ]
+      },
+      "rescued_rows": 0,
+      "broken_rows": 0,
+      "net_row_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "donor_follow_all_changed": null,
+      "xy_crosstalk_eligible": 0,
+      "xy_crosstalk_all4": null
+    },
+    {
+      "family": "bind_x",
+      "stage": "other",
+      "distance": 0,
+      "arm": "probe",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "y_now": [
+          0.16666666666666666,
+          0.041666666666666664,
+          0.3333333333333333
+        ]
+      },
+      "rescued_rows": 6,
+      "broken_rows": 21,
+      "net_row_delta": [
+        -0.078125,
+        -0.15625,
+        -0.015625
+      ],
+      "donor_follow_all_changed": null,
+      "xy_crosstalk_eligible": 0,
+      "xy_crosstalk_all4": null
+    },
+    {
+      "family": "bind_x",
+      "stage": "other",
+      "distance": 0,
+      "arm": "probe_permuted_labels",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "y_now": [
+          0.25,
+          0.08333333333333333,
+          0.4166666666666667
+        ]
+      },
+      "rescued_rows": 12,
+      "broken_rows": 19,
+      "net_row_delta": [
+        -0.036458333333333336,
+        -0.10416666666666667,
+        0.026041666666666668
+      ],
+      "donor_follow_all_changed": null,
+      "xy_crosstalk_eligible": 0,
+      "xy_crosstalk_all4": null
+    },
+    {
+      "family": "bind_x",
+      "stage": "other",
+      "distance": 0,
+      "arm": "probe_state_swap",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "y_now": [
+          0.16666666666666666,
+          0.041666666666666664,
+          0.3333333333333333
+        ]
+      },
+      "rescued_rows": 8,
+      "broken_rows": 21,
+      "net_row_delta": [
+        -0.06770833333333333,
+        -0.14583333333333334,
+        0.0
+      ],
+      "donor_follow_all_changed": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "xy_crosstalk_eligible": 0,
+      "xy_crosstalk_all4": null
+    },
+    {
+      "family": "bind_x",
+      "stage": "other",
+      "distance": 0,
+      "arm": "probe_zero",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "y_now": [
+          0.25,
+          0.08333333333333333,
+          0.4177083333333324
+        ]
+      },
+      "rescued_rows": 44,
+      "broken_rows": 51,
+      "net_row_delta": [
+        -0.036458333333333336,
+        -0.20833333333333334,
+        0.14075520833333321
+      ],
+      "donor_follow_all_changed": null,
+      "xy_crosstalk_eligible": 0,
+      "xy_crosstalk_all4": null
+    },
+    {
+      "family": "bind_x",
+      "stage": "other",
+      "distance": 0,
+      "arm": "q",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.16666666666666666,
+          0.041666666666666664,
+          0.3333333333333333
+        ],
+        "y_now": [
+          0.16666666666666666,
+          0.041666666666666664,
+          0.3333333333333333
+        ]
+      },
+      "rescued_rows": 7,
+      "broken_rows": 0,
+      "net_row_delta": [
+        0.036458333333333336,
+        0.0,
+        0.09388020833333321
+      ],
+      "donor_follow_all_changed": null,
+      "xy_crosstalk_eligible": 0,
+      "xy_crosstalk_all4": null
+    },
+    {
+      "family": "bind_x",
+      "stage": "other",
+      "distance": 0,
+      "arm": "q+beta",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.16666666666666666,
+          0.041666666666666664,
+          0.3333333333333333
+        ],
+        "y_now": [
+          0.16666666666666666,
+          0.041666666666666664,
+          0.3333333333333333
+        ]
+      },
+      "rescued_rows": 7,
+      "broken_rows": 0,
+      "net_row_delta": [
+        0.036458333333333336,
+        0.0,
+        0.09388020833333321
+      ],
+      "donor_follow_all_changed": null,
+      "xy_crosstalk_eligible": 0,
+      "xy_crosstalk_all4": null
+    },
+    {
+      "family": "bind_x",
+      "stage": "other",
+      "distance": 0,
+      "arm": "q+k",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.16666666666666666,
+          0.041666666666666664,
+          0.3333333333333333
+        ],
+        "y_now": [
+          0.16666666666666666,
+          0.041666666666666664,
+          0.3333333333333333
+        ]
+      },
+      "rescued_rows": 7,
+      "broken_rows": 0,
+      "net_row_delta": [
+        0.036458333333333336,
+        0.0,
+        0.09388020833333321
+      ],
+      "donor_follow_all_changed": null,
+      "xy_crosstalk_eligible": 0,
+      "xy_crosstalk_all4": null
+    },
+    {
+      "family": "bind_x",
+      "stage": "other",
+      "distance": 0,
+      "arm": "q+v",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.16666666666666666,
+          0.041666666666666664,
+          0.3333333333333333
+        ],
+        "y_now": [
+          0.16666666666666666,
+          0.041666666666666664,
+          0.3333333333333333
+        ]
+      },
+      "rescued_rows": 7,
+      "broken_rows": 0,
+      "net_row_delta": [
+        0.036458333333333336,
+        0.0,
+        0.09388020833333321
+      ],
+      "donor_follow_all_changed": null,
+      "xy_crosstalk_eligible": 0,
+      "xy_crosstalk_all4": null
+    },
+    {
+      "family": "bind_x",
+      "stage": "other",
+      "distance": 0,
+      "arm": "q_sham",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.08333333333333333,
+          0.0,
+          0.20833333333333334
+        ],
+        "y_now": [
+          0.16666666666666666,
+          0.041666666666666664,
+          0.3333333333333333
+        ]
+      },
+      "rescued_rows": 0,
+      "broken_rows": 0,
+      "net_row_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "donor_follow_all_changed": null,
+      "xy_crosstalk_eligible": 0,
+      "xy_crosstalk_all4": null
+    },
+    {
+      "family": "bind_x",
+      "stage": "other",
+      "distance": 0,
+      "arm": "q_wrong_entity",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.16666666666666666,
+          0.041666666666666664,
+          0.3333333333333333
+        ],
+        "y_now": [
+          0.16666666666666666,
+          0.041666666666666664,
+          0.3333333333333333
+        ]
+      },
+      "rescued_rows": 7,
+      "broken_rows": 0,
+      "net_row_delta": [
+        0.036458333333333336,
+        0.0,
+        0.09388020833333321
+      ],
+      "donor_follow_all_changed": null,
+      "xy_crosstalk_eligible": 0,
+      "xy_crosstalk_all4": null
+    },
+    {
+      "family": "bind_x",
+      "stage": "other",
+      "distance": 0,
+      "arm": "question_only",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "y_now": [
+          0.3333333333333333,
+          0.125,
+          0.5
+        ]
+      },
+      "rescued_rows": 16,
+      "broken_rows": 19,
+      "net_row_delta": [
+        -0.015625,
+        -0.10950520833333333,
+        0.078125
+      ],
+      "donor_follow_all_changed": null,
+      "xy_crosstalk_eligible": 0,
+      "xy_crosstalk_all4": null
+    },
+    {
+      "family": "bind_x",
+      "stage": "other",
+      "distance": 0,
+      "arm": "v",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.08333333333333333,
+          0.0,
+          0.20833333333333334
+        ],
+        "y_now": [
+          0.16666666666666666,
+          0.041666666666666664,
+          0.3333333333333333
+        ]
+      },
+      "rescued_rows": 0,
+      "broken_rows": 0,
+      "net_row_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "donor_follow_all_changed": null,
+      "xy_crosstalk_eligible": 0,
+      "xy_crosstalk_all4": null
+    },
+    {
+      "family": "bind_x",
+      "stage": "other",
+      "distance": 0,
+      "arm": "v_free_q",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.08333333333333333,
+          0.0,
+          0.20833333333333334
+        ],
+        "y_now": [
+          0.16666666666666666,
+          0.041666666666666664,
+          0.3333333333333333
+        ]
+      },
+      "rescued_rows": 0,
+      "broken_rows": 0,
+      "net_row_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "donor_follow_all_changed": null,
+      "xy_crosstalk_eligible": 0,
+      "xy_crosstalk_all4": null
+    },
+    {
+      "family": "bind_x",
+      "stage": "other",
+      "distance": 0,
+      "arm": "v_wrong_site",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.08333333333333333,
+          0.0,
+          0.20833333333333334
+        ],
+        "y_now": [
+          0.16666666666666666,
+          0.041666666666666664,
+          0.3333333333333333
+        ]
+      },
+      "rescued_rows": 0,
+      "broken_rows": 0,
+      "net_row_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "donor_follow_all_changed": null,
+      "xy_crosstalk_eligible": 0,
+      "xy_crosstalk_all4": null
+    },
+    {
+      "family": "bind_x",
+      "stage": "other",
+      "distance": 0,
+      "arm": "v_wrong_value",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.08333333333333333,
+          0.0,
+          0.20833333333333334
+        ],
+        "y_now": [
+          0.16666666666666666,
+          0.041666666666666664,
+          0.3333333333333333
+        ]
+      },
+      "rescued_rows": 0,
+      "broken_rows": 0,
+      "net_row_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "donor_follow_all_changed": null,
+      "xy_crosstalk_eligible": 0,
+      "xy_crosstalk_all4": null
+    },
+    {
+      "family": "bind_y",
+      "stage": "other",
+      "distance": 0,
+      "arm": "beta",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.20833333333333334,
+          0.041666666666666664,
+          0.375
+        ],
+        "y_now": [
+          0.08333333333333333,
+          0.0,
+          0.20833333333333334
+        ]
+      },
+      "rescued_rows": 0,
+      "broken_rows": 0,
+      "net_row_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "donor_follow_all_changed": null,
+      "xy_crosstalk_eligible": 11,
+      "xy_crosstalk_all4": [
+        0.09090909090909091,
+        0.0,
+        0.2727272727272727
+      ]
+    },
+    {
+      "family": "bind_y",
+      "stage": "other",
+      "distance": 0,
+      "arm": "beta_free_q",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.20833333333333334,
+          0.041666666666666664,
+          0.375
+        ],
+        "y_now": [
+          0.08333333333333333,
+          0.0,
+          0.20833333333333334
+        ]
+      },
+      "rescued_rows": 0,
+      "broken_rows": 0,
+      "net_row_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "donor_follow_all_changed": null,
+      "xy_crosstalk_eligible": 11,
+      "xy_crosstalk_all4": [
+        0.09090909090909091,
+        0.0,
+        0.2727272727272727
+      ]
+    },
+    {
+      "family": "bind_y",
+      "stage": "other",
+      "distance": 0,
+      "arm": "beta_wrong_site",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.20833333333333334,
+          0.041666666666666664,
+          0.375
+        ],
+        "y_now": [
+          0.08333333333333333,
+          0.0,
+          0.20833333333333334
+        ]
+      },
+      "rescued_rows": 0,
+      "broken_rows": 0,
+      "net_row_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "donor_follow_all_changed": null,
+      "xy_crosstalk_eligible": 11,
+      "xy_crosstalk_all4": [
+        0.09090909090909091,
+        0.0,
+        0.2727272727272727
+      ]
+    },
+    {
+      "family": "bind_y",
+      "stage": "other",
+      "distance": 0,
+      "arm": "k",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.20833333333333334,
+          0.041666666666666664,
+          0.375
+        ],
+        "y_now": [
+          0.08333333333333333,
+          0.0,
+          0.20833333333333334
+        ]
+      },
+      "rescued_rows": 0,
+      "broken_rows": 0,
+      "net_row_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "donor_follow_all_changed": null,
+      "xy_crosstalk_eligible": 11,
+      "xy_crosstalk_all4": [
+        0.09090909090909091,
+        0.0,
+        0.2727272727272727
+      ]
+    },
+    {
+      "family": "bind_y",
+      "stage": "other",
+      "distance": 0,
+      "arm": "k_free_q",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.20833333333333334,
+          0.041666666666666664,
+          0.375
+        ],
+        "y_now": [
+          0.08333333333333333,
+          0.0,
+          0.20833333333333334
+        ]
+      },
+      "rescued_rows": 0,
+      "broken_rows": 0,
+      "net_row_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "donor_follow_all_changed": null,
+      "xy_crosstalk_eligible": 11,
+      "xy_crosstalk_all4": [
+        0.09090909090909091,
+        0.0,
+        0.2727272727272727
+      ]
+    },
+    {
+      "family": "bind_y",
+      "stage": "other",
+      "distance": 0,
+      "arm": "k_sham",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.20833333333333334,
+          0.041666666666666664,
+          0.375
+        ],
+        "y_now": [
+          0.08333333333333333,
+          0.0,
+          0.20833333333333334
+        ]
+      },
+      "rescued_rows": 0,
+      "broken_rows": 0,
+      "net_row_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "donor_follow_all_changed": null,
+      "xy_crosstalk_eligible": 11,
+      "xy_crosstalk_all4": [
+        0.09090909090909091,
+        0.0,
+        0.2727272727272727
+      ]
+    },
+    {
+      "family": "bind_y",
+      "stage": "other",
+      "distance": 0,
+      "arm": "k_wrong_site",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.20833333333333334,
+          0.041666666666666664,
+          0.375
+        ],
+        "y_now": [
+          0.08333333333333333,
+          0.0,
+          0.20833333333333334
+        ]
+      },
+      "rescued_rows": 0,
+      "broken_rows": 0,
+      "net_row_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "donor_follow_all_changed": null,
+      "xy_crosstalk_eligible": 11,
+      "xy_crosstalk_all4": [
+        0.09090909090909091,
+        0.0,
+        0.2727272727272727
+      ]
+    },
+    {
+      "family": "bind_y",
+      "stage": "other",
+      "distance": 0,
+      "arm": "native",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.20833333333333334,
+          0.041666666666666664,
+          0.375
+        ],
+        "y_now": [
+          0.08333333333333333,
+          0.0,
+          0.20833333333333334
+        ]
+      },
+      "rescued_rows": 0,
+      "broken_rows": 0,
+      "net_row_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "donor_follow_all_changed": null,
+      "xy_crosstalk_eligible": 11,
+      "xy_crosstalk_all4": [
+        0.09090909090909091,
+        0.0,
+        0.2727272727272727
+      ]
+    },
+    {
+      "family": "bind_y",
+      "stage": "other",
+      "distance": 0,
+      "arm": "probe",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.2916666666666667,
+          0.125,
+          0.5
+        ],
+        "y_now": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "rescued_rows": 16,
+      "broken_rows": 21,
+      "net_row_delta": [
+        -0.026041666666666668,
+        -0.11979166666666667,
+        0.06770833333333333
+      ],
+      "donor_follow_all_changed": null,
+      "xy_crosstalk_eligible": 11,
+      "xy_crosstalk_all4": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "family": "bind_y",
+      "stage": "other",
+      "distance": 0,
+      "arm": "probe_permuted_labels",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.25,
+          0.08333333333333333,
+          0.4166666666666667
+        ],
+        "y_now": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "rescued_rows": 11,
+      "broken_rows": 23,
+      "net_row_delta": [
+        -0.0625,
+        -0.15625,
+        0.020833333333333332
+      ],
+      "donor_follow_all_changed": null,
+      "xy_crosstalk_eligible": 11,
+      "xy_crosstalk_all4": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "family": "bind_y",
+      "stage": "other",
+      "distance": 0,
+      "arm": "probe_state_swap",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.2916666666666667,
+          0.125,
+          0.5
+        ],
+        "y_now": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "rescued_rows": 17,
+      "broken_rows": 21,
+      "net_row_delta": [
+        -0.020833333333333332,
+        -0.11471354166666665,
+        0.06783854166666654
+      ],
+      "donor_follow_all_changed": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "xy_crosstalk_eligible": 11,
+      "xy_crosstalk_all4": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "family": "bind_y",
+      "stage": "other",
+      "distance": 0,
+      "arm": "probe_zero",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.25,
+          0.08333333333333333,
+          0.4166666666666667
+        ],
+        "y_now": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "rescued_rows": 42,
+      "broken_rows": 54,
+      "net_row_delta": [
+        -0.0625,
+        -0.25,
+        0.11458333333333333
+      ],
+      "donor_follow_all_changed": null,
+      "xy_crosstalk_eligible": 11,
+      "xy_crosstalk_all4": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "family": "bind_y",
+      "stage": "other",
+      "distance": 0,
+      "arm": "q",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.20833333333333334,
+          0.041666666666666664,
+          0.375
+        ],
+        "y_now": [
+          0.125,
+          0.0,
+          0.2916666666666667
+        ]
+      },
+      "rescued_rows": 8,
+      "broken_rows": 1,
+      "net_row_delta": [
+        0.036458333333333336,
+        0.0,
+        0.09375
+      ],
+      "donor_follow_all_changed": null,
+      "xy_crosstalk_eligible": 11,
+      "xy_crosstalk_all4": [
+        0.09090909090909091,
+        0.0,
+        0.2727272727272727
+      ]
+    },
+    {
+      "family": "bind_y",
+      "stage": "other",
+      "distance": 0,
+      "arm": "q+beta",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.20833333333333334,
+          0.041666666666666664,
+          0.375
+        ],
+        "y_now": [
+          0.125,
+          0.0,
+          0.2916666666666667
+        ]
+      },
+      "rescued_rows": 7,
+      "broken_rows": 1,
+      "net_row_delta": [
+        0.03125,
+        0.0,
+        0.09375
+      ],
+      "donor_follow_all_changed": null,
+      "xy_crosstalk_eligible": 11,
+      "xy_crosstalk_all4": [
+        0.09090909090909091,
+        0.0,
+        0.2727272727272727
+      ]
+    },
+    {
+      "family": "bind_y",
+      "stage": "other",
+      "distance": 0,
+      "arm": "q+k",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.20833333333333334,
+          0.041666666666666664,
+          0.375
+        ],
+        "y_now": [
+          0.125,
+          0.0,
+          0.2916666666666667
+        ]
+      },
+      "rescued_rows": 8,
+      "broken_rows": 1,
+      "net_row_delta": [
+        0.036458333333333336,
+        0.0,
+        0.09375
+      ],
+      "donor_follow_all_changed": null,
+      "xy_crosstalk_eligible": 11,
+      "xy_crosstalk_all4": [
+        0.09090909090909091,
+        0.0,
+        0.2727272727272727
+      ]
+    },
+    {
+      "family": "bind_y",
+      "stage": "other",
+      "distance": 0,
+      "arm": "q+v",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.20833333333333334,
+          0.041666666666666664,
+          0.375
+        ],
+        "y_now": [
+          0.125,
+          0.0,
+          0.2916666666666667
+        ]
+      },
+      "rescued_rows": 7,
+      "broken_rows": 1,
+      "net_row_delta": [
+        0.03125,
+        0.0,
+        0.09375
+      ],
+      "donor_follow_all_changed": null,
+      "xy_crosstalk_eligible": 11,
+      "xy_crosstalk_all4": [
+        0.09090909090909091,
+        0.0,
+        0.2727272727272727
+      ]
+    },
+    {
+      "family": "bind_y",
+      "stage": "other",
+      "distance": 0,
+      "arm": "q_sham",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.20833333333333334,
+          0.041666666666666664,
+          0.375
+        ],
+        "y_now": [
+          0.08333333333333333,
+          0.0,
+          0.20833333333333334
+        ]
+      },
+      "rescued_rows": 0,
+      "broken_rows": 1,
+      "net_row_delta": [
+        -0.005208333333333333,
+        -0.015625,
+        0.0
+      ],
+      "donor_follow_all_changed": null,
+      "xy_crosstalk_eligible": 11,
+      "xy_crosstalk_all4": [
+        0.09090909090909091,
+        0.0,
+        0.2727272727272727
+      ]
+    },
+    {
+      "family": "bind_y",
+      "stage": "other",
+      "distance": 0,
+      "arm": "q_wrong_entity",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.20833333333333334,
+          0.041666666666666664,
+          0.375
+        ],
+        "y_now": [
+          0.125,
+          0.0,
+          0.2916666666666667
+        ]
+      },
+      "rescued_rows": 7,
+      "broken_rows": 1,
+      "net_row_delta": [
+        0.03125,
+        0.0,
+        0.09375
+      ],
+      "donor_follow_all_changed": null,
+      "xy_crosstalk_eligible": 11,
+      "xy_crosstalk_all4": [
+        0.09090909090909091,
+        0.0,
+        0.2727272727272727
+      ]
+    },
+    {
+      "family": "bind_y",
+      "stage": "other",
+      "distance": 0,
+      "arm": "question_only",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.2916666666666667,
+          0.125,
+          0.4583333333333333
+        ],
+        "y_now": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "rescued_rows": 21,
+      "broken_rows": 27,
+      "net_row_delta": [
+        -0.03125,
+        -0.16145833333333334,
+        0.078125
+      ],
+      "donor_follow_all_changed": null,
+      "xy_crosstalk_eligible": 11,
+      "xy_crosstalk_all4": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "family": "bind_y",
+      "stage": "other",
+      "distance": 0,
+      "arm": "v",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.20833333333333334,
+          0.041666666666666664,
+          0.375
+        ],
+        "y_now": [
+          0.08333333333333333,
+          0.0,
+          0.20833333333333334
+        ]
+      },
+      "rescued_rows": 0,
+      "broken_rows": 0,
+      "net_row_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "donor_follow_all_changed": null,
+      "xy_crosstalk_eligible": 11,
+      "xy_crosstalk_all4": [
+        0.09090909090909091,
+        0.0,
+        0.2727272727272727
+      ]
+    },
+    {
+      "family": "bind_y",
+      "stage": "other",
+      "distance": 0,
+      "arm": "v_free_q",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.20833333333333334,
+          0.041666666666666664,
+          0.375
+        ],
+        "y_now": [
+          0.08333333333333333,
+          0.0,
+          0.20833333333333334
+        ]
+      },
+      "rescued_rows": 0,
+      "broken_rows": 0,
+      "net_row_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "donor_follow_all_changed": null,
+      "xy_crosstalk_eligible": 11,
+      "xy_crosstalk_all4": [
+        0.09090909090909091,
+        0.0,
+        0.2727272727272727
+      ]
+    },
+    {
+      "family": "bind_y",
+      "stage": "other",
+      "distance": 0,
+      "arm": "v_wrong_site",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.20833333333333334,
+          0.041666666666666664,
+          0.375
+        ],
+        "y_now": [
+          0.08333333333333333,
+          0.0,
+          0.20833333333333334
+        ]
+      },
+      "rescued_rows": 0,
+      "broken_rows": 0,
+      "net_row_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "donor_follow_all_changed": null,
+      "xy_crosstalk_eligible": 11,
+      "xy_crosstalk_all4": [
+        0.09090909090909091,
+        0.0,
+        0.2727272727272727
+      ]
+    },
+    {
+      "family": "bind_y",
+      "stage": "other",
+      "distance": 0,
+      "arm": "v_wrong_value",
+      "n_scenes": 24,
+      "n_rows": 192,
+      "all8": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "all8_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "role_all4": {
+        "x_now": [
+          0.20833333333333334,
+          0.041666666666666664,
+          0.375
+        ],
+        "y_now": [
+          0.08333333333333333,
+          0.0,
+          0.20833333333333334
+        ]
+      },
+      "rescued_rows": 0,
+      "broken_rows": 0,
+      "net_row_delta": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "donor_follow_all_changed": null,
+      "xy_crosstalk_eligible": 11,
+      "xy_crosstalk_all4": [
+        0.09090909090909091,
+        0.0,
+        0.2727272727272727
+      ]
+    }
+  ],
+  "records_minus_neutral": [],
+  "historical_protected_joint": [],
+  "note": "crossed all8 = two entities x two worlds x two orders, after both updates; role_all4 uses one entity. Intervals resample scenes. Immediate stage and within-order Q/write factorial are in summary.json."
+}

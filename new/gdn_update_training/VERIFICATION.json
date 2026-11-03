@@ -1,0 +1,17 @@
+{
+  "schema": "gdn-update-learning-verification.v1",
+  "base_commit": "6bbba481a56b254df965238f91e427fc9fce030e",
+  "local_environment": {"torch": "2.10.0+cpu", "cuda_available": false},
+  "local_test_command": "python -m pytest -q new/gdn_update_training/tests",
+  "new_package_tests": {"passed": 21, "failed": 0},
+  "shell_syntax": "passed",
+  "python_compile": "passed",
+  "offline_plan_cli": "passed; no weights loaded",
+  "local_existing_census_suite": "not run: direct GitHub checkout unavailable in this container",
+  "base_census_ci": {"run_id": 41100228069, "conclusion": "success"},
+  "new_remote_ci": "inspect GitHub Actions for the published commit; not asserted here",
+  "native_gpu_training": "not run",
+  "native_export_reload": "not run",
+  "model_quality_or_speed_claim": false,
+  "teacher_variant": "direct native K/beta gradient search and actual downstream replay; not closed-form state-gradient oracle"
+}
