@@ -1,0 +1,7 @@
+{
+  "full_vocab_max_abs": 0.0,
+  "self_patch_max_abs": 0.0,
+  "state_read_max_abs": 3.763125278055668e-06,
+  "atol": 0.08,
+  "rtol": 0.03
+}
