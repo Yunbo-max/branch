@@ -62,3 +62,23 @@ def test_prompt_only_and_refuse_overwrite(tmp_path):
         pass
     else:
         assert False, 'duplicate ID should fail'
+
+
+def test_run_tf_then_opd_checkpoint_roundtrip(tmp_path):
+    data = tmp_path / 'train.jsonl'
+    data.write_text('{"id":"a","prompt":"P1"}\n{"id":"b","prompt":"P2"}\n')
+    teacher = TinyTeacher()
+    common = dict(teacher=teacher, data_path=str(data), horizon=3, updates=2,
+                  lr=1e-3, seed=17, hidden=16, n_layers=2, n_heads=2)
+    first = tmp_path / 'tf'
+    first_result = train_run(output_dir=str(first), mode='tf', **common)
+    assert first_result['status'] == 'completed_reference_training'
+    assert (first / 'metadata.json').is_file() and (first / 'model.pt').is_file()
+    second = tmp_path / 'opd'
+    second_result = train_run(output_dir=str(second), mode='opd', initial=str(first), **common)
+    assert second_result['mode'] == 'opd'
+    from psdraft.training import load_student
+    resumed = load_student(second, target_vocab=13, teacher_hidden=12, device='cpu')
+    with torch.no_grad():
+        logits = resumed.logits_on_draft(torch.randn(1, 12), torch.tensor([[1, 2]]))
+    assert logits.shape == (1, 2, 13)
