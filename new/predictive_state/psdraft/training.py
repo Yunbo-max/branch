@@ -117,6 +117,9 @@ def train_run(teacher, *, data_path: str, output_dir: str, mode: str,
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed)
     examples = load_prompts(data_path)
+    # Seeded independent order; do not always train on the first dataset rows.
+    sampler = random.Random(seed)
+    sampler.shuffle(examples)
     if initial is None:
         if hidden % n_heads != 0:
             raise ValueError("hidden must be divisible by n_heads")
@@ -133,6 +136,8 @@ def train_run(teacher, *, data_path: str, output_dir: str, mode: str,
     events = []
     started = time.perf_counter()
     for index in range(updates):
+        if index > 0 and index % len(examples) == 0:
+            sampler.shuffle(examples)
         item = examples[index % len(examples)]
         prefix = teacher.encode_prompt(item["prompt"])
         stats = optimize_one(student, teacher, prefix, optimizer, mode=mode, horizon=horizon)

@@ -37,6 +37,7 @@ class PredictiveStateDrafter(nn.Module):
         self.condition = nn.Sequential(nn.LayerNorm(cfg.teacher_hidden_size),
                                        nn.Linear(cfg.teacher_hidden_size, cfg.hidden_size))
         self.embedding = nn.Embedding(cfg.vocab_size, cfg.hidden_size)
+        nn.init.normal_(self.embedding.weight, mean=0.0, std=0.02)
         self.blocks = nn.ModuleList(GatedDeltaBlock(cfg.hidden_size, cfg.n_heads,
                                                     cfg.head_dim, cfg.mlp_ratio)
                                     for _ in range(cfg.n_layers))
