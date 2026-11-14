@@ -1,0 +1,2 @@
+{"id":"math_smoke","prompt":"Compute 17 + 25. Explain briefly."}
+{"id":"code_smoke","prompt":"Write a Python function that returns the square of an integer."}
