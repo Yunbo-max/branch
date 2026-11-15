@@ -71,6 +71,31 @@ def qualify(backend, *, prompt: str, horizon: int, seed: int):
         # The main head should predict the same first-token distribution.
         if float(mse) > 0.08:
             raise RuntimeError(f"cached/native first token logits not aligned: {float(mse)}")
+    # GPU qualification must also exercise the *new* differentiable C03/C04
+    # adapters, not merely the frozen native MTP sampler. No optimizer step.
+    grad_checks = {}
+    with torch.enable_grad():
+        c03 = configure_case("c03_fusion", hidden=backend.hidden, rank=32).to(backend.device)
+        c03.train()
+        replay_03 = c03.replay(backend, boundary, gdn, gqa, draft.ids)
+        forward_kl(replay_03.logits, target[:, :horizon, :]).backward()
+        grad_03 = c03.adapter.up.weight.grad
+        if grad_03 is None or not bool(torch.isfinite(grad_03).all()) or float(grad_03.abs().sum()) <= 0:
+            raise RuntimeError("native C03 adapter backprop failed")
+        grad_checks["fusion_adapter_up_grad_l1"] = float(grad_03.abs().sum())
+        c04 = configure_case("c04_state", hidden=backend.hidden, rank=32).to(backend.device)
+        c04.train()
+        replay_04 = c04.replay(backend, boundary, gdn, gqa, draft.ids)
+        jump_loss, _ = c04.state_loss(replay_04, state, future_state)
+        if not bool(torch.isfinite(jump_loss)):
+            raise FloatingPointError("native C04 jump loss nonfinite")
+        jump_loss.backward()
+        grad_04 = c04.state_head.net[-1].weight.grad
+        if grad_04 is None or not bool(torch.isfinite(grad_04).all()) or float(grad_04.abs().sum()) <= 0:
+            raise RuntimeError("native C04 state-supervision backprop failed")
+        grad_checks["state_head_output_grad_l1"] = float(grad_04.abs().sum())
+        grad_checks["state_jump_loss"] = float(jump_loss)
+    del c03, c04, replay_03, replay_04
     return {"status": "software_qualification_only", "prompt_length": prefix.shape[1],
             "draft_horizon": horizon, "state_shape": list(state.shape),
             "first_position_max_logit_error": float(mse),
@@ -78,6 +103,7 @@ def qualify(backend, *, prompt: str, horizon: int, seed: int):
             "true_gdn_state_delta_rms": float(state_change),
             "gdn_layer": 26, "gqa_layer": 27,
             "native_mtp_pretrained": True, "training_updates": 0,
+            "gradient_qualification": grad_checks,
             "measured_tokens_per_second": None}
 
 
