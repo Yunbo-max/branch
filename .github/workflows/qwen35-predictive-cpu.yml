@@ -1,0 +1,27 @@
+name: qwen35-predictive-cpu
+on:
+  push:
+    branches: ['research/predictive-state-opd-gdn-20261114']
+    paths:
+      - 'new/predictive_state/**'
+      - '.github/workflows/qwen35-predictive-cpu.yml'
+  pull_request:
+    paths:
+      - 'new/predictive_state/**'
+jobs:
+  cpu-mock-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install project and CPU test dependencies
+        working-directory: new/predictive_state
+        run: |
+          python -m pip install -e '.[test]' \
+            --extra-index-url https://download.pytorch.org/whl/cpu
+      - name: Test real source with mocked native 4B interface (no pretrained weights)
+        working-directory: new/predictive_state
+        run: python -m pytest -q tests/test_qwen35_predictive.py
