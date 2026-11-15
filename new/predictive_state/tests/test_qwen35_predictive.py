@@ -16,6 +16,8 @@ class FakeMTP(nn.Module):
         assert hidden.shape == next_embedding.shape and hidden.shape[0] == 1
         assert hidden.shape[-1] == 8
         assert (past_key_values is None and start_position == 0) or past_key_values == start_position
+        if past_key_values is None:
+            assert hidden.shape[1] == 3, 'native MTP must prefill the full accepted prefix'
         return (hidden + 0.3 * next_embedding).tanh(), start_position + hidden.shape[1]
 
 
