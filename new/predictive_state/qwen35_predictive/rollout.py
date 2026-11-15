@@ -43,16 +43,47 @@ class PredictiveMTP(nn.Module):
     @staticmethod
     def _next_native_mtp(backend, native_hidden: torch.Tensor, token: torch.Tensor,
                          past, position: int):
-        """Qwen released MTP forward, with K independent causal cache positions."""
+        """One native MTP step with the REQUIRED full-prefix prefill at j=0.
+
+        Official AKR's pretrained MTP receives ALL backbone prefix hidden rows
+        and a shifted token embedding sequence on its very first call.
+        Treating this as one isolated MTP token loses context and is not the
+        released MTP baseline. After prefill, its own causal cache is reused
+        for each additional speculative token (no new target Backbone call).
+        """
         with torch.no_grad():
-            next_emb = backend.base.model.embed_tokens(token[:, None])
-            out, new_past = backend.mtp(
-                native_hidden[:, None, :], next_emb, past_key_values=past,
-                use_cache=True, start_position=position,
-            )
-        if out.shape != (1, 1, backend.hidden):
-            raise RuntimeError("released MTP produced unexpected hidden")
-        return out[:, 0, :].detach(), new_past
+            prefix_hidden = getattr(backend, "_mtp_prefill_hidden", None)
+            prefix_tokens = getattr(backend, "_mtp_prefill_tokens", None)
+            if prefix_hidden is None or prefix_tokens is None:
+                raise RuntimeError("call backend.boundary on this accepted prefix before drafting")
+            p = prefix_tokens.shape[1]
+            if prefix_hidden.shape != (1, p, backend.hidden) or token.shape != (1,):
+                raise RuntimeError("stale or misaligned native MTP prefix context")
+            if position == 0:
+                if past is not None:
+                    raise RuntimeError("first MTP prefill may not use a draft cache")
+                # Row t combines h_t with embedding of x_(t+1), including
+                # the sampled first draft token for the last prefix row.
+                shifted = torch.cat((prefix_tokens[:, 1:], token[:, None]), dim=1)
+                next_embeddings = backend.base.model.embed_tokens(shifted)
+                out, new_past = backend.mtp(
+                    prefix_hidden, next_embeddings,
+                    past_key_values=None, use_cache=True, start_position=0,
+                )
+                if out.shape != (1, p, backend.hidden):
+                    raise RuntimeError("MTP full-prefix prefill output shape mismatch")
+            else:
+                if past is None:
+                    raise RuntimeError("native MTP draft cache missing after prefill")
+                next_embeddings = backend.base.model.embed_tokens(token[:, None])
+                out, new_past = backend.mtp(
+                    native_hidden[:, None, :], next_embeddings,
+                    past_key_values=past, use_cache=True,
+                    start_position=p + position - 1,
+                )
+                if out.shape != (1, 1, backend.hidden):
+                    raise RuntimeError("native MTP cached step shape mismatch")
+        return out[:, -1, :].detach(), new_past
 
     def project(self, backend, native_hidden: torch.Tensor, feature: torch.Tensor):
         effective = native_hidden if self.adapter is None else self.adapter(native_hidden, feature)

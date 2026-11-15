@@ -33,6 +33,9 @@ class PinnedQwenBackend:
             raise RuntimeError("vocabulary mismatch; cannot distil or verify")
         self.hidden = int(self.base.config.hidden_size)
         self.vocab = int(self.base.config.vocab_size)
+        # Native MTP first prefill needs ALL accepted-prefix backbone states.
+        self._mtp_prefill_hidden = None
+        self._mtp_prefill_tokens = None
 
     @classmethod
     def load(cls, *, akr_root: str, model_dir: str, device: str, dtype: str):
@@ -75,7 +78,12 @@ class PinnedQwenBackend:
             result = self.base.model(input_ids=prefix, use_cache=collect_state)
         if set(captured) != {"gdn", "gqa"}:
             raise RuntimeError("GDN/GQA capture failed; missing branch feature")
-        hidden = result.last_hidden_state[:, -1, :].detach()
+        # Original AKR pretrained MTP consumes full-prefix h_0..h_t and
+        # shifted embeddings x_1..x_(t+1) on its first forward.
+        # Keep only frozen/accepted-prefix features, never draft-future hidden.
+        self._mtp_prefill_hidden = result.last_hidden_state.detach()
+        self._mtp_prefill_tokens = prefix.detach().clone()
+        hidden = self._mtp_prefill_hidden[:, -1, :]
         start_state = native_gdn_matrix(result.past_key_values) if collect_state else None
         return hidden, captured["gdn"], captured["gqa"], start_state
 

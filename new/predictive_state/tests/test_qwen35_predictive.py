@@ -13,9 +13,10 @@ from qwen35_predictive.checkpoint import load_small
 class FakeMTP(nn.Module):
     def forward(self, hidden, next_embedding, *, past_key_values, use_cache, start_position):
         assert use_cache
-        assert hidden.shape == next_embedding.shape == (1, 1, 8)
+        assert hidden.shape == next_embedding.shape and hidden.shape[0] == 1
+        assert hidden.shape[-1] == 8
         assert (past_key_values is None and start_position == 0) or past_key_values == start_position
-        return (hidden + 0.3 * next_embedding).tanh(), start_position + 1
+        return (hidden + 0.3 * next_embedding).tanh(), start_position + hidden.shape[1]
 
 
 class FakeBackbone(nn.Module):
@@ -55,7 +56,9 @@ class FakeBackend:
 
     @torch.no_grad()
     def boundary(self, prefix, *, collect_state=False):
-        hidden = self.base.model.embed_tokens(prefix)[:, -1, :].detach()
+        self._mtp_prefill_hidden = self.base.model.embed_tokens(prefix).detach()
+        self._mtp_prefill_tokens = prefix.detach().clone()
+        hidden = self._mtp_prefill_hidden[:, -1, :]
         state = self._state(prefix) if collect_state else None
         return hidden, hidden * 0.8, hidden * 0.2, state
 
