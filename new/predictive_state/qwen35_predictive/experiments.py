@@ -39,9 +39,9 @@ def _seed_everything(seed):
         torch.cuda.manual_seed_all(seed)
 
 
-def configure_case(case: str, *, rank: int = 128,
+def configure_case(case: str, *, hidden: int = 2560, rank: int = 128,
                    state_weight: float = 0.1) -> PredictiveMTP:
-    return PredictiveMTP(case=case, hidden=2560, rank=rank,
+    return PredictiveMTP(case=case, hidden=hidden, rank=rank,
                          state_weight=state_weight)
 
 
@@ -50,7 +50,7 @@ def qualify(backend, *, prompt: str, horizon: int, seed: int):
         raise ValueError("MTP qualification needs at least two proposed tokens")
     prefix = backend.encode(prompt)
     boundary, gdn, gqa, state = backend.boundary(prefix, collect_state=True)
-    model = configure_case("c00_native").to(backend.device)
+    model = configure_case("c00_native", hidden=backend.hidden).to(backend.device)
     with torch.no_grad():
         draft = model.sample(backend, boundary, gdn, gqa,
                              horizon=horizon, generator=_generator(backend.device, seed))
@@ -90,7 +90,7 @@ def train_case(backend, *, case: str, prompts: str, output: str, horizon: int,
         raise ValueError("invalid bounded pilot settings")
     _seed_everything(seed)
     questions = shuffled_questions(load_questions(prompts), seed)[:max_prompts]
-    model = configure_case(case, rank=rank, state_weight=state_weight).to(backend.device).train()
+    model = configure_case(case, hidden=backend.hidden, rank=rank, state_weight=state_weight).to(backend.device).train()
     optim = torch.optim.AdamW(model.trainable_parameters(), lr=learning_rate, weight_decay=0.0)
     root = _mkdir_new(output)
     identity = {"status": "running", "case": case, "seed": seed,
@@ -166,11 +166,11 @@ def evaluate_case(backend, *, case: str, prompts: str, output: str, checkpoint: 
     if case == "c00_native":
         if checkpoint:
             raise ValueError("C00 native baseline must not load adapter checkpoint")
-        model = configure_case(case).to(backend.device)
+        model = configure_case(case, hidden=backend.hidden).to(backend.device)
     else:
         if not checkpoint:
             raise ValueError("trained case requires explicit completed adapter.pt")
-        model = load_small(checkpoint, case=case, hidden=2560, rank=rank,
+        model = load_small(checkpoint, case=case, hidden=backend.hidden, rank=rank,
                            state_weight=state_weight, device=str(backend.device))
     model.eval()
     questions = shuffled_questions(load_questions(prompts), seed)[:max_prompts]
