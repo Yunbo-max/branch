@@ -38,6 +38,7 @@ class StateJumpHead(nn.Module):
     """
     def __init__(self, hidden: int = 2560, sketch_rank: int = 8, width: int = 256):
         super().__init__()
+        self.hidden = hidden
         self.sketch = FixedStateSketch(rank=sketch_rank)
         d = self.sketch.output_dim
         self.net = nn.Sequential(
@@ -51,7 +52,7 @@ class StateJumpHead(nn.Module):
 
     def predict_delta(self, final_draft_hidden: torch.Tensor,
                       start_state: torch.Tensor) -> torch.Tensor:
-        if final_draft_hidden.ndim != 2 or final_draft_hidden.shape[-1] != 2560:
+        if final_draft_hidden.ndim != 2 or final_draft_hidden.shape[-1] != self.hidden:
             raise ValueError("final draft hidden mismatch")
         start = self.sketch(start_state)
         return self.net(torch.cat((final_draft_hidden.float(), start), dim=-1))
