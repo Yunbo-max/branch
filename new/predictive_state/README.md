@@ -1,3 +1,11 @@
+# Active main study: pretrained Qwen3.5-4B × native GDN/GQA × native MTP (2026-11-15)
+
+**The active implementation is now [qwen35_predictive/](qwen35_predictive/README.md); the complete [Chinese GPU runbook](qwen35_predictive/RUNBOOK_ZH.md) specifies independent C00–C04 runs.** It uses the pinned pretrained Qwen3.5-4B Backbone and actual released MTP weights, with a frozen target and small trainable readout/state modules. Existing [psdraft/](psdraft/) below is retained for reference as the earlier randomly initialized tiny GDN drafter, **not** the selected main model.
+
+**Evidence boundary:** GitHub CPU mock CI passes; CUDA-native Qwen3.5 loading, GPU qualification, 4B training, true task accuracy and end-to-end cached speculative decoding speed are still unverified. C04 predicts a real GDN state **sketch for auxiliary supervision**, but does not yet use predicted state to skip K Backbone steps.
+
+---
+
 # Predictive-State Drafter — GDN + Teacher-Anchored OPD
 
 **Research bootstrap, 2026-11-14. No pretrained drafter, completed large-model training, CUDA kernel qualification, acceptance-length improvement or measured speedup is claimed.**
