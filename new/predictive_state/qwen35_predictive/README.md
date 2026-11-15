@@ -18,6 +18,8 @@ C00 first proposal comes from the frozen main head, followed by recursive reuse 
 
 **Training**: independently sample `K` future tokens from the current adapted MTP, then query the frozen backbone over **exact same sampled token IDs**; minimize full-vocabulary forward KL on every valid proposal position. C04 also trains state-sketch prediction by normalized MSE. Only the small modules backpropagate. Gold answers are never used in the training/rollout; teacher sees only an ordinary question prompt and the student's sampled prefix.
 
+**MTP prefill requirement:** the released native MTP layer first consumes the **entire accepted-prefix hidden sequence** paired with shifted token embeddings (as in AKR), not only the last boundary hidden. Later draft steps reuse the MTP's own KV cache. Rebuilding that full MTP prefill on every independent reference block is costly at long context; it is not a fast production decode implementation.
+
 **Evaluation**: one-block reference speculative verification using the exact p/q acceptance and residual correction. Reports paired acceptance length, fraction all accepted, KL, TV and (for C04) state-sketch loss; saves each raw row. Teacher currently **recomputes entire prefix**, so the recorded reference time **does not** measure cached speculative generation throughput, and no acceleration is claimed.
 
 The novelty claim **is not** GDN+GQA+MTP or on-policy KL. It will require showing that an efficiently predicted *next state* can support multi-token/block decoding with reduced serial work, without hurting consistency. C04 tests only whether such state prediction is learnable.
