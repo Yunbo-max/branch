@@ -26,7 +26,7 @@ and `g` a key-channel decay. Simply replacing a gate or using a dense
 preconditioner does **not** implement exact original Branch geometry:
 a key-side direction rotation is required.
 
-This adapter uses a **mathematically exact restricted case**:
+The adapter uses a **mathematically exact restricted case by default**:
 - Full SPD metric `H`, frozen within each geometry chunk;
 - `L = cholesky(H)`;
 - key/query input `L^{-1} k`, `L^{-1} q`;
@@ -37,6 +37,17 @@ This adapter uses a **mathematically exact restricted case**:
 - official `chunk_gdn2` called unchanged, with `scale=1.0`.
 
 Thus the original *chunk-frozen Full Geometry writer* is preserved.
+
+To retain **all of GDN-2's channel-wise gates**, callers can additionally pass
+`erase_gate=b`, `write_gate=w` and `log_decay=g`. The wrapper uses
+`b_kernel=beta*b`, `w_kernel=beta*w`, and `g_kernel=g` in the protected
+basis. This defines a **new Geometry-Conditioned GDN-2**, with a full-SPD
+protected write direction and channel-wise gating; setting `b=w=1` and
+`g=0` exactly recovers original Branch. When the gates are unrestricted,
+it is NOT equal to the old Branch objective, because channel-wise decay and
+erase are applied in the transformed coordinates. It is still executed with
+the unchanged official fused kernel. No training/quality results are claimed.
+
 **It is not a claim that unrestricted full GDN-2 is equivalent to Branch.**
 It also omits Branch's history reader, per-token Fork allocator and routing.
 
@@ -63,6 +74,11 @@ y, state, query_C = full_geometry_via_gdn2(
     q, k, v, chunk_size=64, lam=1.0, mu=8.0, tau=1.0,
     protection_decay=0.95,
 )
+# To keep GDN-2 channel-wise gates:
+# y, state, query_C = full_geometry_via_gdn2(
+#     q, k, v, erase_gate=b, write_gate=w, log_decay=g,
+# )
+# b=[B,T,H,K], w=[B,T,H,V], g=[B,T,H,K] (log-decay)
 # Streaming next call: initial_state=state, initial_protection=query_C.
 ```
 
@@ -86,6 +102,8 @@ does not apply it automatically and does not make a performance claim.
 3. Only if worthwhile, test (i) geometry-protection gains over GDN-2,
    and (ii) Predicted-Skip as separate write-only and coupled erase/write
    gate ablations. The latter is *not* strict Full Geometry by itself.
-4. Full, untied GDN-2 channel-wise erase/write and decay do not generally
-   commute with a dense moving SPD basis; supporting all of them with an
-   exact old-Branch equivalence needs a different recurrence/kernel.
+4. In the *gated* geometry extension, report ablations against both the
+   exact tied-gate Branch special case and the original official GDN-2.
+   Do not conflate a new, rotated channel-wise decay with an unchanged
+   original-coordinate channel-wise decay. The beta guard and internal
+   normalization are switched off to keep the mathematical semantics.
