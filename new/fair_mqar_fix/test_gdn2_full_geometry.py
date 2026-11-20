@@ -22,11 +22,11 @@ def cpu_tied_gdn2(*, q, k, v, g, b, w, initial_state,
     assert output_final_state and scale == 1.0
     assert not kwargs.get("use_qk_l2norm_in_kernel", False)
     assert not kwargs.get("beta_guard", True)
-    assert torch.all(g == 0)
     S = initial_state.to(q.dtype)
     ys = []
     for j in range(q.shape[1]):
         kj, qj, vj, bj, wj = (a[:, j] for a in (k, q, v, b, w))
+        S = S * g[:, j].exp().unsqueeze(-1)
         old_read = torch.einsum("bhkv,bhk->bhv", S, bj * kj)
         S = S + torch.einsum("bhk,bhv->bhkv", kj, wj * vj - old_read)
         ys.append(torch.einsum("bhkv,bhk->bhv", S, qj))
@@ -101,3 +101,25 @@ def test_predicted_skip_signal_is_not_full_geometry():
     r = predicted_skip_gate(S, pq, val, gamma=2.0)
     assert abs(float(r[0, 0, 0]) - math.exp(-2.0)) < 1e-6
     assert abs(float(r[0, 1, 0]) - 1.0) < 1e-6
+
+
+def test_full_channel_gates_reduce_to_original_writer_when_unit_and_zero_decay():
+    torch.manual_seed(6)
+    q = F.normalize(torch.randn(1, 9, 2, 6), dim=-1)
+    k = F.normalize(torch.randn_like(q), dim=-1)
+    v = torch.randn(1, 9, 2, 4)
+    settings = dict(chunk_size=4, kernel=cpu_tied_gdn2)
+    exact, *_ = full_geometry_via_gdn2(q, k, v, **settings)
+    equal, *_ = full_geometry_via_gdn2(
+        q, k, v, erase_gate=torch.ones_like(k),
+        write_gate=torch.ones_like(v), log_decay=torch.zeros_like(k),
+        **settings
+    )
+    gated, *_ = full_geometry_via_gdn2(
+        q, k, v, erase_gate=torch.sigmoid(torch.randn_like(k)),
+        write_gate=torch.sigmoid(torch.randn_like(v)),
+        log_decay=-torch.rand_like(k) * 0.1,
+        **settings
+    )
+    assert torch.allclose(exact, equal, atol=1e-6)
+    assert not torch.allclose(exact, gated, atol=1e-4)
