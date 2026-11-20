@@ -1,7 +1,9 @@
 """Exact chunk-frozen Branch Full Geometry using the OFFICIAL GDN-2 kernel.
 
-This is an *algorithmic compatibility adapter*, not an implementation of
-GDN-2's full channel-wise erase/write/decay model.
+With default tied gates/zero decay, this is an *exact* Full Geometry
+compatibility adapter. Optional untied erase/write and channel-wise decay
+extend the model within the protected basis. That extended model is new
+and is NOT the same recurrence as the original Branch writer.
 
 For a fixed query-protection metric H = lam I + mu C within a chunk, the
 original protected update (key-major S [K,V]) is
@@ -19,7 +21,10 @@ Then
 
 The last recurrence is exactly the *tied scalar-gate, zero-decay special case*
 of the official NVlabs GDN-2 chunk kernel: b=beta (K channels),
-w=beta (V channels), g=0. The kernel must NOT renormalize kh/qh, and
+w=beta (V channels), g=0. Optional b_t/w_t/g_t use channel-wise gates
+inside the transformed coordinate system, scaling b,w by beta. The
+restricted setting recovers the exact Branch update; the general setting
+defines a geometry-conditioned GDN-2 with full gate expressivity. The kernel must NOT renormalize kh/qh, and
 its key-weighted beta_guard must be disabled: both otherwise alter this
 exact equivalence. We do not reimplement any Triton/CUDA kernel.
 
@@ -109,6 +114,9 @@ def full_geometry_via_gdn2(
     initial_state: Tensor | None = None,
     initial_protection: Tensor | None = None,
     detach_protection: bool = True,
+    erase_gate: Tensor | None = None,
+    write_gate: Tensor | None = None,
+    log_decay: Tensor | None = None,
     kernel: Callable | None = None,
 ) -> tuple[Tensor, Tensor, Tensor]:
     """Execute the exact chunk-frozen Full Geometry recurrence.
@@ -118,7 +126,11 @@ def full_geometry_via_gdn2(
     this adapter deliberately does not change their norms.
 
     Returns output [B,T,H,V], physical final state [B,H,K,V], and
-    updated full covariance [B,H,K,K]. Use the LAST TWO as the streaming
+    updated full covariance [B,H,K,K]. If optional erase_gate [B,T,H,K],
+    write_gate [B,T,H,V] or log_decay [B,T,H,K] are provided, GDN-2
+    runs with fully channel-wise gating in the protected coordinates.
+    In that case this is a new geometric extension, not strict equivalence
+    to original Branch. Use the LAST TWO as the streaming
     initial state/protection for the next call.
 
     kernel: default uses official NVlabs chunk_gdn2; an injectable
@@ -136,6 +148,13 @@ def full_geometry_via_gdn2(
         raise ValueError("At least one token is required")
     if q.dtype != k.dtype or q.dtype != v.dtype:
         raise ValueError("Use the same dtype for q, k, v (float32 for the PoC)")
+    for name, gate, shape in (
+        ("erase_gate", erase_gate, (B,T,nh,dk)),
+        ("write_gate", write_gate, (B,T,nh,dv)),
+        ("log_decay", log_decay, (B,T,nh,dk)),
+    ):
+        if gate is not None and gate.shape != shape:
+            raise ValueError(f"{name} must have shape {shape}")
     if initial_state is None:
         S = q.new_zeros(B, nh, dk, dv)
     else:
@@ -164,12 +183,24 @@ def full_geometry_via_gdn2(
         Z0 = torch.matmul(L.transpose(-1, -2), S)
         qh, kh = _solve_keys(L, qs), _solve_keys(L, ks)
         beta = (tau + kh.square().sum(dim=-1)).reciprocal()
-        erase_b = beta.unsqueeze(-1).expand_as(kh).contiguous()
-        write_w = beta.unsqueeze(-1).expand_as(vs).contiguous()
+        erase_factor = (
+            erase_gate[:, start:stop] if erase_gate is not None
+            else torch.ones_like(kh)
+        )
+        write_factor = (
+            write_gate[:, start:stop] if write_gate is not None
+            else torch.ones_like(vs)
+        )
+        erase_b = (beta.unsqueeze(-1) * erase_factor).contiguous()
+        write_w = (beta.unsqueeze(-1) * write_factor).contiguous()
+        gate_g = (
+            log_decay[:, start:stop] if log_decay is not None
+            else torch.zeros_like(kh)
+        )
 
         y, Zfinal = runner(
             q=qh.contiguous(), k=kh.contiguous(), v=vs.contiguous(),
-            g=torch.zeros_like(kh), b=erase_b, w=write_w,
+            g=gate_g.contiguous(), b=erase_b, w=write_w,
             scale=1.0,
             initial_state=Z0.to(torch.float32),
             output_final_state=True,
